@@ -6,7 +6,7 @@ export default function Studio() {
     <div className='min-h-screen w-screen bg-black'>
       <div className='fixed h-screen w-screen'>
         <Aurora
-          colorStops={['#7cff67', '#b19eef', '#5227ff']}
+          colorStops={['#3A29FF', '#FF94B4', '#FF3232']}
           blend={0.5}
           amplitude={1.0}
           speed={0.5}
