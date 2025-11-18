@@ -273,7 +273,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
       </svg>
 
       <div
-        className='pointer-events-none absolute inset-0'
+        className='pointer-events-none absolute inset-0 z-10'
         style={inheritRadius}
       >
         <div
