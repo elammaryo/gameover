@@ -29,8 +29,15 @@ export default function RootLayout({
       >
         <div
           id='transition-overlay'
-          className='pointer-events-none fixed inset-0 z-[9999] bg-black opacity-0 transition-opacity duration-300'
-        />
+          className='pointer-events-none fixed inset-0 z-[9999] flex items-center justify-center bg-black opacity-0 transition-opacity duration-500'
+        >
+          <div
+            id='transition-label'
+            className='font-mono text-xs tracking-[0.35em] text-gray-300 uppercase opacity-0 transition-opacity duration-200 sm:text-sm'
+          >
+            ENTERING STUDIO...
+          </div>
+        </div>
 
         {children}
       </body>

@@ -14,16 +14,22 @@ export default function Home() {
 
   const enterStudio = () => {
     const overlay = document.getElementById('transition-overlay')
+    const label = document.getElementById('transition-label')
 
     if (!overlay) return
 
-    // Fade overlay in
-    overlay.style.opacity = '1'
+    const sfx = new Audio('/sfx/whoosh.mp3')
+    sfx.volume = 0.4
+    sfx.play().catch(() => {})
 
-    // After fade, navigate
+    overlay.style.opacity = '1'
+    if (label) {
+      label.classList.add('opacity-100', 'glitch-once')
+    }
+
     setTimeout(() => {
       router.push('/studio')
-    }, 300) // match duration-300
+    }, 2000)
   }
 
   return (

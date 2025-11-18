@@ -2,6 +2,22 @@ import Aurora from '../components/Aurora'
 import { NavBar } from '../components/NavBar'
 
 export default function Studio() {
+  useEffect(() => {
+    const overlay = document.getElementById('transition-overlay')
+    const label = document.getElementById('transition-label')
+
+    if (label) {
+      label.classList.remove('opacity-100', 'glitch-once')
+    }
+
+    if (overlay) {
+      overlay.style.opacity = '1'
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '0'
+      })
+    }
+  }, [])
+
   return (
     <div className='min-h-screen w-screen bg-black'>
       <div className='fixed h-screen w-screen'>
