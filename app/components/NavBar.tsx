@@ -14,9 +14,8 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
       </a>
       <div className='flex space-x-5 sm:space-x-12'>
         {tabs.map(tab => (
-          <div className='flex flex-col'>
+          <div className='flex flex-col' key={tab}>
             <a
-              key={tab}
               href={`/${tab}`}
               className={
                 'text-white' + (selectedTab === tab ? ' font-bold' : '')
