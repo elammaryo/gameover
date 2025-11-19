@@ -1,7 +1,7 @@
 import logo from '../../public/gameover-logo.png'
 
 export function NavBar({ selectedTab }: { selectedTab?: string }) {
-  const tabs = ['studio', 'beats', 'playlists', 'tech', 'about']
+  const tabs = ['studio', 'spotify', 'tech', 'about']
 
   return (
     <nav className='fixed top-0 z-50 flex w-full items-center justify-between gap-8 bg-[#111111] bg-black/50 px-8 py-6 backdrop-blur-sm sm:pr-18 sm:pl-10'>
