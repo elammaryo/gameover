@@ -19,7 +19,6 @@ export default function Studio() {
   useEffect(() => {
     getPlaylists()
       .then((data: Playlist[]) => {
-        console.log('Playlists in Studio:', data)
         setPlaylists(data)
       })
       .catch((error: any) => {

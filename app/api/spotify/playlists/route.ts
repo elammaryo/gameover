@@ -8,7 +8,6 @@ let token: {
 } | null = null
 
 export async function GET(request: Request) {
-  console.log('GET /api/spotify/playlists called')
   try {
     if (!token?.access_token) {
       await requestToken()
@@ -23,7 +22,6 @@ export async function GET(request: Request) {
       }
     )
     const data = await res.json()
-    console.log('Fetched playlists:', data)
     return NextResponse.json({ playlists: data.items || [], status: 200 })
   } catch (error) {
     console.error('Error in GET /api/spotify/playlists:', error)
@@ -32,7 +30,6 @@ export async function GET(request: Request) {
 }
 
 export async function requestToken() {
-  console.log('Requesting new Spotify token...')
   const res = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: {
@@ -43,9 +40,6 @@ export async function requestToken() {
   })
 
   const data = await res.json()
-  console.log('Spotify token response status:', res.status)
-  console.log('Spotify token response body:', data)
-
   token = data
 }
 
