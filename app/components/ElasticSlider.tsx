@@ -7,7 +7,7 @@ import {
   useTransform
 } from 'motion/react'
 
-const MAX_OVERFLOW = 10
+const MAX_OVERFLOW = 8
 
 interface ElasticSliderProps {
   defaultValue?: number
