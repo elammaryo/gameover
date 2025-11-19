@@ -1,18 +1,31 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { SetStateAction, useEffect, useState } from 'react'
 import Aurora from '../components/Aurora'
 import { NavBar } from '../components/NavBar'
 import { useRouter } from 'next/navigation'
 import FeaturedBeatCard from '../components/FeaturedBeatCard'
 import { PlayerBar } from '../components/PlayerBar'
+import { getPlaylists } from '../api'
+import { HiPlay } from 'react-icons/hi2'
+import { Playlist } from '../models/Playlist'
 
 const tabs = ['Beats', 'Playlists'] as const
 type Tab = (typeof tabs)[number]
 
 export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>('Beats')
+  const [playlists, setPlaylists] = useState<Playlist[]>([])
 
   useEffect(() => {
+    getPlaylists()
+      .then((data: Playlist[]) => {
+        console.log('Playlists in Studio:', data)
+        setPlaylists(data)
+      })
+      .catch((error: any) => {
+        console.error('Error fetching playlists:', error)
+      })
+
     const overlay = document.getElementById('transition-overlay')
     const label = document.getElementById('transition-label')
 
@@ -121,7 +134,7 @@ export default function Studio() {
                       </span>
                     </div>
                     <button className='flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition group-hover:scale-[1.05]'>
-                      ►
+                      <HiPlay size={14} />
                     </button>
                   </div>
                 </div>
@@ -130,9 +143,9 @@ export default function Studio() {
           ) : (
             <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
               {/* placeholder playlist cards */}
-              {Array.from({ length: 4 }).map((_, i) => (
+              {playlists.map((playlist, i) => (
                 <div
-                  key={i}
+                  key={playlist.id}
                   className='bg-white/5/5 flex cursor-pointer flex-col gap-3 rounded-2xl border border-white/5 p-4 backdrop-blur-lg transition hover:border-fuchsia-400/60 hover:bg-white/10'
                 >
                   <div className='h-24 w-full rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-500' />
@@ -158,7 +171,6 @@ export default function Studio() {
         //     : undefined
         // }
         isPlaying={true}
-        onPlayPause={() => {}}
       />
     </main>
   )
