@@ -6,7 +6,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
   return (
     <nav className='fixed top-0 z-50 flex w-full items-center justify-between bg-[#111111] bg-black/50 py-6 pr-18 pl-10 backdrop-blur-sm'>
       <a href='/'>
-        <img src={logo.src} className='h-4 w-auto' alt='Logo' />
+        <img src={logo.src} className='h-3.5 w-auto' alt='Logo' />
       </a>
       <div className='space-x-12'>
         <a
