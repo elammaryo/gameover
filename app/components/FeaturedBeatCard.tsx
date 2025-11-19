@@ -1,4 +1,5 @@
 import ElectricBorder from '../components/ElectricBorder'
+import { HiPlay } from 'react-icons/hi2'
 
 function FeaturedBeatCard() {
   return (
@@ -24,7 +25,7 @@ function FeaturedBeatCard() {
           </div>
 
           <button className='ml-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[14px] font-semibold text-black transition hover:scale-105'>
-            ►
+            <HiPlay size={20} />
           </button>
         </div>
       </div>
