@@ -148,10 +148,17 @@ export default function Studio() {
                   key={playlist.id}
                   className='bg-white/5/5 flex cursor-pointer flex-col gap-3 rounded-2xl border border-white/5 p-4 backdrop-blur-lg transition hover:border-fuchsia-400/60 hover:bg-white/10'
                 >
-                  <div className='h-24 w-full rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-500' />
+                  <div className='h-full w-full rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-500'>
+                    <img
+                      src={playlist.images[0]?.url}
+                      alt={playlist.name}
+                      className='h-full w-full rounded-xl object-cover'
+                    />
+                  </div>
+
                   <div className='flex flex-col gap-1'>
                     <span className='text-sm font-semibold'>
-                      Playlist #{i + 1}
+                      {playlist.name}
                     </span>
                     <span className='text-xs text-gray-400'>
                       Spotify · Vibe session
