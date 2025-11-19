@@ -74,7 +74,7 @@ export default function Studio() {
             </span>
             <div className='mt-3 flex flex-col gap-2 text-sm text-gray-300'>
               <span>0 beats loaded</span>
-              <span>0 playlists connected</span>
+              <span>{playlists.length} playlists connected</span>
               <span className='text-gray-500'>
                 Once you hook Spotify + your beat data, show stats here.
               </span>
