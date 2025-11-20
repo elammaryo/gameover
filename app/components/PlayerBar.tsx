@@ -6,22 +6,48 @@ import { Track } from '../models/Track'
 
 type PlayerBarProps = {
   track?: Track | null
-  isPlaying: boolean
-  onNext?: () => void
-  onPrev?: () => void
+  queue?: Track[]
+  onTrackChange?: (track: Track) => void
 }
 
-export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
+export function PlayerBar({ track, queue, onTrackChange }: PlayerBarProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(100)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Update audio element when track changes
+  function onPrev() {
+    if (!queue || !track || !onTrackChange) return
+    const currentIndex = queue.findIndex(t => t.id === track.id)
+    if (currentIndex > 0) {
+      const prevTrack = queue[currentIndex - 1]
+      onTrackChange(prevTrack)
+    }
+  }
+
+  function onNext() {
+    if (!queue || !track || !onTrackChange) return
+    const currentIndex = queue.findIndex(t => t.id === track.id)
+    if (currentIndex < queue.length - 1) {
+      const nextTrack = queue[currentIndex + 1]
+      onTrackChange(nextTrack)
+    }
+  }
+
+  // Update audio element when track changes and auto-play
   useEffect(() => {
     if (audioRef.current && track?.audioUrl) {
       audioRef.current.load()
+      // Auto-play when new track is loaded
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true)
+        })
+        .catch(err => {
+          console.error('Auto-play error:', err)
+        })
     }
   }, [track?.audioUrl])
 
@@ -42,7 +68,7 @@ export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
   // Update volume when it changes
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100 // Convert 0-100 to 0-1
+      audioRef.current.volume = volume / 100
     }
   }, [volume])
 
@@ -64,7 +90,7 @@ export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
 
   function handleEnded() {
     setIsPlaying(false)
-    if (onNext) onNext()
+    onNext()
   }
 
   function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
@@ -93,16 +119,9 @@ export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onEnded={handleEnded}
-          onPlay={() => {
-            setIsPlaying(true)
-          }}
-          onPause={() => {
-            setIsPlaying(false)
-          }}
-          onError={e => {
-            console.error('Audio error event:', e)
-            // console.error('Audio element error:', audioRef.current?.error)
-          }}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onError={e => console.error('Audio error event:', e)}
           src={track.audioUrl}
         />
       )}
@@ -127,7 +146,6 @@ export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
                 {track?.artist || 'Select a beat to start'}
               </span>
             </div>
-            {/* animated EQ – only when playing */}
             {isPlaying && (
               <div className='ml-1 flex h-4 items-end gap-[2px] text-cyan-300'>
                 <span className='eq-bar-1 w-[2px] bg-cyan-300' />
@@ -140,11 +158,10 @@ export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
           {/* CENTER: time + progress + controls */}
           <div className='flex flex-1 items-center justify-center'>
             <div className='flex w-full max-w-[520px] flex-col items-end gap-2 sm:items-center'>
-              {/* controls */}
               <div className='flex items-center justify-center gap-2 pl-2'>
                 <button
                   onClick={onPrev}
-                  disabled={!onPrev}
+                  disabled={!queue || !track || !onTrackChange}
                   className='flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
                 >
                   <HiBackward size={14} />
@@ -158,14 +175,13 @@ export function PlayerBar({ track, onNext, onPrev }: PlayerBarProps) {
                 </button>
                 <button
                   onClick={onNext}
-                  disabled={!onNext}
+                  disabled={!queue || !track || !onTrackChange}
                   className='flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
                 >
                   <HiForward size={14} />
                 </button>
               </div>
 
-              {/* time + progress */}
               <div className='flex w-full items-center gap-2 max-sm:hidden'>
                 <span className='text-[10px] text-gray-500'>
                   {formatTime(currentTime)}

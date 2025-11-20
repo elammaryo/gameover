@@ -131,7 +131,7 @@ export default function Studio() {
                       </span>
                     </div>
                     <button
-                      className='flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform group-hover:scale-105'
+                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform group-hover:scale-105'
                       onClick={() => {
                         setSelectedTrack(beat)
                       }}
@@ -169,12 +169,16 @@ export default function Studio() {
                         Spotify · Vibe session
                       </span>
                     </div>
-                    <button
+                    <div
                       className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform hover:scale-108'
-                      onClick={() => {}}
+                      onClick={e => {
+                        e.stopPropagation() // Prevent outer button click
+                        // Handle play button click
+                        console.log('Play playlist:', playlist.name)
+                      }}
                     >
                       <HiPlay size={14} />
-                    </button>
+                    </div>
                   </div>
                 </button>
               ))}
@@ -182,7 +186,11 @@ export default function Studio() {
           )}
         </section>
       </div>
-      <PlayerBar track={selectedTrack} isPlaying={true} />
+      <PlayerBar
+        track={selectedTrack}
+        queue={beats}
+        onTrackChange={track => setSelectedTrack(track as BeatTrack)}
+      />
     </main>
   )
 }
