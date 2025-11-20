@@ -100,7 +100,7 @@ export default function Studio() {
                 >
                   {tab}
                   {isActive && (
-                    <span className='absolute right-0 -bottom-[3px] left-0 mx-auto h-[2px] w-full max-w-[72px] rounded-full bg-cyan-400' />
+                    <span className='absolute right-0 -bottom-[3px] left-0 mx-auto h-[2px] w-full max-w-[72px] rounded-full bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400' />
                   )}
                 </button>
               )
