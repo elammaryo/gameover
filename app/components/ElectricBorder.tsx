@@ -5,7 +5,8 @@ import React, {
   useEffect,
   useId,
   useLayoutEffect,
-  useRef
+  useRef,
+  useState
 } from 'react'
 
 type ElectricBorderProps = PropsWithChildren<{
@@ -42,11 +43,20 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
   className,
   style
 }) => {
+  const [isMobile, setIsMobile] = useState(false)
   const rawId = useId().replace(/[:]/g, '')
   const filterId = `turbulent-displace-${rawId}`
   const svgRef = useRef<SVGSVGElement | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const strokeRef = useRef<HTMLDivElement | null>(null)
+
+  // Detect mobile on mount
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const updateAnim = () => {
     const svg = svgRef.current
@@ -90,8 +100,10 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     const dur = Math.max(0.001, baseDur / (speed || 1))
     ;[...dyAnims, ...dxAnims].forEach(a => a.setAttribute('dur', `${dur}s`))
 
+    // Reduce effect intensity on mobile
     const disp = svg.querySelector('feDisplacementMap')
-    if (disp) disp.setAttribute('scale', String(30 * (chaos || 1)))
+    const effectiveScale = isMobile ? 15 * (chaos || 1) : 30 * (chaos || 1)
+    if (disp) disp.setAttribute('scale', String(effectiveScale))
 
     const filterEl = svg.querySelector<SVGFilterElement>(
       `#${CSS.escape(filterId)}`
@@ -116,7 +128,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 
   useEffect(() => {
     updateAnim()
-  }, [speed, chaos])
+  }, [speed, chaos, isMobile])
 
   useLayoutEffect(() => {
     if (!rootRef.current) return
@@ -134,7 +146,9 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     ...inheritRadius,
     borderWidth: thickness,
     borderStyle: 'solid',
-    borderColor: color
+    borderColor: color,
+    willChange: 'filter', // GPU acceleration hint
+    transform: 'translateZ(0)' // Force GPU layer
   }
 
   const glow1Style: CSSProperties = {
@@ -143,7 +157,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     borderStyle: 'solid',
     borderColor: hexToRgba(color, 0.6),
     filter: `blur(${0.5 + thickness * 0.25}px)`,
-    opacity: 0.5
+    opacity: isMobile ? 0.4 : 0.5
   }
 
   const glow2Style: CSSProperties = {
@@ -152,14 +166,14 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     borderStyle: 'solid',
     borderColor: color,
     filter: `blur(${2 + thickness * 0.5}px)`,
-    opacity: 0.5
+    opacity: isMobile ? 0.3 : 0.5
   }
 
   const bgGlowStyle: CSSProperties = {
     ...inheritRadius,
     transform: 'scale(1.08)',
-    filter: 'blur(32px)',
-    opacity: 0.3,
+    filter: isMobile ? 'blur(20px)' : 'blur(32px)', // Less blur on mobile
+    opacity: isMobile ? 0.2 : 0.3,
     zIndex: -1,
     background: `linear-gradient(-30deg, ${hexToRgba(color, 0.8)}, transparent, ${color})`
   }
@@ -185,10 +199,11 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
             width='140%'
             height='140%'
           >
+            {/* Reduce octaves on mobile for better performance */}
             <feTurbulence
               type='turbulence'
               baseFrequency='0.02'
-              numOctaves='10'
+              numOctaves={isMobile ? '6' : '10'}
               result='noise1'
               seed='1'
             />
@@ -205,7 +220,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
             <feTurbulence
               type='turbulence'
               baseFrequency='0.02'
-              numOctaves='10'
+              numOctaves={isMobile ? '6' : '10'}
               result='noise2'
               seed='1'
             />
@@ -222,7 +237,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
             <feTurbulence
               type='turbulence'
               baseFrequency='0.02'
-              numOctaves='10'
+              numOctaves={isMobile ? '6' : '10'}
               result='noise1'
               seed='2'
             />
@@ -239,7 +254,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
             <feTurbulence
               type='turbulence'
               baseFrequency='0.02'
-              numOctaves='10'
+              numOctaves={isMobile ? '6' : '10'}
               result='noise2'
               seed='2'
             />
