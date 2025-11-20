@@ -10,6 +10,8 @@ import {
 const MAX_OVERFLOW = 8
 
 interface ElasticSliderProps {
+  value?: number
+  onChange?: (value: number) => void
   defaultValue?: number
   startingValue?: number
   maxValue?: number
@@ -21,6 +23,8 @@ interface ElasticSliderProps {
 }
 
 const ElasticSlider: React.FC<ElasticSliderProps> = ({
+  value: controlledValue,
+  onChange,
   defaultValue = 50,
   startingValue = 0,
   maxValue = 100,
@@ -35,6 +39,8 @@ const ElasticSlider: React.FC<ElasticSliderProps> = ({
       className={`flex w-48 flex-col items-center justify-center gap-4 ${className}`}
     >
       <Slider
+        value={controlledValue}
+        onChange={onChange}
         defaultValue={defaultValue}
         startingValue={startingValue}
         maxValue={maxValue}
@@ -48,6 +54,8 @@ const ElasticSlider: React.FC<ElasticSliderProps> = ({
 }
 
 interface SliderProps {
+  value?: number
+  onChange?: (value: number) => void
   defaultValue: number
   startingValue: number
   maxValue: number
@@ -58,6 +66,8 @@ interface SliderProps {
 }
 
 const Slider: React.FC<SliderProps> = ({
+  value: controlledValue,
+  onChange,
   defaultValue,
   startingValue,
   maxValue,
@@ -66,7 +76,9 @@ const Slider: React.FC<SliderProps> = ({
   leftIcon,
   rightIcon
 }) => {
-  const [value, setValue] = useState<number>(defaultValue)
+  const [internalValue, setInternalValue] = useState<number>(defaultValue)
+  const value = controlledValue !== undefined ? controlledValue : internalValue
+
   const sliderRef = useRef<HTMLDivElement>(null)
   const [region, setRegion] = useState<'left' | 'middle' | 'right'>('middle')
   const clientX = useMotionValue(0)
@@ -74,8 +86,10 @@ const Slider: React.FC<SliderProps> = ({
   const scale = useMotionValue(1)
 
   useEffect(() => {
-    setValue(defaultValue)
-  }, [defaultValue])
+    if (controlledValue === undefined) {
+      setInternalValue(defaultValue)
+    }
+  }, [defaultValue, controlledValue])
 
   useMotionValueEvent(clientX, 'change', (latest: number) => {
     if (sliderRef.current) {
@@ -105,7 +119,13 @@ const Slider: React.FC<SliderProps> = ({
         newValue = Math.round(newValue / stepSize) * stepSize
       }
       newValue = Math.min(Math.max(newValue, startingValue), maxValue)
-      setValue(newValue)
+
+      if (onChange) {
+        onChange(newValue)
+      } else {
+        setInternalValue(newValue)
+      }
+
       clientX.jump(e.clientX)
     }
   }
