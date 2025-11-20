@@ -1,0 +1,19 @@
+[
+  {
+    "id": "1",
+    "title": "Yeat Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/113.mp3",
+    "bpm": 140,
+    "genre": "Trap"
+  },
+  {
+    "id": "2",
+    "title": "LV - Pop Smoke Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/72.wav",
+    "mood": "Aggressive",
+    "bpm": 145,
+    "genre": "Drill"
+  }
+]
