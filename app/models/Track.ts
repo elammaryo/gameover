@@ -1,30 +1,57 @@
-interface BaseTrack {
+export type TrackSource = 'beat' | 'spotify'
+
+abstract class BaseTrack {
   id: string
   title: string
   artist?: string
   durationMs?: number
   artworkUrl?: string
   source: TrackSource
+  audioUrl: string
+
+  constructor(data: any) {
+    this.id = data.id
+    this.title = data.title
+    this.artist = data.artist
+    this.durationMs = data.durationMs
+    this.artworkUrl = data.artworkUrl
+    this.source = data.source
+    this.audioUrl = data.audioUrl
+  }
 }
 
-export interface BeatTrack extends BaseTrack {
-  source: 'beat'
+export class BeatTrack extends BaseTrack {
+  source: 'beat' = 'beat'
   bpm: number
   genre: string
   mood?: string
-  s3Key: string
   tags?: string[]
+
+  constructor(data: any) {
+    super(data)
+    this.bpm = data.bpm
+    this.genre = data.genre
+    this.mood = data.mood
+    this.tags = data.tags
+  }
 }
 
-export interface SpotifyTrack extends BaseTrack {
-  source: 'spotify'
+export class SpotifyTrack extends BaseTrack {
+  source: 'spotify' = 'spotify'
   spotifyId: string
   artists: string[]
   albumName: string
   previewUrl?: string
   spotifyUrl: string
+
+  constructor(data: any) {
+    super(data)
+    this.spotifyId = data.spotifyId
+    this.artists = data.artists
+    this.albumName = data.albumName
+    this.previewUrl = data.previewUrl
+    this.spotifyUrl = data.spotifyUrl
+  }
 }
 
 export type Track = BeatTrack | SpotifyTrack
-
-export type TrackSource = 'beat' | 'spotify'
