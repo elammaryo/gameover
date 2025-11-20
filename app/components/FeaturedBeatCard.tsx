@@ -5,8 +5,8 @@ function FeaturedBeatCard() {
   return (
     <ElectricBorder
       color='#00eaff'
-      speed={0.5}
-      chaos={0.4}
+      speed={0.4}
+      chaos={0.3}
       thickness={2}
       style={{ borderRadius: 20 }}
     >
