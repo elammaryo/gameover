@@ -96,13 +96,14 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
       dxAnims[1].setAttribute('values', `0; -${width}`)
     }
 
-    const baseDur = 6
+    // Slower animation on mobile (12s vs 6s)
+    const baseDur = isMobile ? 12 : 6
     const dur = Math.max(0.001, baseDur / (speed || 1))
     ;[...dyAnims, ...dxAnims].forEach(a => a.setAttribute('dur', `${dur}s`))
 
-    // Reduce effect intensity on mobile
+    // Significantly reduced displacement on mobile (10 vs 30)
     const disp = svg.querySelector('feDisplacementMap')
-    const effectiveScale = isMobile ? 15 * (chaos || 1) : 30 * (chaos || 1)
+    const effectiveScale = isMobile ? 10 * (chaos || 1) : 30 * (chaos || 1)
     if (disp) disp.setAttribute('scale', String(effectiveScale))
 
     const filterEl = svg.querySelector<SVGFilterElement>(
@@ -147,8 +148,8 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     borderWidth: thickness,
     borderStyle: 'solid',
     borderColor: color,
-    willChange: 'filter', // GPU acceleration hint
-    transform: 'translateZ(0)' // Force GPU layer
+    willChange: isMobile ? 'auto' : 'filter', // Only GPU hint on desktop
+    transform: 'translateZ(0)'
   }
 
   const glow1Style: CSSProperties = {
@@ -157,7 +158,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     borderStyle: 'solid',
     borderColor: hexToRgba(color, 0.6),
     filter: `blur(${0.5 + thickness * 0.25}px)`,
-    opacity: isMobile ? 0.4 : 0.5
+    opacity: isMobile ? 0.3 : 0.5
   }
 
   const glow2Style: CSSProperties = {
@@ -166,17 +167,21 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     borderStyle: 'solid',
     borderColor: color,
     filter: `blur(${2 + thickness * 0.5}px)`,
-    opacity: isMobile ? 0.3 : 0.5
+    opacity: isMobile ? 0.25 : 0.5
   }
 
   const bgGlowStyle: CSSProperties = {
     ...inheritRadius,
     transform: 'scale(1.08)',
-    filter: isMobile ? 'blur(20px)' : 'blur(32px)', // Less blur on mobile
-    opacity: isMobile ? 0.2 : 0.3,
+    filter: isMobile ? 'blur(16px)' : 'blur(32px)', // Half the blur on mobile
+    opacity: isMobile ? 0.15 : 0.3,
     zIndex: -1,
     background: `linear-gradient(-30deg, ${hexToRgba(color, 0.8)}, transparent, ${color})`
   }
+
+  // Mobile-optimized turbulence settings
+  const octaves = isMobile ? 4 : 10
+  const baseFreq = isMobile ? 0.015 : 0.02
 
   return (
     <div
@@ -199,11 +204,10 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
             width='140%'
             height='140%'
           >
-            {/* Reduce octaves on mobile for better performance */}
             <feTurbulence
               type='turbulence'
-              baseFrequency='0.02'
-              numOctaves={isMobile ? '6' : '10'}
+              baseFrequency={baseFreq}
+              numOctaves={octaves}
               result='noise1'
               seed='1'
             />
@@ -219,8 +223,8 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 
             <feTurbulence
               type='turbulence'
-              baseFrequency='0.02'
-              numOctaves={isMobile ? '6' : '10'}
+              baseFrequency={baseFreq}
+              numOctaves={octaves}
               result='noise2'
               seed='1'
             />
@@ -236,8 +240,8 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 
             <feTurbulence
               type='turbulence'
-              baseFrequency='0.02'
-              numOctaves={isMobile ? '6' : '10'}
+              baseFrequency={baseFreq}
+              numOctaves={octaves}
               result='noise1'
               seed='2'
             />
@@ -253,8 +257,8 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
 
             <feTurbulence
               type='turbulence'
-              baseFrequency='0.02'
-              numOctaves={isMobile ? '6' : '10'}
+              baseFrequency={baseFreq}
+              numOctaves={octaves}
               result='noise2'
               seed='2'
             />
