@@ -5,13 +5,15 @@ let token: {
   access_token: string
   token_type: string
   expires_in: number
+  expires_at: number
 } | null = null
 
 export async function GET(request: Request) {
   try {
-    if (!token?.access_token) {
+    if (!token?.access_token || Date.now() >= token.expires_at) {
       await requestToken()
     }
+
     const res = await fetch(
       `https://api.spotify.com/v1/users/${userId}/playlists?limit=10`,
       {
@@ -21,6 +23,7 @@ export async function GET(request: Request) {
         method: 'GET'
       }
     )
+
     const data = await res.json()
     return NextResponse.json({ playlists: data.items || [], status: 200 })
   } catch (error) {
@@ -30,17 +33,28 @@ export async function GET(request: Request) {
 }
 
 export async function requestToken() {
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64')}`
-    },
-    body: 'grant_type=client_credentials'
-  })
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(
+          `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
+        ).toString('base64')}`
+      },
+      body: 'grant_type=client_credentials'
+    })
 
-  const data = await res.json()
-  token = data
+    const data = await res.json()
+
+    token = {
+      ...data,
+      expires_at: Date.now() + data.expires_in * 1000
+    }
+  } catch (error) {
+    console.error('Error requesting Spotify token:', error)
+    throw new Error('Failed to fetch Spotify token')
+  }
 }
 
 // Get my personal top tracks from Spotify // will use in about me tab along with other stats
