@@ -4,10 +4,12 @@ import { createContext, useState } from 'react'
 
 export const PlayBarContext = createContext({
   selectedTrack: null as Track | null,
-  setTrack: (track: Track) => {},
+  setTrack: (track: Track | null) => {},
   setQueue: (tracks: Track[]) => {},
   onNext: () => {},
-  onPrev: () => {}
+  onPrev: () => {},
+  isPlaying: false,
+  setPlayPause: (value: boolean) => {}
 })
 
 export default function PlayBarProvider({
@@ -17,13 +19,18 @@ export default function PlayBarProvider({
 }) {
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null)
   const [queue, setQueueState] = useState<Track[]>([])
+  const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
-  const setTrack = (track: Track) => {
+  const setTrack = (track: Track | null) => {
     setSelectedTrack(track)
   }
 
   const setQueue = (tracks: Track[]) => {
-    setQueueState(tracks)
+    setQueueState(tracks ?? [])
+  }
+
+  const setPlayPause = (value: boolean) => {
+    setIsPlaying(value)
   }
 
   const onNext = () => {
@@ -47,7 +54,15 @@ export default function PlayBarProvider({
   return (
     <>
       <PlayBarContext.Provider
-        value={{ selectedTrack, setTrack, setQueue, onNext, onPrev }}
+        value={{
+          selectedTrack,
+          setTrack,
+          setQueue,
+          onNext,
+          onPrev,
+          isPlaying,
+          setPlayPause
+        }}
       >
         {children}
       </PlayBarContext.Provider>

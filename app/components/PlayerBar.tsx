@@ -2,16 +2,15 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import ElasticSlider from './ElasticSlider'
 import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
-import { Track } from '../models/Track'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 
 export function PlayerBar() {
-  const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(100)
   const audioRef = useRef<HTMLAudioElement>(null)
-  const { selectedTrack, setTrack, onNext, onPrev } = useContext(PlayBarContext)
+  const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
+    useContext(PlayBarContext)
   const track = selectedTrack
 
   // Update audio element when track changes and auto-play
@@ -22,7 +21,7 @@ export function PlayerBar() {
       audioRef.current
         .play()
         .then(() => {
-          setIsPlaying(true)
+          setPlayPause(true)
         })
         .catch(err => {
           console.error('Auto-play error:', err)
@@ -37,7 +36,7 @@ export function PlayerBar() {
     if (isPlaying) {
       audioRef.current.play().catch(err => {
         console.error('Play error:', err)
-        setIsPlaying(false)
+        setPlayPause(false)
       })
     } else {
       audioRef.current.pause()
@@ -52,7 +51,7 @@ export function PlayerBar() {
   }, [volume])
 
   function onPlayPause() {
-    setIsPlaying(!isPlaying)
+    setPlayPause(!isPlaying)
   }
 
   function handleTimeUpdate() {
@@ -68,7 +67,7 @@ export function PlayerBar() {
   }
 
   function handleEnded() {
-    setIsPlaying(false)
+    setPlayPause(false)
     onNext()
   }
 
@@ -98,8 +97,8 @@ export function PlayerBar() {
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onEnded={handleEnded}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPlay={() => setPlayPause(true)}
+          onPause={() => setPlayPause(false)}
           onError={e => console.error('Audio error event:', e)}
           src={track.audioUrl}
         />
