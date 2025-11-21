@@ -1,6 +1,6 @@
 [
   {
-    "id": "1",
+    "id": "113",
     "title": "Yeat Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/113.mp3",
@@ -8,12 +8,48 @@
     "genre": "Trap"
   },
   {
-    "id": "2",
+    "id": "72",
     "title": "LV - Pop Smoke Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/72.wav",
     "mood": "Aggressive",
     "bpm": 145,
-    "genre": "Drill"
+    "genre": "NY Drill"
+  },
+  {
+    "id": "109",
+    "title": "Golden Breeze - Afrobeats",
+    "artist": "GameOver",
+    "s3Key": "Beats/#109.wav",
+    "mood": "Tropical",
+    "bpm": 100,
+    "genre": "Afrobeats"
+  },
+  {
+    "id": "96",
+    "title": "Taka Tak - Brazilian Funk Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#96.wav",
+    "mood": "Energetic",
+    "bpm": 130,
+    "genre": "Brazilian Funk"
+  },
+  {
+    "id": "63",
+    "title": "Millionz - Tion Wayne Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#63 Millionz.wav",
+    "mood": "Dark",
+    "bpm": 130,
+    "genre": "UK Drill"
+  },
+  {
+    "id": "97",
+    "title": "Unnamed Drill Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#97.mp3",
+    "mood": "Dark",
+    "bpm": 130,
+    "genre": "UK Drill"
   }
 ]
