@@ -45,7 +45,7 @@ export default function Home() {
             />
           </div>
 
-          <div className='w-screen-1/2 flex min-h-screen flex-col items-start justify-center p-12 pt-30 sm:p-32'>
+          <div className='w-screen-1/2 pt-auto flex min-h-screen flex-col items-start justify-center p-12 sm:p-32'>
             <img src={logo.src} className='w-130 -translate-x-1' alt='Logo' />
             <BlurText
               text='Next Level Beats.'
