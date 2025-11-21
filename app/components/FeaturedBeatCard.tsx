@@ -1,7 +1,18 @@
 import ElectricBorder from '../components/ElectricBorder'
-import { HiPlay } from 'react-icons/hi2'
+import { HiPause, HiPlay } from 'react-icons/hi2'
+import { BeatTrack, Track } from '../models/Track'
+import { useContext } from 'react'
+import { PlayBarContext } from '../providers/PlayBarProvider'
 
-function FeaturedBeatCard() {
+function FeaturedBeatCard({
+  track,
+  beats
+}: {
+  track: BeatTrack | null
+  beats: Track[]
+}) {
+  const { isPlaying, setPlayPause, selectedTrack, setTrack, setQueue } =
+    useContext(PlayBarContext)
   const isMobile =
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   const card = (
@@ -15,12 +26,32 @@ function FeaturedBeatCard() {
         <div className='h-20 w-20 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-600 shadow-lg shadow-cyan-500/30' />
 
         <div className='flex flex-col'>
-          <h3 className='text-xl font-semibold'>Shadow Circuit</h3>
-          <p className='text-sm text-gray-400'>Drill · 140 BPM · Dark</p>
+          <h3 className='text-xl font-semibold'>{track?.title}</h3>
+          <p className='text-sm text-gray-400'>
+            {track?.genre} · {track?.bpm} · {track?.mood}
+          </p>
         </div>
 
-        <button className='ml-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[14px] font-semibold text-black transition hover:scale-105'>
-          <HiPlay size={20} />
+        <button
+          className='ml-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[14px] font-semibold text-black transition hover:scale-105'
+          onClick={() => {
+            if (selectedTrack?.id === track?.id && isPlaying) {
+              setPlayPause(!isPlaying)
+            } else if (selectedTrack?.id === track?.id && !isPlaying) {
+              setPlayPause(!isPlaying)
+            } else {
+              setTrack(track)
+              const queue: Track[] =
+                track != null ? [track, ...beats] : [...beats]
+              setQueue(queue)
+            }
+          }}
+        >
+          {selectedTrack?.id === track?.id && isPlaying ? (
+            <HiPause size={20} />
+          ) : (
+            <HiPlay size={20} />
+          )}
         </button>
       </div>
     </div>

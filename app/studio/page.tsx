@@ -5,7 +5,7 @@ import FeaturedBeatCard from '../components/FeaturedBeatCard'
 import { PlayerBar } from '../components/PlayerBar'
 import { getBeats, getPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
-import { BeatTrack } from '../models/Track'
+import { BeatTrack, Track } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
 import { BeatsSection } from '../components/BeatsSection'
 
@@ -63,7 +63,10 @@ export default function Studio() {
           </span>
         </header>
 
-        <FeaturedBeatCard />
+        <FeaturedBeatCard
+          track={beats.find(beat => beat.id == '109') ?? null}
+          beats={beats}
+        />
 
         {/* NOW PLAYING + SIDE INFO */}
         <section className='grid gap-6 md:grid-cols-[2fr,1fr]'>
