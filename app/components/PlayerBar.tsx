@@ -1,39 +1,18 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import ElasticSlider from './ElasticSlider'
 import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
 import { Track } from '../models/Track'
+import { PlayBarContext } from '../providers/PlayBarProvider'
 
-type PlayerBarProps = {
-  track?: Track | null
-  queue?: Track[]
-  onTrackChange?: (track: Track) => void
-}
-
-export function PlayerBar({ track, queue, onTrackChange }: PlayerBarProps) {
+export function PlayerBar() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(100)
   const audioRef = useRef<HTMLAudioElement>(null)
-
-  function onPrev() {
-    if (!queue || !track || !onTrackChange) return
-    const currentIndex = queue.findIndex(t => t.id === track.id)
-    if (currentIndex > 0) {
-      const prevTrack = queue[currentIndex - 1]
-      onTrackChange(prevTrack)
-    }
-  }
-
-  function onNext() {
-    if (!queue || !track || !onTrackChange) return
-    const currentIndex = queue.findIndex(t => t.id === track.id)
-    if (currentIndex < queue.length - 1) {
-      const nextTrack = queue[currentIndex + 1]
-      onTrackChange(nextTrack)
-    }
-  }
+  const { selectedTrack, setTrack, onNext, onPrev } = useContext(PlayBarContext)
+  const track = selectedTrack
 
   // Update audio element when track changes and auto-play
   useEffect(() => {
@@ -161,22 +140,22 @@ export function PlayerBar({ track, queue, onTrackChange }: PlayerBarProps) {
               <div className='flex items-center justify-center gap-2 pl-2'>
                 <button
                   onClick={onPrev}
-                  disabled={!queue || !track || !onTrackChange}
-                  className='flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                  disabled={!track}
+                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
                 >
                   <HiBackward size={14} />
                 </button>
                 <button
                   onClick={onPlayPause}
                   disabled={!track?.audioUrl}
-                  className='flex h-9 w-9 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
+                  className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
                 >
                   {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
                 </button>
                 <button
                   onClick={onNext}
-                  disabled={!queue || !track || !onTrackChange}
-                  className='flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                  disabled={!track}
+                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
                 >
                   <HiForward size={14} />
                 </button>
@@ -187,7 +166,7 @@ export function PlayerBar({ track, queue, onTrackChange }: PlayerBarProps) {
                   {formatTime(currentTime)}
                 </span>
                 <div
-                  className='relative h-[3px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
+                  className='relative h-[5px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
                   onClick={handleSeek}
                 >
                   <div

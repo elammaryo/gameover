@@ -4,7 +4,6 @@ import { NavBar } from '../components/NavBar'
 import FeaturedBeatCard from '../components/FeaturedBeatCard'
 import { PlayerBar } from '../components/PlayerBar'
 import { getBeats, getPlaylists } from '../api'
-import { HiPlay } from 'react-icons/hi2'
 import { Playlist } from '../models/Playlist'
 import { BeatTrack } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
@@ -17,7 +16,6 @@ export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>('Beats')
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [beats, setBeats] = useState<BeatTrack[]>([])
-  const [selectedTrack, setSelectedTrack] = useState<BeatTrack | null>(null)
 
   useEffect(() => {
     getBeats()
@@ -121,11 +119,7 @@ export default function Studio() {
           )}
         </section>
       </div>
-      <PlayerBar
-        track={selectedTrack}
-        queue={beats}
-        onTrackChange={track => setSelectedTrack(track as BeatTrack)}
-      />
+      <PlayerBar />
     </main>
   )
 }
