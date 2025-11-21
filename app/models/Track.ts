@@ -26,6 +26,7 @@ export class BeatTrack extends BaseTrack {
   genre: string
   mood?: string
   tags?: string[]
+  key?: string
 
   constructor(data: any) {
     super(data)
@@ -33,6 +34,7 @@ export class BeatTrack extends BaseTrack {
     this.genre = data.genre
     this.mood = data.mood
     this.tags = data.tags
+    this.key = data.key
   }
 }
 

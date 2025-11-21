@@ -3,18 +3,9 @@
     "id": "113",
     "title": "Yeat Type Beat",
     "artist": "GameOver",
-    "s3Key": "Beats/113.mp3",
+    "s3Key": "Beats/#113.mp3",
     "bpm": 140,
     "genre": "Trap"
-  },
-  {
-    "id": "72",
-    "title": "LV - Pop Smoke Type Beat",
-    "artist": "GameOver",
-    "s3Key": "Beats/72.wav",
-    "mood": "Aggressive",
-    "bpm": 145,
-    "genre": "NY Drill"
   },
   {
     "id": "109",
@@ -26,6 +17,52 @@
     "genre": "Afrobeats"
   },
   {
+    "id": "107",
+    "title": "Midnight Flame - Tyla Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#107.wav",
+    "mood": "Chill",
+    "bpm": 130,
+    "genre": "Amapiano"
+  },
+  {
+    "id": "106",
+    "title": "M4",
+    "artist": "GameOver",
+    "s3Key": "Beats/#106.wav",
+    "mood": "Dark",
+    "bpm": 130,
+    "genre": "Trap/Brazilian Funk"
+  },
+  {
+    "id": "102",
+    "title": "Trapistan",
+    "artist": "GameOver",
+    "s3Key": "Beats/#102.mp3",
+    "mood": "Ethnic",
+    "bpm": 130,
+    "genre": "Trap"
+  },
+  {
+    "id": "99",
+    "title": "99 - Trap Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#99.mp3",
+    "mood": "Energetic",
+    "bpm": 96,
+    "key": "D# Minor",
+    "genre": "Melodic Trap"
+  },
+  {
+    "id": "97",
+    "title": "97 - Drill Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#97.mp3",
+    "mood": "Dark",
+    "bpm": 130,
+    "genre": "UK Drill"
+  },
+  {
     "id": "96",
     "title": "Taka Tak - Brazilian Funk Beat",
     "artist": "GameOver",
@@ -35,19 +72,19 @@
     "genre": "Brazilian Funk"
   },
   {
+    "id": "72",
+    "title": "LV - Pop Smoke Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#72.wav",
+    "mood": "Aggressive",
+    "bpm": 145,
+    "genre": "NY Drill"
+  },
+  {
     "id": "63",
     "title": "Millionz - Tion Wayne Type Beat",
     "artist": "GameOver",
-    "s3Key": "Beats/#63 Millionz.wav",
-    "mood": "Dark",
-    "bpm": 130,
-    "genre": "UK Drill"
-  },
-  {
-    "id": "97",
-    "title": "Unnamed Drill Beat",
-    "artist": "GameOver",
-    "s3Key": "Beats/#97.mp3",
+    "s3Key": "Beats/#63.wav",
     "mood": "Dark",
     "bpm": 130,
     "genre": "UK Drill"

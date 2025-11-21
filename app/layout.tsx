@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'GameOver - Music Producer',
-  description: 'Next Level Beats for Next Level Creators.'
+  description: 'Next Level Beats.'
 }
 
 export default function RootLayout({
