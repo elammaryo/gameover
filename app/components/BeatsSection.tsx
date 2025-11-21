@@ -1,7 +1,10 @@
 import { HiPlay } from 'react-icons/hi2'
 import { BeatTrack } from '../models/Track'
+import { useContext } from 'react'
+import { PlayBarContext } from '../providers/PlayBarProvider'
 
 export function BeatsSection({ beats }: { beats: BeatTrack[] }) {
+  const { setTrack, setQueue } = useContext(PlayBarContext)
   return (
     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
       {beats.map(beat => (
@@ -19,8 +22,12 @@ export function BeatsSection({ beats }: { beats: BeatTrack[] }) {
             <button
               className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform group-hover:scale-105'
               onClick={() => {
-                // use provider to set selected track
-                // setSelectedTrack(beat)
+                setTrack(beat)
+                const queue = [
+                  beat,
+                  ...beats.filter(track => beat.id !== track.id)
+                ]
+                setQueue(queue)
               }}
             >
               <HiPlay size={14} />
