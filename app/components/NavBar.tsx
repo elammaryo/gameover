@@ -4,7 +4,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
   const tabs = ['studio', 'spotify', 'tech', 'about']
 
   return (
-    <nav className='fixed top-0 z-50 flex w-full items-center justify-between gap-8 bg-[#111111] bg-black/50 px-8 py-6 backdrop-blur-sm sm:pr-18 sm:pl-10'>
+    <nav className='fixed top-0 z-50 flex w-full items-center justify-between gap-6 bg-[#111111] bg-black/50 px-8 py-6 backdrop-blur-sm sm:pr-18 sm:pl-10'>
       <a href='/'>
         <img
           src={logo.src}

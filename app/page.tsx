@@ -35,24 +35,24 @@ export default function Home() {
   return (
     <div className='flex min-h-screen w-full items-center bg-[#07050A] font-sans'>
       <NavBar />
-      <main className='flex min-h-screen max-w-3xl flex-col items-center justify-center sm:items-start'>
+      <main className='flex max-w-3xl flex-col items-center justify-center sm:items-start'>
         <div className='inset-0 flex w-screen max-lg:justify-center'>
           <div className='flex w-[50vw] items-center justify-center max-lg:hidden'>
             <img
               src={sentinelImage.src}
-              className='h-[calc(100vh-50px)] translate-y-[30px] object-cover'
+              className='h-[calc(100vh-50px)] translate-y-[10px] object-cover'
               alt='Logo'
             />
           </div>
 
-          <div className='w-screen-1/2 pt-auto flex min-h-screen flex-col items-start justify-center p-12 sm:p-32'>
+          <div className='w-screen-1/2 pt-auto flex flex-col items-start justify-center p-12'>
             <img src={logo.src} className='w-130 -translate-x-1' alt='Logo' />
             <BlurText
               text='Next Level Beats.'
               delay={750}
               animateBy='words'
               direction='top'
-              className='mt-6 text-5xl font-bold text-white sm:text-7xl'
+              className='mt-6 text-6xl font-bold text-white sm:text-7xl'
             />
             <span className='mt-12 max-w-md text-2xl text-gray-300'>
               Trap // Drill // Afrobeats // Experimental
