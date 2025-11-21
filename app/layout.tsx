@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import PlayBarProvider from './providers/PlayBarProvider'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,8 +39,7 @@ export default function RootLayout({
             ENTERING STUDIO...
           </div>
         </div>
-
-        {children}
+        <PlayBarProvider>{children}</PlayBarProvider>
       </body>
     </html>
   )
