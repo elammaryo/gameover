@@ -67,7 +67,6 @@ export function PlayerBar() {
   }
 
   function handleEnded() {
-    setPlayPause(false)
     onNext()
   }
 
