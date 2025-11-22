@@ -105,7 +105,7 @@ export function PlayerBar() {
       <div className='px-0 pb-0'>
         <div className='flex w-full items-center gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 shadow-[0_-10px_35px_rgba(0,0,0,0.6)]'>
           {/* LEFT: cover + titles */}
-          <div className='flex min-w-0 basis-[28%] items-center gap-3'>
+          <div className='flex min-w-0 items-center gap-3'>
             {track?.artworkUrl ? (
               <img
                 src={track.artworkUrl}
