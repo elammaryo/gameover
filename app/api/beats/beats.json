@@ -72,6 +72,85 @@
     "genre": "Brazilian Funk"
   },
   {
+    "id": "92",
+    "title": "Dave Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#92.mp3",
+    "mood": "Dark",
+    "bpm": 121,
+    "key": "D# Minor",
+    "genre": "Trap"
+  },
+  {
+    "id": "91",
+    "title": "SpiderMan 2099",
+    "artist": "GameOver",
+    "s3Key": "Beats/#91.wav",
+    "mood": "Remix",
+    "bpm": 130,
+    "genre": "Trap"
+  },
+  {
+    "id": "88",
+    "title": "Moon",
+    "artist": "GameOver",
+    "s3Key": "Beats/#88.mp3",
+    "mood": "Dark",
+    "bpm": 145,
+    "key": "G# Minor",
+    "genre": "Drill"
+  },
+  {
+    "id": "85",
+    "title": "Dinero - Migos Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#85.mp3",
+    "mood": "Energetic",
+    "bpm": 140,
+    "key": "A Minor",
+    "genre": "Trap"
+  },
+  {
+    "id": "84",
+    "title": "Without You - Central Cee Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#84.mp3",
+    "mood": "Energetic",
+    "bpm": 146,
+    "key": "A Minor",
+    "genre": "UK Drill"
+  },
+  {
+    "id": "81",
+    "title": "Black Benz - Roddy Ricch Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#81.mp3",
+    "mood": "Energetic",
+    "bpm": 95,
+    "key": "A Minor",
+    "genre": "Melodic Trap"
+  },
+  {
+    "id": "80",
+    "title": "Non Stop - Lil Baby Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#80.mp3",
+    "mood": "Energetic",
+    "bpm": 157,
+    "key": "F# Minor",
+    "genre": "ATL Trap"
+  },
+  {
+    "id": "79",
+    "title": "Nightcrawler - Pop Smoke Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#79.wav",
+    "mood": "Dark",
+    "bpm": 144,
+    "key": "D# Minor",
+    "genre": "NY Drill"
+  },
+  {
     "id": "71",
     "title": "LV - Pop Smoke Type Beat",
     "artist": "GameOver",
@@ -81,6 +160,16 @@
     "genre": "NY Drill"
   },
   {
+    "id": "65",
+    "title": "Sunset Avenue - Kanye Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#65 Sunset Avenue [Hip hop] (Cmin_122bpm).mp3",
+    "mood": "Chill",
+    "bpm": 122,
+    "key": "C Minor",
+    "genre": "Hip Hop"
+  },
+  {
     "id": "63",
     "title": "Millionz - Tion Wayne Type Beat",
     "artist": "GameOver",
@@ -88,5 +177,45 @@
     "mood": "Dark",
     "bpm": 130,
     "genre": "UK Drill"
+  },
+  {
+    "id": "62",
+    "title": "Two Faced",
+    "artist": "GameOver",
+    "s3Key": "Beats/#62 Two Faced 2 [Trap+Drill Re-Mixed] (Gm_196bpm).wav",
+    "mood": "Energetic",
+    "bpm": 196,
+    "key": "G Minor",
+    "genre": "Trap/Drill"
+  },
+  {
+    "id": "60",
+    "title": " Miles Away - 21 Savage Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#60 Miles Away [Trap Re-Mixed] (Fmin_151bpm).wav",
+    "mood": "Dark",
+    "bpm": 151,
+    "key": "D Minor",
+    "genre": "Trap"
+  },
+  {
+    "id": "34",
+    "title": " Ascension",
+    "artist": "GameOver",
+    "s3Key": "#34 Ascension [Drill Re-Mixed] (A#min_139bpm).wav",
+    "mood": "Dark",
+    "bpm": 139,
+    "key": "A# Minor",
+    "genre": "Trap"
+  },
+  {
+    "id": "53",
+    "title": "The Last Uchiha",
+    "artist": "GameOver",
+    "s3Key": "Beats/#53 The Last Uchiha [Drill Re-Mixed] (Dmin_144bpm).mp3",
+    "mood": "Chill",
+    "bpm": 144,
+    "key": "D Minor",
+    "genre": "Drill Remix"
   }
 ]
