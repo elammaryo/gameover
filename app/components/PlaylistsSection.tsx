@@ -20,7 +20,7 @@ export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
               />
             )}
           </div>
-          <div className='flex items-center justify-between'>
+          <div className='flex w-full items-center justify-between'>
             <div className='flex flex-col items-start gap-1'>
               <span className='text-sm font-semibold'>{playlist.name}</span>
               <span className='text-xs text-gray-400'>
