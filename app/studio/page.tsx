@@ -53,7 +53,7 @@ export default function Studio() {
   return (
     <main className='relative min-h-screen bg-[#07050A] pb-20 text-white'>
       {/* Aurora background */}
-      <div className='pointer-events-none fixed inset-0 opacity-25'>
+      <div className='pointer-events-none fixed inset-0 opacity-30'>
         <Aurora
           colorStops={['#8b5cf6', '#06b6d4', '#f59e0b']}
           amplitude={1.2}
