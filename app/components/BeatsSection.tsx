@@ -22,13 +22,13 @@ export function BeatsSection({ beats }: { beats: BeatTrack[] }) {
             </div>
             <button
               className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform group-hover:scale-105'
-              onClick={() => {
+              onClick={async () => {
                 if (selectedTrack?.id === beat.id && isPlaying) {
                   setPlayPause(!isPlaying)
                 } else if (selectedTrack?.id === beat.id && !isPlaying) {
                   setPlayPause(!isPlaying)
                 } else {
-                  setTrack(beat)
+                  await setTrack(beat)
                   const queue = [
                     beat,
                     ...beats.filter(track => beat.id !== track.id)

@@ -1,13 +1,14 @@
 'use client'
 import { Track } from '@/app/models/Track'
 import { createContext, useState } from 'react'
+import { getBeatSignedUrl } from '../api'
 
 export const PlayBarContext = createContext({
   selectedTrack: null as Track | null,
-  setTrack: (track: Track | null) => {},
+  setTrack: async (track: Track | null) => {},
   setQueue: (tracks: Track[]) => {},
-  onNext: () => {},
-  onPrev: () => {},
+  onNext: async () => {},
+  onPrev: async () => {},
   isPlaying: false,
   setPlayPause: (value: boolean) => {}
 })
@@ -21,8 +22,10 @@ export default function PlayBarProvider({
   const [queue, setQueueState] = useState<Track[]>([])
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
-  const setTrack = (track: Track | null) => {
-    setSelectedTrack(track)
+  const setTrack = async (track: Track | null) => {
+    await getBeatSignedUrl(track?.id ?? '').then(url => {
+      setSelectedTrack({ ...track, audioUrl: url } as Track)
+    })
   }
 
   const setQueue = (tracks: Track[]) => {
@@ -33,21 +36,21 @@ export default function PlayBarProvider({
     setIsPlaying(value)
   }
 
-  const onNext = () => {
+  const onNext = async () => {
     if (!queue || !selectedTrack) return
     const currentIndex = queue.findIndex(t => t.id === selectedTrack.id)
     if (currentIndex < queue.length - 1) {
       const nextTrack = queue[currentIndex + 1]
-      setSelectedTrack(nextTrack)
+      await setTrack(nextTrack)
     }
   }
 
-  const onPrev = () => {
+  const onPrev = async () => {
     if (!queue || !selectedTrack) return
     const currentIndex = queue.findIndex(t => t.id === selectedTrack.id)
     if (currentIndex > 0) {
       const prevTrack = queue[currentIndex - 1]
-      setSelectedTrack(prevTrack)
+      await setTrack(prevTrack)
     }
   }
 
