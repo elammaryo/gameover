@@ -9,24 +9,24 @@ import {
   SiNextdotjs,
   SiTypescript,
   SiTailwindcss,
-  SiAmazon,
   SiSpotify,
   SiVercel,
-  SiFramer
+  SiFramer,
+  SiAmazonwebservices
 } from 'react-icons/si'
-import { HiServer, HiSparkles } from 'react-icons/hi2'
+import { HiCloud, HiSparkles } from 'react-icons/hi2'
 import { HiCode } from 'react-icons/hi'
 
 const techStack = [
   {
-    category: 'Frontend',
+    category: 'Frontend & Framework',
     icon: <HiCode size={24} />,
     technologies: [
       {
         name: 'Next.js 16',
         icon: <SiNextdotjs size={32} />,
         color: '#FFFFFF',
-        description: 'UI framework + API routes'
+        description: 'React framework + API routes'
       },
       { name: 'React 19', icon: <SiReact size={32} />, color: '#61DAFB' },
       {
@@ -47,11 +47,21 @@ const techStack = [
     ]
   },
   {
-    category: 'Backend & Infrastructure',
-    icon: <HiServer size={24} />,
+    category: 'Cloud & Backend',
+    icon: <HiCloud size={24} />,
     technologies: [
-      { name: 'AWS S3', icon: <SiAmazon size={32} />, color: '#FF9900' },
-      { name: 'Vercel', icon: <SiVercel size={32} />, color: '#FFFFFF' },
+      {
+        name: 'AWS S3',
+        icon: <SiAmazonwebservices size={32} />,
+        color: '#FF9900',
+        description: 'Cloud storage for audio files'
+      },
+      {
+        name: 'Vercel',
+        icon: <SiVercel size={32} />,
+        color: '#FFFFFF',
+        description: 'Serverless deployment & hosting'
+      },
       {
         name: 'Spotify API',
         icon: <SiSpotify size={32} />,
@@ -238,13 +248,17 @@ export default function TechPage() {
                   'Generates AWS S3 signed URLs for secure audio streaming'
               },
               {
-                endpoint: '/api/spotify/playlists',
-                description: 'Fetches curated playlists from Spotify API'
+                endpoint: '/api/beats/signedUrl',
+                description: 'Returns a signed URL for a beat file in S3'
               },
               {
-                endpoint: '/api/spotify/callback',
-                description: 'OAuth 2.0 authentication flow handler'
+                endpoint: '/api/spotify/playlists',
+                description: 'Fetches curated playlists from Spotify API'
               }
+              // {
+              //   endpoint: '/api/spotify/callback',
+              //   description: 'OAuth 2.0 authentication flow handler'
+              // }
             ].map(route => (
               <div
                 key={route.endpoint}
