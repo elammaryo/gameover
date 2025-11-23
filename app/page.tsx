@@ -57,8 +57,9 @@ export default function Home() {
               src={sentinelImage}
               className='h-screen object-cover px-12 pt-16'
               alt='Sentinel'
-              unoptimized
-              loading='lazy'
+              quality={100}
+              priority
+              placeholder='blur'
             />
           </div>
 
@@ -70,6 +71,7 @@ export default function Home() {
               src={logo.src}
               className='w-130 -translate-x-1'
               alt='GameOver Logo'
+              priority
             />
             <BlurText
               text='Next Level Beats.'
