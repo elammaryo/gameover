@@ -12,7 +12,8 @@ import {
   SiSpotify,
   SiVercel,
   SiFramer,
-  SiAmazonwebservices
+  SiAmazonwebservices,
+  SiGithub
 } from 'react-icons/si'
 import { HiCloud, HiSparkles } from 'react-icons/hi2'
 import { HiCode } from 'react-icons/hi'
@@ -307,7 +308,7 @@ function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
         </section>
 
         {/* PERFORMANCE METRICS */}
-        <section>
+        <section className='mb-16'>
           <h2 className='mb-8 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
             Performance
           </h2>
@@ -329,6 +330,28 @@ function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
                 <div className='text-sm text-gray-400'>{metric.label}</div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* GITHUB CTA */}
+        <section>
+          <div className='rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-500/10 to-blue-500/5 p-8 text-center backdrop-blur-sm'>
+            <SiGithub className='mx-auto mb-4 text-gray-300' size={48} />
+            <h3 className='mb-3 text-2xl font-bold text-white'>
+              Check Out The Code
+            </h3>
+            <p className='mb-6 text-gray-400'>
+              View the full source code and explore how this site was built from
+              scratch
+            </p>
+            <a
+              href='https://github.com/elammaryo'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex items-center gap-2 rounded-full border border-cyan-500 bg-cyan-500/10 px-8 py-3 font-semibold text-cyan-400 transition-all hover:border-cyan-400 hover:bg-cyan-500/20'
+            >
+              View on GitHub →
+            </a>
           </div>
         </section>
       </div>

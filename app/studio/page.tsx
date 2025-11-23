@@ -12,6 +12,7 @@ import FeaturedBeatCard from '../components/FeaturedBeatCard'
 import Aurora from '../components/Aurora'
 import BlurText from '../components/BlurText'
 import { HiMusicalNote, HiSparkles, HiFire } from 'react-icons/hi2'
+import { SiSoundcloud } from 'react-icons/si'
 
 const tabs = ['Beats', 'Playlists'] as const
 type Tab = (typeof tabs)[number]
@@ -227,6 +228,28 @@ export default function Studio() {
           ) : (
             <PlaylistsSection playlists={playlists} />
           )}
+        </section>
+
+        {/* SOUNDCLOUD CTA */}
+        <section className='mt-16'>
+          <div className='rounded-2xl border border-orange-400/20 bg-gradient-to-r from-orange-500/10 to-red-500/5 p-8 text-center backdrop-blur-sm'>
+            <SiSoundcloud className='mx-auto mb-4 text-orange-500' size={48} />
+            <h3 className='mb-3 text-2xl font-bold text-white'>
+              More Beats on SoundCloud
+            </h3>
+            <p className='mb-6 text-gray-400'>
+              Discover exclusive releases, demos, and experimental tracks on my
+              SoundCloud
+            </p>
+            <a
+              href='https://soundcloud.com/goproductions'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex items-center gap-2 rounded-full border border-orange-500 bg-orange-500/10 px-8 py-3 font-semibold text-orange-400 transition-all hover:border-orange-400 hover:bg-orange-500/20'
+            >
+              Listen on SoundCloud →
+            </a>
+          </div>
         </section>
       </div>
       <PlayerBar />
