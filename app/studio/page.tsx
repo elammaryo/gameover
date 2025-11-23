@@ -8,6 +8,8 @@ import { Playlist } from '../models/Playlist'
 import { BeatTrack, Track } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
 import { BeatsSection } from '../components/BeatsSection'
+import FeaturedBeatCard from '../components/FeaturedBeatCard'
+import Aurora from '../components/Aurora'
 
 const tabs = ['Beats', 'Playlists'] as const
 type Tab = (typeof tabs)[number]
@@ -50,9 +52,19 @@ export default function Studio() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] pb-20 text-white'>
+      {/* Aurora background */}
+      <div className='pointer-events-none fixed inset-0 opacity-25'>
+        <Aurora
+          colorStops={['#8b5cf6', '#06b6d4', '#f59e0b']}
+          amplitude={1.2}
+          blend={0.65}
+          speed={0.4}
+        />
+      </div>
+
       <NavBar selectedTab='studio' />
 
-      <div className='relative mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-24 pb-16 sm:px-6'>
+      <div className='relative z-10 mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-24 pb-16 sm:px-6'>
         {/* HEADER */}
         <header className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
           <h1 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase sm:text-sm'>
