@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import ElasticSlider from './ElasticSlider'
 import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
 import { PlayBarContext } from '../providers/PlayBarProvider'
+import Image from 'next/image'
 
 export function PlayerBar() {
   const [currentTime, setCurrentTime] = useState(0)
@@ -107,7 +108,7 @@ export function PlayerBar() {
           {/* LEFT: cover + titles */}
           <div className='flex min-w-0 items-center gap-3'>
             {track?.artworkUrl ? (
-              <img
+              <Image
                 src={track.artworkUrl}
                 alt={track.title}
                 className='h-10 w-10 rounded-xl'

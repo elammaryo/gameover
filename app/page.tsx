@@ -38,15 +38,24 @@ export default function Home() {
       <main className='flex max-w-3xl flex-col items-center justify-center sm:items-start'>
         <div className='inset-0 flex w-screen max-lg:justify-center'>
           <div className='flex w-[50vw] items-center justify-center max-lg:hidden'>
-            <img
-              src={sentinelImage.src}
-              className='h-[calc(100vh-50px)] translate-y-[10px] object-cover'
-              alt='Logo'
+            <Image
+              width={8000}
+              height={8000}
+              src={sentinelImage}
+              className='h-screen object-cover px-12 pt-16'
+              alt='Sentinel'
+              unoptimized
             />
           </div>
 
           <div className='w-screen-1/2 pt-auto flex flex-col items-start justify-center p-12'>
-            <img src={logo.src} className='w-130 -translate-x-1' alt='Logo' />
+            <Image
+              width={520}
+              height={70}
+              src={logo.src}
+              className='w-130 -translate-x-1'
+              alt='GameOver Logo'
+            />
             <BlurText
               text='Next Level Beats.'
               delay={750}

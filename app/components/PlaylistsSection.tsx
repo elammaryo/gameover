@@ -1,5 +1,6 @@
 import { HiPlay } from 'react-icons/hi2'
 import { Playlist } from '../models/Playlist'
+import Image from 'next/image'
 
 export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
   return (
@@ -12,7 +13,9 @@ export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
         >
           <div className='h-full w-full overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-500'>
             {playlist.images[0]?.url && (
-              <img
+              <Image
+                width={800}
+                height={800}
                 src={playlist.images[0].url}
                 alt={playlist.name}
                 className='h-full w-full object-cover'
