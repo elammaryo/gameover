@@ -88,18 +88,47 @@ export default function Studio() {
           allBeats={beats}
         />
 
-        {/* NOW PLAYING + SIDE INFO */}
-        <section className='grid gap-6 md:grid-cols-[2fr,1fr]'>
-          <div className='rounded-3xl border border-white/10 bg-white/5 p-5'>
-            <span className='text-xs tracking-[0.2em] text-gray-400 uppercase'>
-              Session summary
-            </span>
-            <div className='mt-3 flex flex-col gap-2 text-sm text-gray-300'>
-              <span>0 beats loaded</span>
-              <span>{playlists.length} playlists connected</span>
-              <span className='text-gray-500'>
-                Once you hook Spotify + your beat data, show stats here.
-              </span>
+        {/* LIBRARY STATS */}
+        <section className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+          {/* Total Beats */}
+          <div className='rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm'>
+            <div className='text-3xl font-bold text-white'>{beats.length}</div>
+            <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
+              Total Beats
+            </div>
+          </div>
+
+          {/* Playlists */}
+          <div className='rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm'>
+            <div className='text-3xl font-bold text-cyan-400'>
+              {playlists.length}
+            </div>
+            <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
+              Playlists
+            </div>
+          </div>
+
+          {/* Genres */}
+          <div className='rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm'>
+            <div className='text-3xl font-bold text-fuchsia-400'>
+              {new Set(beats.map(b => b.genre)).size}
+            </div>
+            <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
+              Genres
+            </div>
+          </div>
+
+          {/* Avg BPM */}
+          <div className='rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm'>
+            <div className='text-3xl font-bold text-orange-400'>
+              {beats.length > 0
+                ? Math.round(
+                    beats.reduce((acc, b) => acc + b.bpm, 0) / beats.length
+                  )
+                : 0}
+            </div>
+            <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
+              Avg BPM
             </div>
           </div>
         </section>
