@@ -9,7 +9,7 @@ export class Playlist {
   primary_color: string | null
   public: boolean
   snapshot_id: string
-  tracks: any[]
+  tracks: { href: string; total: number }
   type: 'playlist'
   uri: string
 
@@ -24,7 +24,7 @@ export class Playlist {
     primary_color: string | null
     public: boolean
     snapshot_id: string
-    tracks: any[]
+    tracks: { href: string; total: number }
     type: 'playlist'
     uri: string
   }) {
