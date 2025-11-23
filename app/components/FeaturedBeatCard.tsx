@@ -44,7 +44,7 @@ function FeaturedBeatsSection({
     <section className='space-y-6'>
       <div className='flex items-center gap-2'>
         <span className='text-cyan-400'>⚡</span>
-        <h2 className='font-mono font-medium tracking-[0.22em] text-white uppercase'>
+        <h2 className='font-mono text-sm tracking-[0.35em] text-gray-400 uppercase'>
           Featured Beats
         </h2>
       </div>
@@ -66,7 +66,7 @@ function FeaturedBeatsSection({
             >
               {/* Background gradient */}
               <div
-                className={`absolute inset-0 bg-gradient-to-br ${getGradient(index)} opacity-20 transition-opacity group-hover:opacity-30`}
+                className={`absolute inset-0 bg-gradient-to-br ${getGradient(index)} opacity-30 transition-opacity group-hover:opacity-40`}
               />
 
               {/* Content */}
