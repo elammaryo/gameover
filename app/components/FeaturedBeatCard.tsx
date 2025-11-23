@@ -1,4 +1,3 @@
-import ElectricBorder from '../components/ElectricBorder'
 import { HiPause, HiPlay } from 'react-icons/hi2'
 import { BeatTrack, Track } from '../models/Track'
 import { useContext } from 'react'
