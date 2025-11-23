@@ -58,6 +58,7 @@ export default function Home() {
               className='h-screen object-cover px-12 pt-16'
               alt='Sentinel'
               unoptimized
+              loading='lazy'
             />
           </div>
 
