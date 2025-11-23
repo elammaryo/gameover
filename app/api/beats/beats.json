@@ -2,6 +2,7 @@
   {
     "id": "113",
     "title": "Yeat Type Beat",
+    "subtitle": "Yeat Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#113.mp3",
     "bpm": 140,
@@ -9,7 +10,8 @@
   },
   {
     "id": "109",
-    "title": "Golden Breeze - Afrobeats",
+    "title": "Golden Breeze",
+    "subtitle": "Burna Boy Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#109.wav",
     "mood": "Tropical",
@@ -18,7 +20,8 @@
   },
   {
     "id": "107",
-    "title": "Midnight Flame - Tyla Type Beat",
+    "title": "Midnight Flame",
+    "subtitle": "Tyla Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#107.wav",
     "mood": "Chill",
@@ -39,9 +42,9 @@
     "title": "Trapistan",
     "artist": "GameOver",
     "s3Key": "Beats/#102.mp3",
-    "mood": "Ethnic",
+    "mood": "Energetic",
     "bpm": 130,
-    "genre": "Trap"
+    "genre": "Ethnic Trap"
   },
   {
     "id": "99",
@@ -64,7 +67,8 @@
   },
   {
     "id": "96",
-    "title": "Taka Tak - Brazilian Funk Beat",
+    "title": "Taka Tak",
+    "subtitle": "Brazilian Funk Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#96.wav",
     "mood": "Energetic",
@@ -74,6 +78,7 @@
   {
     "id": "92",
     "title": "Dave Type Beat",
+    "subtitle": "Dave Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#92.mp3",
     "mood": "Dark",
@@ -84,6 +89,7 @@
   {
     "id": "91",
     "title": "SpiderMan 2099",
+    "subtitle": "Miguel O'Hara Theme Remix",
     "artist": "GameOver",
     "s3Key": "Beats/#91.wav",
     "mood": "Remix",
@@ -102,7 +108,8 @@
   },
   {
     "id": "85",
-    "title": "Dinero - Migos Type Beat",
+    "title": "Dinero",
+    "subtitle": "Migos Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#85.mp3",
     "mood": "Energetic",
@@ -112,7 +119,8 @@
   },
   {
     "id": "84",
-    "title": "Without You - Central Cee Type Beat",
+    "title": "Without You",
+    "subtitle": "Central Cee Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#84.mp3",
     "mood": "Energetic",
@@ -122,7 +130,8 @@
   },
   {
     "id": "81",
-    "title": "Black Benz - Roddy Ricch Type Beat",
+    "title": "Black Benz",
+    "subtitle": "Roddy Ricch Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#81.mp3",
     "mood": "Energetic",
@@ -132,7 +141,8 @@
   },
   {
     "id": "80",
-    "title": "Non Stop - Lil Baby Type Beat",
+    "title": "Non Stop",
+    "subtitle": "Lil Baby Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#80.mp3",
     "mood": "Energetic",
@@ -142,7 +152,8 @@
   },
   {
     "id": "79",
-    "title": "Nightcrawler - Pop Smoke Type Beat",
+    "title": "Nightcrawler",
+    "subtitle": "Pop Smoke Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#79.wav",
     "mood": "Dark",
@@ -152,7 +163,8 @@
   },
   {
     "id": "71",
-    "title": "LV - Pop Smoke Type Beat",
+    "title": "LV",
+    "subtitle": "Pop Smoke Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#71.wav",
     "mood": "Aggressive",
@@ -161,7 +173,8 @@
   },
   {
     "id": "65",
-    "title": "Sunset Avenue - Kanye Type Beat",
+    "title": "Sunset Avenue",
+    "subtitle": "Kanye Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#65 Sunset Avenue [Hip hop] (Cmin_122bpm).mp3",
     "mood": "Chill",
@@ -171,7 +184,8 @@
   },
   {
     "id": "63",
-    "title": "Millionz - Tion Wayne Type Beat",
+    "title": "Millionz",
+    "subtitle": "Tion Wayne Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#63.wav",
     "mood": "Dark",
@@ -190,7 +204,8 @@
   },
   {
     "id": "60",
-    "title": " Miles Away - 21 Savage Type Beat",
+    "title": " Miles Away",
+    "subtitle": "21 Savage Type Beat",
     "artist": "GameOver",
     "s3Key": "Beats/#60 Miles Away [Trap Re-Mixed] (Fmin_151bpm).wav",
     "mood": "Dark",
@@ -206,11 +221,12 @@
     "mood": "Dark",
     "bpm": 139,
     "key": "A# Minor",
-    "genre": "Trap"
+    "genre": "Ethnic Drill"
   },
   {
     "id": "53",
     "title": "The Last Uchiha",
+    "subtitle": "Sasuke's Theme Drill Remix",
     "artist": "GameOver",
     "s3Key": "Beats/#53 The Last Uchiha [Drill Re-Mixed] (Dmin_144bpm).mp3",
     "mood": "Chill",

@@ -23,6 +23,7 @@ abstract class BaseTrack {
 export class BeatTrack extends BaseTrack {
   source: 'beat' = 'beat'
   bpm: number
+  subtitle?: string
   genre: string
   mood?: string
   tags?: string[]
@@ -31,6 +32,7 @@ export class BeatTrack extends BaseTrack {
   constructor(data: any) {
     super(data)
     this.bpm = data.bpm
+    this.subtitle = data.subtitle
     this.genre = data.genre
     this.mood = data.mood
     this.tags = data.tags
