@@ -12,3 +12,15 @@ export async function getBeats(): Promise<BeatTrack[]> {
   const data = await res.json()
   return data.map((item: any) => new BeatTrack(item))
 }
+
+export async function getBeatSignedUrl(trackId: string): Promise<string> {
+  const res = await fetch(`/api/beats/signedUrl`, {
+    method: 'POST',
+    body: JSON.stringify({ trackId }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const data = await res.json()
+  return data.audioUrl
+}
