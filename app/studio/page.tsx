@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { NavBar } from '../components/NavBar'
-import FeaturedBeatCard from '../components/FeaturedBeatCard'
+import FeaturedBeatsSection from '../components/FeaturedBeatCard'
 import { PlayerBar } from '../components/PlayerBar'
 import { getBeats, getPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
@@ -63,9 +63,17 @@ export default function Studio() {
           </span>
         </header>
 
-        <FeaturedBeatCard
-          track={beats.find(beat => beat.id == '109') ?? null}
-          beats={beats}
+        <FeaturedBeatsSection
+          featuredBeats={beats.filter(
+            beat =>
+              beat.id === '109' ||
+              beat.id === '79' ||
+              beat.id === '84' ||
+              beat.id === '80' ||
+              beat.id === '88' ||
+              beat.id === '91'
+          )}
+          allBeats={beats}
         />
 
         {/* NOW PLAYING + SIDE INFO */}
