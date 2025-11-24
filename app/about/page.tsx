@@ -205,7 +205,7 @@ export default function AboutPage() {
                 </div>
                 <p className='text-lg leading-relaxed text-gray-300 md:text-xl'>
                   Crafting hard-hitting trap, drill, and afrobeats that push
-                  boundaries. Based in [Your Location], blending heavy 808s with
+                  boundaries. Based in Toronto, blending heavy 808s with
                   experimental sound design.
                 </p>
 
