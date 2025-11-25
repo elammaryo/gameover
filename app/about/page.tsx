@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { NavBar } from '../components/NavBar'
-import BlurText from '../components/BlurText'
 import Aurora from '../components/Aurora'
 import Image from 'next/image'
-import { SiSpotify, SiSoundcloud, SiInstagram, SiGithub } from 'react-icons/si'
+import {
+  SiSpotify,
+  SiSoundcloud,
+  SiInstagram,
+  SiGithub,
+  SiLinkedin
+} from 'react-icons/si'
 import {
   HiMusicalNote,
   HiSparkles,
@@ -13,24 +18,11 @@ import {
   HiHeart,
   HiGlobeAlt
 } from 'react-icons/hi2'
+import profileImage from '../../public/profile.png'
+import { getSpotifyTopTracks } from '../api'
+import { BeatTrack, SpotifyTrack } from '../models/Track'
 
 export default function AboutPage() {
-  useEffect(() => {
-    const overlay = document.getElementById('transition-overlay')
-    const label = document.getElementById('transition-label')
-
-    if (label) {
-      label.classList.remove('opacity-100', 'glitch-once')
-    }
-
-    if (overlay) {
-      overlay.style.opacity = '1'
-      requestAnimationFrame(() => {
-        overlay.style.opacity = '0'
-      })
-    }
-  }, [])
-
   // Mock data - replace with actual API calls if you add endpoints
   const topArtists = [
     {
@@ -102,7 +94,7 @@ export default function AboutPage() {
     },
     {
       label: 'Beats Created',
-      value: '200+',
+      value: '100+',
       icon: <HiMusicalNote size={20} />,
       color: 'purple'
     },
@@ -143,6 +135,13 @@ export default function AboutPage() {
       handle: '@omer.el__'
     },
     {
+      name: 'LinkedIn',
+      url: 'https://linkedin.com/in/omerelammary',
+      icon: <SiLinkedin size={24} />,
+      color: 'hover:text-blue-500',
+      handle: '@omerelammary'
+    },
+    {
       name: 'GitHub',
       url: 'https://github.com/elammaryo',
       icon: <SiGithub size={24} />,
@@ -177,19 +176,13 @@ export default function AboutPage() {
               {/* Profile Photo */}
               <div className='relative flex-shrink-0'>
                 <div className='h-40 w-40 overflow-hidden rounded-2xl border-2 border-purple-500/40 bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 shadow-2xl shadow-purple-500/20 md:h-48 md:w-48'>
-                  {/* Replace with actual image */}
-                  <div className='flex h-full w-full items-center justify-center text-6xl'>
-                    🎧
-                  </div>
-                  {/* Uncomment when you add your photo:
                   <Image
-                    src="/path-to-your-photo.jpg"
-                    alt="Profile"
+                    src={profileImage}
+                    alt='Profile'
                     width={192}
                     height={192}
-                    className="h-full w-full object-cover"
+                    className='h-full w-full object-cover'
                   />
-                  */}
                 </div>
               </div>
 
@@ -200,7 +193,7 @@ export default function AboutPage() {
                     Music Producer
                   </h1>
                   <h2 className='text-5xl font-bold text-white sm:text-6xl'>
-                    GameOver
+                    Omer Elammary
                   </h2>
                 </div>
                 <p className='text-lg leading-relaxed text-gray-300 md:text-xl'>
@@ -220,7 +213,7 @@ export default function AboutPage() {
                   <div className='flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 py-2'>
                     <HiMusicalNote className='text-fuchsia-400' size={16} />
                     <span className='text-sm font-semibold text-white'>
-                      200+ Beats
+                      100+ Beats
                     </span>
                   </div>
                   <div className='flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2'>
@@ -342,13 +335,13 @@ export default function AboutPage() {
           <div className='space-y-3'>
             {topTracks.map((track, index) => (
               <div
-                key={track.name}
+                key={track?.name}
                 className='group flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm transition-all hover:border-purple-400/40 hover:bg-white/10'
               >
                 {/* Album Cover */}
                 <div className='relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg'>
                   <Image
-                    src={track.image}
+                    src={track.image} // {track.images[0].url ?? ''}
                     alt={track.name}
                     width={64}
                     height={64}
@@ -373,7 +366,7 @@ export default function AboutPage() {
                 {/* Play Count */}
                 <div className='text-right'>
                   <div className='text-sm font-semibold text-purple-400'>
-                    {track.plays}
+                    {/* {track.plays} */}
                   </div>
                   <div className='text-xs text-gray-500'>plays</div>
                 </div>
@@ -427,6 +420,87 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* PRODUCER × DEVELOPER SECTION */}
+        <section className='mb-16'>
+          <h2 className='mb-6 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
+            Producer × Developer
+          </h2>
+
+          <div className='grid gap-6 md:grid-cols-2'>
+            {/* Music Producer Card */}
+            <div className='group relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-fuchsia-500/5 p-8 backdrop-blur-sm transition-all hover:border-purple-400/40'>
+              <div className='pointer-events-none absolute top-0 right-0 h-64 w-64 bg-gradient-to-bl from-purple-500/20 to-transparent blur-3xl' />
+
+              <div className='relative z-10'>
+                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-fuchsia-600'>
+                  <HiMusicalNote size={28} className='text-white' />
+                </div>
+
+                <h3 className='mb-3 text-2xl font-bold text-white'>
+                  Music Producer
+                </h3>
+
+                <p className='mb-4 text-gray-300'>
+                  Specializing in trap, drill, and afrobeats. I craft
+                  hard-hitting beats with heavy 808s, crisp hi-hats, and
+                  atmospheric melodies that push boundaries.
+                </p>
+
+                <div className='space-y-2 text-sm text-gray-400'>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-1.5 w-1.5 rounded-full bg-purple-400' />
+                    <span>100+ beats created</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-1.5 w-1.5 rounded-full bg-fuchsia-400' />
+                    <span>5+ years experience</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-1.5 w-1.5 rounded-full bg-pink-400' />
+                    <span>8 genres explored</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Full-Stack Developer Card */}
+            <div className='group relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 p-8 backdrop-blur-sm transition-all hover:border-cyan-400/40'>
+              <div className='pointer-events-none absolute top-0 right-0 h-64 w-64 bg-gradient-to-bl from-cyan-500/20 to-transparent blur-3xl' />
+
+              <div className='relative z-10'>
+                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600'>
+                  <HiGlobeAlt size={28} className='text-white' />
+                </div>
+
+                <h3 className='mb-3 text-2xl font-bold text-white'>
+                  Software Engineer
+                </h3>
+
+                <p className='mb-4 text-gray-300'>
+                  Building modern web experiences with Next.js, AWS, . This
+                  site? Built from scratch with custom shaders, serverless
+                  functions, and a focus on performance and design.
+                </p>
+
+                <div className='space-y-2 text-sm text-gray-400'>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-1.5 w-1.5 rounded-full bg-cyan-400' />
+                    <span>Next.js & React</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-1.5 w-1.5 rounded-full bg-blue-400' />
+                    <span>AWS & Serverless</span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-1.5 w-1.5 rounded-full bg-indigo-400' />
+                    <span>WebGL & Custom Shaders</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* SOCIAL LINKS */}
         <section className='mb-16'>
           <h2 className='mb-6 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
@@ -434,28 +508,37 @@ export default function AboutPage() {
           </h2>
 
           <div className='grid gap-4 sm:grid-cols-2'>
-            {socialLinks.map(social => (
-              <a
-                key={social.name}
-                href={social.url}
-                target='_blank'
-                rel='noopener noreferrer'
-                className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10 ${social.color}`}
-              >
-                <div className='flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 transition-transform group-hover:scale-110'>
-                  {social.icon}
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-lg font-semibold text-white'>
-                    {social.name}
-                  </span>
-                  <span className='text-sm text-gray-400'>{social.handle}</span>
-                </div>
-                <div className='ml-auto text-gray-500 transition-transform group-hover:translate-x-1'>
-                  →
-                </div>
-              </a>
-            ))}
+            {socialLinks.map((social, index) => {
+              const isLastAndOdd =
+                socialLinks.length % 2 !== 0 && index === socialLinks.length - 1
+
+              return (
+                <a
+                  key={social.name}
+                  href={social.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10 ${social.color} ${
+                    isLastAndOdd ? 'sm:col-span-2' : ''
+                  }`}
+                >
+                  <div className='flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 transition-transform group-hover:scale-110'>
+                    {social.icon}
+                  </div>
+                  <div className='flex flex-col'>
+                    <span className='text-lg font-semibold text-white'>
+                      {social.name}
+                    </span>
+                    <span className='text-sm text-gray-400'>
+                      {social.handle}
+                    </span>
+                  </div>
+                  <div className='ml-auto text-gray-500 transition-transform group-hover:translate-x-1'>
+                    →
+                  </div>
+                </a>
+              )
+            })}
           </div>
         </section>
 
