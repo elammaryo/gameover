@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
 import querystring from 'querystring'
 
-let code: string
-
 export function GET() {
-  console.log('Initiating Spotify Login Process')
-
-  console.log('Generating Spotify Auth URL')
   const clientId = process.env.CLIENT_ID
   const redirectUri = 'https://gameover.studio/spotify'
   const scopes = ['user-read-private', 'user-top-read']
@@ -24,8 +19,6 @@ export function GET() {
 
   return NextResponse.json({ url: authUrl })
 }
-
-function spotifyAuthUrl() {}
 
 function generateRandomString(length: number): string {
   const characters =
