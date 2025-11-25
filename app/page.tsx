@@ -131,7 +131,7 @@ export default function Home() {
 
           <div className='mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3'>
             {/* Card 1 */}
-            <div className='group cursor-pointer rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-cyan-400/60 hover:bg-white/10'>
+            <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-cyan-400/60 hover:bg-white/10'>
               <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600'>
                 <span className='text-2xl'>🎵</span>
               </div>
@@ -145,7 +145,7 @@ export default function Home() {
             </div>
 
             {/* Card 2 */}
-            <div className='group cursor-pointer rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-fuchsia-400/60 hover:bg-white/10'>
+            <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-fuchsia-400/60 hover:bg-white/10'>
               <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600'>
                 <span className='text-2xl'>🎧</span>
               </div>
@@ -159,10 +159,7 @@ export default function Home() {
             </div>
 
             {/* Card 3 */}
-            <div
-              onClick={() => router.push('/tech')}
-              className='group cursor-pointer rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-green-400/60 hover:bg-white/10'
-            >
+            <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-green-400/60 hover:bg-white/10'>
               <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600'>
                 <span className='text-2xl'>💻</span>
               </div>
