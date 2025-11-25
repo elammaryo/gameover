@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { NavBar } from '../components/NavBar'
 import Aurora from '../components/Aurora'
 import Image from 'next/image'
@@ -19,8 +18,6 @@ import {
   HiGlobeAlt
 } from 'react-icons/hi2'
 import profileImage from '../../public/profile.png'
-import { getSpotifyTopTracks } from '../api'
-import { BeatTrack, SpotifyTrack } from '../models/Track'
 
 export default function AboutPage() {
   // Mock data - replace with actual API calls if you add endpoints
