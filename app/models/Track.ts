@@ -42,19 +42,23 @@ export class BeatTrack extends BaseTrack {
 
 export class SpotifyTrack extends BaseTrack {
   source: 'spotify' = 'spotify'
+  name: string
   spotifyId: string
   artists: string[]
   albumName: string
   previewUrl?: string
   spotifyUrl: string
+  images: { url: string; height: number; width: number }[]
 
   constructor(data: any) {
     super(data)
+    this.name = data.name
     this.spotifyId = data.spotifyId
     this.artists = data.artists
     this.albumName = data.albumName
     this.previewUrl = data.previewUrl
     this.spotifyUrl = data.spotifyUrl
+    this.images = data.images
   }
 }
 
