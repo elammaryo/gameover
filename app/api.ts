@@ -1,5 +1,5 @@
 import { Playlist } from './models/Playlist'
-import { Track, BeatTrack } from './models/Track'
+import { Track, BeatTrack, SpotifyTrack } from './models/Track'
 
 export async function getPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/spotify/playlists')
@@ -23,4 +23,10 @@ export async function getBeatSignedUrl(trackId: string): Promise<string> {
   })
   const data = await res.json()
   return data.audioUrl
+}
+
+export async function spotifyLoginUrl() {
+  const res = await fetch('/api/spotify/login')
+  const data = await res.json()
+  return data.url
 }
