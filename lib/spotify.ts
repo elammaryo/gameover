@@ -26,7 +26,7 @@ export async function requestToken() {
   }
 }
 
-export async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken() {
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken
@@ -36,8 +36,8 @@ export async function refreshAccessToken(): Promise<string | null> {
     const response = await fetch(tokenEndpoint, {
       method: 'POST',
       headers: {
-        Authorization: authHeader,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: authHeader
       },
       body: body.toString()
     })
@@ -46,9 +46,11 @@ export async function refreshAccessToken(): Promise<string | null> {
       throw new Error(`Failed to refresh token: ${response.statusText}`)
     }
 
-    const data: { access_token: string; [key: string]: any } =
-      await response.json()
-    return data.access_token
+    const data = await response.json()
+    return {
+      ...data,
+      expires_at: Date.now() + data.expires_in * 1000
+    }
   } catch (error) {
     console.error('Error during token refresh:', error)
     return null
