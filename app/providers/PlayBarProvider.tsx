@@ -6,7 +6,7 @@ import { getBeatSignedUrl } from '../api'
 export const PlayBarContext = createContext({
   selectedTrack: null as Track | null,
   setTrack: async (track: Track | null) => {},
-  setQueue: (tracks: Track[]) => {},
+  setQueue: (track: Track, tracks: Track[]) => {},
   onNext: async () => {},
   onPrev: async () => {},
   isPlaying: false,
@@ -21,6 +21,7 @@ export default function PlayBarProvider({
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null)
   const [queue, setQueueState] = useState<Track[]>([])
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
+  const [currentIndex, setCurrentIndex] = useState<number>(-1)
 
   const setTrack = async (track: Track | null) => {
     await getBeatSignedUrl(track?.id ?? '').then(url => {
@@ -28,7 +29,8 @@ export default function PlayBarProvider({
     })
   }
 
-  const setQueue = (tracks: Track[]) => {
+  const setQueue = (track: Track, tracks: Track[]) => {
+    setCurrentIndex(tracks.findIndex(t => t.id === track.id))
     setQueueState(tracks ?? [])
   }
 
@@ -37,38 +39,36 @@ export default function PlayBarProvider({
   }
 
   const onNext = async () => {
-    if (!queue || !selectedTrack) return
-    const currentIndex = queue.findIndex(t => t.id === selectedTrack.id)
-    if (currentIndex < queue.length - 1) {
-      const nextTrack = queue[currentIndex + 1]
+    if (queue && currentIndex < queue.length - 1) {
+      const newIndex = currentIndex + 1
+      const nextTrack = queue[newIndex]
+      setCurrentIndex(newIndex)
       await setTrack(nextTrack)
     }
   }
 
   const onPrev = async () => {
-    if (!queue || !selectedTrack) return
-    const currentIndex = queue.findIndex(t => t.id === selectedTrack.id)
-    if (currentIndex > 0) {
-      const prevTrack = queue[currentIndex - 1]
+    if (queue && currentIndex > 0) {
+      const newIndex = currentIndex - 1
+      const prevTrack = queue[newIndex]
+      setCurrentIndex(newIndex)
       await setTrack(prevTrack)
     }
   }
 
   return (
-    <>
-      <PlayBarContext.Provider
-        value={{
-          selectedTrack,
-          setTrack,
-          setQueue,
-          onNext,
-          onPrev,
-          isPlaying,
-          setPlayPause
-        }}
-      >
-        {children}
-      </PlayBarContext.Provider>
-    </>
+    <PlayBarContext.Provider
+      value={{
+        selectedTrack,
+        setTrack,
+        setQueue,
+        onNext,
+        onPrev,
+        isPlaying,
+        setPlayPause
+      }}
+    >
+      {children}
+    </PlayBarContext.Provider>
   )
 }

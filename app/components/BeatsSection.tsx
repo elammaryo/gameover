@@ -29,11 +29,7 @@ export function BeatsSection({ beats }: { beats: BeatTrack[] }) {
                   setPlayPause(!isPlaying)
                 } else {
                   await setTrack(beat)
-                  const queue = [
-                    beat,
-                    ...beats.filter(track => beat.id !== track.id)
-                  ]
-                  setQueue(queue)
+                  setQueue(beat, beats)
                 }
               }}
             >

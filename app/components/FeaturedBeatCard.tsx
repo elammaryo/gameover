@@ -22,8 +22,7 @@ function FeaturedBeatsSection({
       setPlayPause(true)
     } else {
       await setTrack(track)
-      const queue: Track[] = [track, ...allBeats.filter(b => b.id !== track.id)]
-      setQueue(queue)
+      setQueue(track, allBeats)
     }
   }
 
