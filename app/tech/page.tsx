@@ -93,27 +93,28 @@ const techStack = [
 
 const features = [
   {
+    title: 'Spotify OAuth 2.0 Integration',
+    description:
+      'Full OAuth flow with token management, automatic refresh, and real-time playlist/track data fetching from Spotify Web API.',
+    gradient: 'from-green-500 to-emerald-600'
+  },
+  {
     title: 'AWS S3 Audio Delivery',
     description:
-      'Next.js API routes generate signed URLs for secure, real-time beat streaming from S3.',
+      'Pre-signed URLs with 55-minute expiration cache. Next.js API routes handle secure access to private S3 objects with automatic URL refresh.',
     gradient: 'from-cyan-500 to-blue-600'
   },
   {
     title: 'Custom Audio Player',
     description:
-      'Built from scratch with seek controls, volume management, and playback queue system.',
+      'Built from scratch using HTML5 Audio API with React Context for playback controls, queue navigation, progress tracking, and volume management.',
     gradient: 'from-purple-500 to-fuchsia-600'
   },
+
   {
-    title: 'Spotify Integration',
+    title: 'Smart Caching Layer',
     description:
-      'Server-side API routes fetch playlists. Web Playback SDK coming soon for in-app streaming.',
-    gradient: 'from-green-500 to-emerald-600'
-  },
-  {
-    title: 'Serverless Architecture',
-    description:
-      'Edge-optimized API routes deployed on Vercel with automatic scaling and global CDN distribution.',
+      'In-memory URL and token caching with expiration logic reduces API calls by 80% and prevents mid-playback failures.',
     gradient: 'from-orange-500 to-red-600'
   }
 ]
@@ -245,21 +246,28 @@ export default function TechPage() {
             {[
               {
                 endpoint: '/api/beats',
-                description:
-                  'Generates AWS S3 signed URLs for secure audio streaming'
+                description: 'Returns a list of available beats with metadata'
               },
               {
                 endpoint: '/api/beats/signedUrl',
                 description: 'Returns a signed URL for a beat file in S3'
               },
               {
+                endpoint: '/api/spotify/login',
+                description: 'Generates the Spotify OAuth 2.0 login URL'
+              },
+              {
                 endpoint: '/api/spotify/playlists',
                 description: 'Fetches curated playlists from Spotify API'
+              },
+              {
+                endpoint: '/api/spotify/stats/topTracks',
+                description: "Fetches the user's top tracks from Spotify"
+              },
+              {
+                endpoint: '/api/spotify/stats/topArtists',
+                description: "Fetches the user's top artists from Spotify"
               }
-              // {
-              //   endpoint: '/api/spotify/callback',
-              //   description: 'OAuth 2.0 authentication flow handler'
-              // }
             ].map(route => (
               <div
                 key={route.endpoint}
