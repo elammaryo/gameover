@@ -18,9 +18,19 @@ import {
   HiGlobeAlt
 } from 'react-icons/hi2'
 import profileImage from '../../public/profile.png'
+import { use, useEffect, useState } from 'react'
+import { getSpotifyTopTracks } from '../api'
+import { SpotifyTrack } from '../models/Track'
 
 export default function AboutPage() {
-  // Mock data - replace with actual API calls if you add endpoints
+  const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([])
+
+  useEffect(() => {
+    getSpotifyTopTracks().then(tracks => {
+      setTopTracks(tracks)
+    })
+  }, [])
+
   const topArtists = [
     {
       name: 'Travis Scott',
@@ -46,39 +56,6 @@ export default function AboutPage() {
       name: 'WizKid',
       plays: '1.4K',
       image: 'https://i.scdn.co/image/ab6761610000e5eb59d6c54e62c37e62c6be85c3'
-    }
-  ]
-
-  const topTracks = [
-    {
-      name: 'SICKO MODE',
-      artist: 'Travis Scott',
-      plays: '342',
-      image: 'https://i.scdn.co/image/ab67616d0000b273072e9faef2ef7b6db63834a3'
-    },
-    {
-      name: 'Last Last',
-      artist: 'Burna Boy',
-      plays: '298',
-      image: 'https://i.scdn.co/image/ab67616d0000b273726d48d93d02e1271774f023'
-    },
-    {
-      name: 'One Dance',
-      artist: 'Drake',
-      plays: '276',
-      image: 'https://i.scdn.co/image/ab67616d0000b273f46b9d202509a8f7384b90de'
-    },
-    {
-      name: 'Essence',
-      artist: 'WizKid ft. Tems',
-      plays: '264',
-      image: 'https://i.scdn.co/image/ab67616d0000b273b6c010cb0bfb3a42b7e6a7a2'
-    },
-    {
-      name: 'Runaway',
-      artist: 'Kanye West',
-      plays: '251',
-      image: 'https://i.scdn.co/image/ab67616d0000b273d9194aa18fa4c9362b47464f'
     }
   ]
 
@@ -338,7 +315,7 @@ export default function AboutPage() {
                 {/* Album Cover */}
                 <div className='relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg'>
                   <Image
-                    src={track.image} // {track.images[0].url ?? ''}
+                    src={track.images[0].url ?? ''}
                     alt={track.name}
                     width={64}
                     height={64}
@@ -356,7 +333,7 @@ export default function AboutPage() {
                     {track.name}
                   </div>
                   <div className='truncate text-sm text-gray-400'>
-                    {track.artist}
+                    {track.artists.join(', ')}
                   </div>
                 </div>
 

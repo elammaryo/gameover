@@ -25,6 +25,19 @@ export async function getBeatSignedUrl(trackId: string): Promise<string> {
   return data.audioUrl
 }
 
+export async function getSpotifyTopTracks(): Promise<SpotifyTrack[]> {
+  const res = await fetch('/api/spotify/topTracks')
+  const data = await res.json()
+  return data.topTracks.map(
+    (item: any) =>
+      new SpotifyTrack({
+        ...item,
+        images: item.album.images,
+        artists: [item.artists.map((a: any) => a.name)]
+      })
+  )
+}
+
 export async function spotifyLoginUrl() {
   const res = await fetch('/api/spotify/login')
   const data = await res.json()
