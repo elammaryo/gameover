@@ -26,7 +26,7 @@ export async function getBeatSignedUrl(trackId: string): Promise<string> {
 }
 
 export async function getSpotifyTopTracks(): Promise<SpotifyTrack[]> {
-  const res = await fetch('/api/spotify/topTracks')
+  const res = await fetch('/api/spotify/stats/topTracks')
   const data = await res.json()
   return data.topTracks.map(
     (item: any) =>
