@@ -7,16 +7,16 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 export function PlayerBar() {
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(100)
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
-    useContext(PlayBarContext)
-  const track = selectedTrack
-
   const pathname = usePathname()
   if (pathname !== '/') {
+    const [currentTime, setCurrentTime] = useState(0)
+    const [duration, setDuration] = useState(0)
+    const [volume, setVolume] = useState(100)
+    const audioRef = useRef<HTMLAudioElement>(null)
+    const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
+      useContext(PlayBarContext)
+    const track = selectedTrack
+
     // Update audio element when track changes and auto-play
     useEffect(() => {
       if (audioRef.current && track?.audioUrl) {
