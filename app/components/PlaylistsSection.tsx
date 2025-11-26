@@ -34,8 +34,6 @@ export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
               className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform hover:scale-108'
               onClick={e => {
                 e.stopPropagation() // Prevent outer button click
-                // Handle play button click
-                console.log('Play playlist:', playlist.name)
               }}
             >
               <HiPlay size={14} />

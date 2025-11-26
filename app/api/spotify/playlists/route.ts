@@ -32,19 +32,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error', status: 500 })
   }
 }
-
-// Get my personal top tracks from Spotify // will use in about me tab along with other stats
-// async function getTopTracks() {
-// Endpoint reference : https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
-// return (
-//   await fetchWebApi('v1/me/top/tracks?time_range=long_term&limit=5', 'GET')
-// ).items
-// }
-
-// const topTracks = await getTopTracks()
-// console.log(
-//   topTracks?.map(
-//     ({ name, artists }: { name: string; artists: { name: string }[] }) =>
-//       `${name} by ${artists.map(artist => artist.name).join(', ')}`
-//   )
-// )
