@@ -8,10 +8,9 @@ import { Playlist } from '../models/Playlist'
 import { BeatTrack, Track } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
 import { BeatsSection } from '../components/BeatsSection'
-import FeaturedBeatCard from '../components/FeaturedBeatCard'
 import Aurora from '../components/Aurora'
 import BlurText from '../components/BlurText'
-import { HiMusicalNote, HiSparkles, HiFire } from 'react-icons/hi2'
+import { HiMusicalNote, HiSparkles } from 'react-icons/hi2'
 import { SiSoundcloud } from 'react-icons/si'
 
 const tabs = ['Beats', 'Playlists'] as const
@@ -252,7 +251,6 @@ export default function Studio() {
           </div>
         </section>
       </div>
-      <PlayerBar />
     </main>
   )
 }

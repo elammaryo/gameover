@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import PlayBarProvider from './providers/PlayBarProvider'
 import { Analytics } from '@vercel/analytics/next'
+import { PlayerBar } from './components/PlayerBar'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,6 +42,7 @@ export default function RootLayout({
           </div>
         </div>
         <PlayBarProvider>
+          <PlayerBar />
           {children}
           <Analytics />
         </PlayBarProvider>
