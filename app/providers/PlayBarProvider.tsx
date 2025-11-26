@@ -3,6 +3,11 @@ import { Track } from '@/app/models/Track'
 import { createContext, useState } from 'react'
 import { getBeatSignedUrl } from '../api'
 
+interface CachedUrl {
+  url: string
+  expiresAt: number // Timestamp in milliseconds
+}
+
 export const PlayBarContext = createContext({
   selectedTrack: null as Track | null,
   setTrack: async (track: Track | null) => {},
@@ -22,11 +27,29 @@ export default function PlayBarProvider({
   const [queue, setQueueState] = useState<Track[]>([])
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [currentIndex, setCurrentIndex] = useState<number>(-1)
+  const [urlCache, setUrlCache] = useState<Map<string, CachedUrl>>(new Map())
 
   const setTrack = async (track: Track | null) => {
-    await getBeatSignedUrl(track?.id ?? '').then(url => {
+    if (!track?.id) {
+      setSelectedTrack(null)
+      return
+    }
+
+    const cached = urlCache.get(track.id)
+    const now = Date.now()
+
+    // Check if cached URL exists and hasn't expired
+    if (cached && cached.expiresAt > now) {
+      setSelectedTrack({ ...track, audioUrl: cached.url } as Track)
+    } else {
+      const url = await getBeatSignedUrl(track.id)
+
+      // We use 55 min instead of 60 to ensure it doesn't expire mid-playback
+      const expiresAt = now + 55 * 60 * 1000
+
+      setUrlCache(prev => new Map(prev).set(track.id, { url, expiresAt }))
       setSelectedTrack({ ...track, audioUrl: url } as Track)
-    })
+    }
   }
 
   const setQueue = (track: Track, tracks: Track[]) => {
