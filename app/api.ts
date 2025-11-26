@@ -38,6 +38,15 @@ export async function getSpotifyTopTracks(): Promise<SpotifyTrack[]> {
   )
 }
 
+export async function getSpotifyTopArtists(): Promise<[]> {
+  const res = await fetch('/api/spotify/stats/topArtists')
+  const data = await res.json()
+  return data.topArtists.map((item: any) => ({
+    name: item.name,
+    images: item.images
+  }))
+}
+
 export async function spotifyLoginUrl() {
   const res = await fetch('/api/spotify/login')
   const data = await res.json()

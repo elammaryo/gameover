@@ -19,45 +19,19 @@ import {
 } from 'react-icons/hi2'
 import profileImage from '../../public/profile.png'
 import { use, useEffect, useState } from 'react'
-import { getSpotifyTopTracks } from '../api'
+import { getSpotifyTopArtists, getSpotifyTopTracks } from '../api'
 import { SpotifyTrack } from '../models/Track'
 
 export default function AboutPage() {
   const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([])
+  const [topArtists, setTopArtists] = useState<
+    { name: string; images: { url: string }[] }[]
+  >([])
 
   useEffect(() => {
-    getSpotifyTopTracks().then(tracks => {
-      setTopTracks(tracks)
-    })
+    getSpotifyTopTracks().then(tracks => setTopTracks(tracks))
+    getSpotifyTopArtists().then(artists => setTopArtists(artists))
   }, [])
-
-  const topArtists = [
-    {
-      name: 'Travis Scott',
-      plays: '2.5K',
-      image: 'https://i.scdn.co/image/ab6761610000e5eb19c2790744c792d05570bb71'
-    },
-    {
-      name: 'Drake',
-      plays: '2.1K',
-      image: 'https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9'
-    },
-    {
-      name: 'Kanye West',
-      plays: '1.8K',
-      image: 'https://i.scdn.co/image/ab6761610000e5eb867008a971fae0f4d913f63a'
-    },
-    {
-      name: 'Burna Boy',
-      plays: '1.6K',
-      image: 'https://i.scdn.co/image/ab6761610000e5eb987c8d6c9b24610e3502480c'
-    },
-    {
-      name: 'WizKid',
-      plays: '1.4K',
-      image: 'https://i.scdn.co/image/ab6761610000e5eb59d6c54e62c37e62c6be85c3'
-    }
-  ]
 
   const stats = [
     {
@@ -271,7 +245,11 @@ export default function AboutPage() {
                 {/* Artist Image */}
                 <div className='relative aspect-square w-full overflow-hidden'>
                   <Image
-                    src={artist.image}
+                    src={
+                      artist.images && artist.images.length > 0
+                        ? artist.images[0].url
+                        : ''
+                    }
                     alt={artist.name}
                     width={300}
                     height={300}
@@ -289,7 +267,7 @@ export default function AboutPage() {
                 <div className='absolute right-0 bottom-0 left-0 p-4'>
                   <div className='font-semibold text-white'>{artist.name}</div>
                   <div className='text-sm text-green-400'>
-                    {artist.plays} plays
+                    {/* {artist.plays} plays */}
                   </div>
                 </div>
               </div>
