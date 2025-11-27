@@ -56,3 +56,37 @@ export async function refreshAccessToken() {
     return null
   }
 }
+
+export async function getLoginToken(code: string) {
+  const body = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: code,
+    redirect_uri: process.env.SPOTIFY_REDIRECT_URI || ''
+  })
+
+  try {
+    const response = await fetch(tokenEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: authHeader
+      },
+      body: body.toString()
+    })
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to exchange code for token: ${response.statusText}`
+      )
+    }
+
+    const data = await response.json()
+    return {
+      ...data,
+      expires_at: Date.now() + data.expires_in * 1000
+    }
+  } catch (error) {
+    console.error('Error during code exchange for token:', error)
+    throw error
+  }
+}

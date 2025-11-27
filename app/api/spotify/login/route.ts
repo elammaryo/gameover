@@ -3,7 +3,7 @@ import querystring from 'querystring'
 
 export function GET() {
   const clientId = process.env.CLIENT_ID
-  const redirectUri = 'https://gameover.studio/spotify'
+  const redirectUri = process.env.SPOTIFY_REDIRECT_URI
   const scopes = ['user-read-private', 'user-top-read']
   const state = generateRandomString(16)
 
