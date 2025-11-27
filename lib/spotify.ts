@@ -90,3 +90,13 @@ export async function getLoginToken(code: string) {
     throw error
   }
 }
+
+export const handleLogin = async () => {
+  try {
+    const response = await fetch('/api/spotify/login')
+    const data = await response.json()
+    window.location.href = data.url
+  } catch (error) {
+    console.error('Error initiating Spotify login:', error)
+  }
+}
