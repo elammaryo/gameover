@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 
 export function PlayerBar() {
   const pathname = usePathname()
-  if (pathname !== '/') {
+  if (pathname === '/studio') {
     const [currentTime, setCurrentTime] = useState(0)
     const [duration, setDuration] = useState(0)
     const [volume, setVolume] = useState(100)
