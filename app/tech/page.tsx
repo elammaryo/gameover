@@ -64,7 +64,7 @@ const techStack = [
         description: 'Serverless deployment & hosting'
       },
       {
-        name: 'Spotify API',
+        name: 'Spotify API + OAuth 2.0',
         icon: <SiSpotify size={32} />,
         color: '#1DB954',
         description: 'Web Playback SDK (coming soon)'
