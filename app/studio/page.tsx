@@ -2,10 +2,9 @@
 import { useEffect, useState } from 'react'
 import { NavBar } from '../components/NavBar'
 import FeaturedBeatsSection from '../components/FeaturedBeatCard'
-import { PlayerBar } from '../components/PlayerBar'
 import { getBeats, getPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
-import { BeatTrack, Track } from '../models/Track'
+import { BeatTrack } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
 import { BeatsSection } from '../components/BeatsSection'
 import Aurora from '../components/Aurora'
@@ -20,21 +19,29 @@ export default function Studio() {
   const [activeTab, setActiveTab] = useState<Tab>('Beats')
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [beats, setBeats] = useState<BeatTrack[]>([])
+  const [loading, setLoading] = useState(true)
+  const [beatsLoading, setBeatsLoading] = useState(true)
+  const [playlistsLoading, setPlaylistsLoading] = useState(true)
 
   useEffect(() => {
     getBeats()
       .then((data: BeatTrack[]) => {
         setBeats(data)
+        setBeatsLoading(false)
       })
       .catch((error: any) => {
         console.error('Error fetching beats:', error)
+        setBeatsLoading(false)
       })
+
     getPlaylists()
       .then((data: Playlist[]) => {
         setPlaylists(data)
+        setPlaylistsLoading(false)
       })
       .catch((error: any) => {
         console.error('Error fetching playlists:', error)
+        setPlaylistsLoading(false)
       })
 
     const overlay = document.getElementById('transition-overlay')
@@ -51,6 +58,22 @@ export default function Studio() {
       })
     }
   }, [])
+
+  useEffect(() => {
+    if (!beatsLoading && !playlistsLoading) {
+      setLoading(false)
+    }
+  }, [beatsLoading, playlistsLoading])
+
+  const featuredBeats = beats.filter(
+    beat =>
+      beat.id === '109' ||
+      beat.id === '79' ||
+      beat.id === '84' ||
+      beat.id === '80' ||
+      beat.id === '88' ||
+      beat.id === '91'
+  )
 
   return (
     <main className='relative min-h-screen bg-[#07050A] pb-20 text-white'>
@@ -104,18 +127,21 @@ export default function Studio() {
 
         {/* FEATURED BEATS SECTION */}
         <section className='mb-8'>
-          <FeaturedBeatsSection
-            featuredBeats={beats.filter(
-              beat =>
-                beat.id === '109' ||
-                beat.id === '79' ||
-                beat.id === '84' ||
-                beat.id === '80' ||
-                beat.id === '88' ||
-                beat.id === '91'
-            )}
-            allBeats={beats}
-          />
+          {beatsLoading ? (
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className='h-48 animate-pulse rounded-2xl bg-white/5'
+                />
+              ))}
+            </div>
+          ) : (
+            <FeaturedBeatsSection
+              featuredBeats={featuredBeats}
+              allBeats={beats}
+            />
+          )}
         </section>
 
         {/* LIBRARY STATS */}
@@ -127,9 +153,13 @@ export default function Studio() {
               <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600'>
                 <HiMusicalNote size={20} />
               </div>
-              <div className='text-3xl font-bold text-white'>
-                {beats.length}
-              </div>
+              {beatsLoading ? (
+                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
+              ) : (
+                <div className='text-3xl font-bold text-white'>
+                  {beats.length}
+                </div>
+              )}
               <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
                 Total Beats
               </div>
@@ -143,9 +173,13 @@ export default function Studio() {
               <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600'>
                 <HiSparkles size={20} />
               </div>
-              <div className='text-3xl font-bold text-fuchsia-400'>
-                {playlists.length}
-              </div>
+              {playlistsLoading ? (
+                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
+              ) : (
+                <div className='text-3xl font-bold text-fuchsia-400'>
+                  {playlists.length}
+                </div>
+              )}
               <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
                 Playlists
               </div>
@@ -159,9 +193,13 @@ export default function Studio() {
               <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600'>
                 <span className='text-xl'>🎼</span>
               </div>
-              <div className='text-3xl font-bold text-green-400'>
-                {new Set(beats.map(b => b.genre)).size}
-              </div>
+              {beatsLoading ? (
+                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
+              ) : (
+                <div className='text-3xl font-bold text-green-400'>
+                  {new Set(beats.map(b => b.genre)).size}
+                </div>
+              )}
               <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
                 Genres
               </div>
@@ -175,13 +213,17 @@ export default function Studio() {
               <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-600'>
                 <span className='text-xl'>⚡</span>
               </div>
-              <div className='text-3xl font-bold text-orange-400'>
-                {beats.length > 0
-                  ? Math.round(
-                      beats.reduce((acc, b) => acc + b.bpm, 0) / beats.length
-                    )
-                  : 0}
-              </div>
+              {beatsLoading ? (
+                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
+              ) : (
+                <div className='text-3xl font-bold text-orange-400'>
+                  {beats.length > 0
+                    ? Math.round(
+                        beats.reduce((acc, b) => acc + b.bpm, 0) / beats.length
+                      )
+                    : 0}
+                </div>
+              )}
               <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
                 Avg BPM
               </div>
@@ -223,7 +265,37 @@ export default function Studio() {
         {/* CONTENT GRID / LIST */}
         <section className='mt-6'>
           {activeTab === 'Beats' ? (
-            <BeatsSection beats={beats} />
+            beatsLoading ? (
+              <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                {[...Array(9)].map((_, i) => (
+                  <div
+                    key={i}
+                    className='h-40 animate-pulse rounded-2xl bg-white/5'
+                  />
+                ))}
+              </div>
+            ) : beats.length === 0 ? (
+              <div className='flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm'>
+                <HiMusicalNote className='text-gray-600' size={48} />
+                <p className='text-gray-400'>No beats available yet.</p>
+              </div>
+            ) : (
+              <BeatsSection beats={beats} />
+            )
+          ) : playlistsLoading ? (
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className='h-64 animate-pulse rounded-2xl bg-white/5'
+                />
+              ))}
+            </div>
+          ) : playlists.length === 0 ? (
+            <div className='flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm'>
+              <HiSparkles className='text-gray-600' size={48} />
+              <p className='text-gray-400'>No playlists found.</p>
+            </div>
           ) : (
             <PlaylistsSection playlists={playlists} />
           )}
