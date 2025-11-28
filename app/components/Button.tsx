@@ -1,5 +1,3 @@
-'use client'
-
 import clsx from 'clsx'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline'
