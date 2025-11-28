@@ -242,43 +242,103 @@ export default function TechPage() {
           <h2 className='mb-8 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
             Backend API Routes
           </h2>
-          <div className='space-y-4'>
-            {[
-              {
-                endpoint: '/api/beats',
-                description: 'Returns a list of available beats with metadata'
-              },
-              {
-                endpoint: '/api/beats/signedUrl',
-                description: 'Returns a signed URL for a beat file in S3'
-              },
-              {
-                endpoint: '/api/spotify/login',
-                description: 'Generates the Spotify OAuth 2.0 login URL'
-              },
-              {
-                endpoint: '/api/spotify/playlists',
-                description: 'Fetches curated playlists from Spotify API'
-              },
-              {
-                endpoint: '/api/spotify/stats/topTracks',
-                description: "Fetches the user's top tracks from Spotify"
-              },
-              {
-                endpoint: '/api/spotify/stats/topArtists',
-                description: "Fetches the user's top artists from Spotify"
-              }
-            ].map(route => (
-              <div
-                key={route.endpoint}
-                className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'
-              >
-                <div className='mb-1 font-mono text-sm text-cyan-400'>
-                  {route.endpoint}
+
+          {/* Audio Endpoints */}
+          <div className='mb-6'>
+            <h3 className='mb-3 text-sm font-semibold text-gray-300'>
+              Audio Delivery
+            </h3>
+            <div className='space-y-3'>
+              {[
+                {
+                  endpoint: '/api/beats',
+                  description: 'Returns all beats with metadata'
+                },
+                {
+                  endpoint: '/api/beats/[id]/signed-url',
+                  description: 'Generates a signed URL for a specific beat'
+                }
+              ].map(route => (
+                <div
+                  key={route.endpoint}
+                  className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'
+                >
+                  <div className='mb-1 font-mono text-sm text-cyan-400'>
+                    {route.endpoint}
+                  </div>
+                  <div className='text-sm text-gray-400'>
+                    {route.description}
+                  </div>
                 </div>
-                <div className='text-sm text-gray-400'>{route.description}</div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* Spotify Authentication */}
+          <div className='mb-6'>
+            <h3 className='mb-3 text-sm font-semibold text-gray-300'>
+              Spotify OAuth
+            </h3>
+            <div className='space-y-3'>
+              {[
+                {
+                  endpoint: '/api/spotify/login',
+                  description: 'Initiates Spotify OAuth 2.0 authorization flow'
+                },
+                {
+                  endpoint: '/api/spotify/callback',
+                  description:
+                    'Handles OAuth callback and exchanges code for tokens'
+                }
+              ].map(route => (
+                <div
+                  key={route.endpoint}
+                  className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'
+                >
+                  <div className='mb-1 font-mono text-sm text-cyan-400'>
+                    {route.endpoint}
+                  </div>
+                  <div className='text-sm text-gray-400'>
+                    {route.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Spotify Data */}
+          <div>
+            <h3 className='mb-3 text-sm font-semibold text-gray-300'>
+              Spotify Data
+            </h3>
+            <div className='space-y-3'>
+              {[
+                {
+                  endpoint: '/api/spotify/playlists',
+                  description: 'Fetches user playlists from Spotify API'
+                },
+                {
+                  endpoint: '/api/spotify/top-tracks',
+                  description: "Fetches user's most played tracks"
+                },
+                {
+                  endpoint: '/api/spotify/top-artists',
+                  description: "Fetches user's top artists"
+                }
+              ].map(route => (
+                <div
+                  key={route.endpoint}
+                  className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'
+                >
+                  <div className='mb-1 font-mono text-sm text-cyan-400'>
+                    {route.endpoint}
+                  </div>
+                  <div className='text-sm text-gray-400'>
+                    {route.description}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
