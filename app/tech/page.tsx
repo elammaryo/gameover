@@ -318,11 +318,11 @@ export default function TechPage() {
                   description: 'Fetches user playlists from Spotify API'
                 },
                 {
-                  endpoint: '/api/spotify/top-tracks',
+                  endpoint: '/api/spotify/topTracks',
                   description: "Fetches user's most played tracks"
                 },
                 {
-                  endpoint: '/api/spotify/top-artists',
+                  endpoint: '/api/spotify/topArtists',
                   description: "Fetches user's top artists"
                 }
               ].map(route => (
