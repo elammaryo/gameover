@@ -100,8 +100,15 @@ export default function SpotifyPage() {
               </h1>
             </div>
 
-            {/* Login Button in Header (subtle placement) */}
-            {!isLoggedIn && (
+            {/* Login/Logout Button in Header */}
+            {isLoggedIn ? (
+              <button
+                onClick={spotifyLogout}
+                className='flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:border-red-500/50 hover:bg-red-500/20'
+              >
+                Logout
+              </button>
+            ) : (
               <button
                 onClick={handleLogin}
                 className='flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400 transition-all hover:border-green-500/50 hover:bg-green-500/20'
