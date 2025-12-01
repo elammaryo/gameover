@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const cookieStore = await cookies()
     // Store tokens securely
     cookieStore.set('spotify_access_token', tokens.access_token, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       maxAge: tokens.expires_in
     })
