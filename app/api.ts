@@ -52,13 +52,3 @@ export async function spotifyLoginUrl() {
   const data = await res.json()
   return data.url
 }
-
-export async function spotifyLogout() {
-  try {
-    await fetch('/api/spotify/logout', { method: 'POST' })
-    // Reload to clear player state
-    window.location.reload()
-  } catch (error) {
-    console.error('Error logging out:', error)
-  }
-}

@@ -100,3 +100,12 @@ export const handleLogin = async () => {
     console.error('Error initiating Spotify login:', error)
   }
 }
+
+export const handleLogout = async () => {
+  try {
+    await fetch('/api/spotify/logout', { method: 'POST' })
+    window.location.reload()
+  } catch (error) {
+    console.error('Error logging out:', error)
+  }
+}

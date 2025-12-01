@@ -10,7 +10,7 @@ import { getPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
 import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
-import { handleLogin } from '@/lib/spotify'
+import { handleLogin, handleLogout } from '@/lib/spotify'
 import { SpotifyPlayerInitializer } from '../components/SpotifyPlayerInitializer'
 
 export default function SpotifyPage() {
@@ -104,7 +104,7 @@ export default function SpotifyPage() {
             {isLoggedIn ? (
               <button
                 onClick={async () => {
-                  await spotifyLogout()
+                  await handleLogout()
                   setIsLoggedIn(false)
                 }}
                 className='flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:border-red-500/50 hover:bg-red-500/20'
