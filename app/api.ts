@@ -52,3 +52,9 @@ export async function spotifyLoginUrl() {
   const data = await res.json()
   return data.url
 }
+
+export async function getSpotifyAccessToken(): Promise<string | null> {
+  const res = await fetch('/api/spotify/token')
+  const data = await res.json()
+  return data.accessToken
+}
