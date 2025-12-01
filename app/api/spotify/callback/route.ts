@@ -31,6 +31,11 @@ export async function GET(request: Request) {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 30 // 30 days
     })
+    cookieStore.set('spotify_logged_in', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 30 // 30 days
+    })
 
     return NextResponse.redirect(new URL('/spotify?success=true', request.url))
   } catch (error) {
