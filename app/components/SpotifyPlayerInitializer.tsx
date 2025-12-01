@@ -71,14 +71,20 @@ export function SpotifyPlayerInitializer({
 
       const player = new window.Spotify.Player({
         name: 'GameOver Studio Player',
-        getOAuthToken: cb => {
-          const currentToken =
-            document.cookie
-              .split(';')
-              .find(c => c.trim().startsWith('spotify_access_token='))
-              ?.split('=')[1] || ''
-
-          cb(currentToken)
+        getOAuthToken: async cb => {
+          try {
+            const response = await fetch('/api/spotify/token')
+            if (!response.ok) {
+              console.error('Failed to fetch token')
+              cb('')
+              return
+            }
+            const data = await response.json()
+            cb(data.access_token || '')
+          } catch (error) {
+            console.error('Error fetching token:', error)
+            cb('')
+          }
         },
         volume: 0.5
       })
@@ -97,7 +103,6 @@ export function SpotifyPlayerInitializer({
 
       player.addListener('authentication_error', ({ message }) => {
         console.error('❌ Authentication error:', message)
-        document.cookie = 'spotify_access_token=; Max-Age=0; path=/'
         window.spotifyPlayerInstance = undefined
         playerInitialized.current = false
       })
