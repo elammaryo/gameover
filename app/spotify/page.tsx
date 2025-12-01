@@ -38,7 +38,11 @@ export default function SpotifyPage() {
       .find(c => c.trim().startsWith('spotify_logged_in='))
       ?.split('=')[1]
 
-    setIsLoggedIn(loggedIn === 'true')
+    console.log('Spotify logged in status from cookie:', loggedIn)
+
+    setIsLoggedIn(
+      loggedIn === 'true' && document.cookie.includes('spotify_access_token=')
+    )
 
     getPlaylists()
       .then(data => {
