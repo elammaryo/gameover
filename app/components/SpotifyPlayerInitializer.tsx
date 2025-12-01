@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { getSpotifyAccessToken } from '../api'
 
 declare global {
   interface Window {
@@ -71,14 +72,10 @@ export function SpotifyPlayerInitializer({
 
       const player = new window.Spotify.Player({
         name: 'GameOver Studio Player',
-        getOAuthToken: cb => {
-          const currentToken =
-            document.cookie
-              .split(';')
-              .find(c => c.trim().startsWith('spotify_access_token='))
-              ?.split('=')[1] || ''
-
-          cb(currentToken)
+        getOAuthToken: async cb => {
+          const accessToken = await getSpotifyAccessToken()
+          if (!accessToken) return
+          cb(accessToken)
         },
         volume: 0.5
       })
@@ -97,7 +94,6 @@ export function SpotifyPlayerInitializer({
 
       player.addListener('authentication_error', ({ message }) => {
         console.error('❌ Authentication error:', message)
-        document.cookie = 'spotify_access_token=; Max-Age=0; path=/'
         window.spotifyPlayerInstance = undefined
         playerInitialized.current = false
       })
