@@ -57,7 +57,7 @@ export default function Home() {
               src={sentinelImage}
               className='h-screen object-cover px-12 pt-16'
               alt='Sentinel'
-              quality={100}
+              quality={75}
               priority
               placeholder='blur'
             />
