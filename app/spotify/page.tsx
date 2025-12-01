@@ -33,12 +33,12 @@ export default function SpotifyPage() {
       })
     }
 
-    const token = document.cookie
+    const loggedIn = document.cookie
       .split(';')
-      .find(c => c.trim().startsWith('spotify_access_token='))
+      .find(c => c.trim().startsWith('spotify_logged_in='))
       ?.split('=')[1]
 
-    setIsLoggedIn(!!token)
+    setIsLoggedIn(loggedIn === 'true')
 
     getPlaylists()
       .then(data => {
