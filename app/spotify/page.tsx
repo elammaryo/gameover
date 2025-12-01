@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { NavBar } from '../components/NavBar'
 import BlurText from '../components/BlurText'
 import Aurora from '../components/Aurora'
@@ -8,11 +9,13 @@ import { PlaylistsSection } from '../components/PlaylistsSection'
 import { getPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
-import { HiMusicalNote, HiSparkles } from 'react-icons/hi2'
+import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
+import { handleLogin } from '@/lib/spotify'
 
 export default function SpotifyPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
     const overlay = document.getElementById('transition-overlay')
@@ -29,7 +32,9 @@ export default function SpotifyPage() {
       })
     }
 
-    // Fetch playlists
+    const token = localStorage.getItem('spotify_access_token')
+    setIsLoggedIn(!!token)
+
     getPlaylists()
       .then(data => {
         setPlaylists(data)
@@ -66,7 +71,7 @@ export default function SpotifyPage() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] text-white'>
-      {/* Spotify-themed Green Aurora */}
+      {/* Aurora background */}
       <div className='pointer-events-none fixed inset-0 opacity-40'>
         <Aurora
           colorStops={['#1DB954', '#1ed760', '#00ff7f']}
@@ -81,11 +86,24 @@ export default function SpotifyPage() {
       <div className='relative z-10 mx-auto max-w-6xl px-4 pt-24 pb-16 sm:px-6'>
         {/* HEADER */}
         <header className='mb-16 flex flex-col gap-6'>
-          <div className='flex items-center gap-3'>
-            <SiSpotify className='text-green-500' size={24} />
-            <h1 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase sm:text-sm'>
-              My Spotify
-            </h1>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <SiSpotify className='text-green-500' size={24} />
+              <h1 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase sm:text-sm'>
+                My Spotify
+              </h1>
+            </div>
+
+            {/* Login Button in Header (subtle placement) */}
+            {!isLoggedIn && (
+              <button
+                onClick={handleLogin}
+                className='flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400 transition-all hover:border-green-500/50 hover:bg-green-500/20'
+              >
+                <SiSpotify size={16} />
+                Login to Play
+              </button>
+            )}
           </div>
 
           <BlurText
@@ -102,6 +120,39 @@ export default function SpotifyPage() {
             playlist is crafted for a specific mood and energy.
           </p>
         </header>
+
+        {/* LOGIN CTA BANNER (prominent placement) */}
+        {!isLoggedIn && (
+          <section className='mb-12'>
+            <div className='group relative overflow-hidden rounded-2xl border border-green-500/30 bg-gradient-to-br from-green-500/15 via-emerald-500/10 to-transparent p-8 backdrop-blur-sm transition-all hover:border-green-500/50'>
+              <div className='absolute top-0 right-0 h-32 w-32 rounded-full bg-green-500/20 blur-3xl' />
+              <div className='relative z-10 flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left'>
+                <div className='flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600'>
+                  <HiLockClosed size={28} />
+                </div>
+                <div className='flex-1'>
+                  <h3 className='mb-2 text-xl font-bold text-white sm:text-2xl'>
+                    Want to listen on the website?
+                  </h3>
+                  <p className='text-sm text-gray-400 sm:text-base'>
+                    Connect your Spotify account to play tracks directly in your
+                    browser
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogin}
+                  className='group/btn inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-green-500 px-6 py-3 font-semibold text-black transition-all hover:scale-105 hover:bg-green-400'
+                >
+                  <SiSpotify size={20} />
+                  Connect Spotify
+                  <span className='transition-transform group-hover/btn:translate-x-1'>
+                    →
+                  </span>
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* STATS GRID */}
         {!loading && playlists.length > 0 && (
@@ -142,11 +193,14 @@ export default function SpotifyPage() {
               <div className='flex flex-col gap-6 sm:flex-row sm:items-center'>
                 {playlists[0]?.images[0]?.url && (
                   <div className='relative h-48 w-48 flex-shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-green-500/20'>
-                    <img
-                      src={playlists[0].images[0].url}
-                      alt={playlists[0].name}
-                      className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
-                    />
+                    <div className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'>
+                      <Image
+                        height={300}
+                        width={300}
+                        src={playlists[0].images[0].url}
+                        alt={playlists[0].name}
+                      />
+                    </div>
                   </div>
                 )}
                 <div className='flex flex-col gap-3'>
