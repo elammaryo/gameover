@@ -255,7 +255,7 @@ export default function TechPage() {
                   description: 'Returns all beats with metadata'
                 },
                 {
-                  endpoint: '/api/beats/[id]/signed-url',
+                  endpoint: '/api/beats/signed-url',
                   description: 'Generates a signed URL for a specific beat'
                 }
               ].map(route => (
@@ -318,11 +318,11 @@ export default function TechPage() {
                   description: 'Fetches user playlists from Spotify API'
                 },
                 {
-                  endpoint: '/api/spotify/topTracks',
+                  endpoint: '/api/spotify/stats/topTracks',
                   description: "Fetches user's most played tracks"
                 },
                 {
-                  endpoint: '/api/spotify/topArtists',
+                  endpoint: '/api/spotify/stats/topArtists',
                   description: "Fetches user's top artists"
                 }
               ].map(route => (
