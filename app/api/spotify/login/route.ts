@@ -6,6 +6,7 @@ export function GET() {
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI
   const scopes = [
     'user-read-private',
+    'user-read-email',
     'user-top-read',
     'streaming',
     'user-read-playback-state',
