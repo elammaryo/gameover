@@ -4,7 +4,14 @@ import querystring from 'querystring'
 export function GET() {
   const clientId = process.env.CLIENT_ID
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI
-  const scopes = ['user-read-private', 'user-top-read']
+  const scopes = [
+    'user-read-private',
+    'user-top-read',
+    'streaming',
+    'user-read-playback-state',
+    'user-modify-playback-state',
+    'user-read-currently-playing'
+  ]
   const state = generateRandomString(16)
 
   const authUrl =
