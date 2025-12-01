@@ -56,7 +56,6 @@ export async function spotifyLoginUrl() {
 export async function spotifyLogout() {
   try {
     await fetch('/api/spotify/logout', { method: 'POST' })
-    setIsLoggedIn(false)
     // Reload to clear player state
     window.location.reload()
   } catch (error) {
