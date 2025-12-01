@@ -11,6 +11,7 @@ import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
 import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
 import { handleLogin } from '@/lib/spotify'
+import { SpotifyPlayerInitializer } from '../components/SpotifyPlayerInitializer'
 
 export default function SpotifyPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
@@ -32,7 +33,11 @@ export default function SpotifyPage() {
       })
     }
 
-    const token = localStorage.getItem('spotify_access_token')
+    const token = document.cookie
+      .split(';')
+      .find(c => c.trim().startsWith('spotify_access_token='))
+      ?.split('=')[1]
+
     setIsLoggedIn(!!token)
 
     getPlaylists()
@@ -71,6 +76,7 @@ export default function SpotifyPage() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] text-white'>
+      <SpotifyPlayerInitializer isLoggedIn={isLoggedIn} />
       {/* Aurora background */}
       <div className='pointer-events-none fixed inset-0 opacity-40'>
         <Aurora

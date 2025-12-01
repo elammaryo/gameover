@@ -1,5 +1,5 @@
 'use client'
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { use, useContext, useEffect, useRef, useState } from 'react'
 import ElasticSlider from './ElasticSlider'
 import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
 import { PlayBarContext } from '../providers/PlayBarProvider'
@@ -13,9 +13,28 @@ export function PlayerBar() {
     const [duration, setDuration] = useState(0)
     const [volume, setVolume] = useState(100)
     const audioRef = useRef<HTMLAudioElement>(null)
-    const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
+    const { selectedTrack, setTrack, onNext, onPrev, isPlaying, setPlayPause } =
       useContext(PlayBarContext)
     const track = selectedTrack
+
+    useEffect(() => {
+      // if (selectedTrack?.source === 'spotify') {
+      const player = window.spotifyPlayerInstance
+      player?.addListener('player_state_changed', state => {
+        console.log('Spotify player state changed:', state)
+        if (!state) {
+          return
+        }
+
+        setTrack(state.track_window.current_track)
+        setPlayPause(state.paused)
+
+        player.getCurrentState().then(state => {
+          !state ? setPlayPause(false) : setPlayPause(true)
+        })
+      })
+      // }
+    }, [])
 
     // Update audio element when track changes and auto-play
     useEffect(() => {
