@@ -1,6 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useContext } from 'react'
+import { getSpotifyAccessToken } from '../api'
+import { PlayBarContext } from '../providers/PlayBarProvider'
+import { SpotifyTrack } from '../models/Track'
 
 declare global {
   interface Window {
@@ -31,6 +34,7 @@ interface SpotifyPlayer {
   seek(position_ms: number): Promise<void>
   previousTrack(): Promise<void>
   nextTrack(): Promise<void>
+  deviceId: string
 }
 
 export function SpotifyPlayerInitializer({
@@ -38,27 +42,32 @@ export function SpotifyPlayerInitializer({
 }: {
   isLoggedIn: boolean
 }) {
-  const playerInitialized = useRef(false)
+  const { setTrack, selectedTrack, setPlayPause } = useContext(PlayBarContext)
+  const currentTrackIdRef = useRef<string | null>(null)
+  const isUpdatingRef = useRef(false)
 
   useEffect(() => {
-    if (!isLoggedIn || playerInitialized.current) {
+    currentTrackIdRef.current = selectedTrack?.id || null
+  }, [selectedTrack])
+
+  useEffect(() => {
+    if (!isLoggedIn) {
       return
     }
 
     if (window.spotifyPlayerInstance) {
-      console.log('✅ Spotify player already exists, skipping initialization')
-      playerInitialized.current = true
+      console.log('✅ Spotify player already initialized, skipping')
       return
     }
 
     console.log('🔧 Setting up Spotify Player...')
 
-    // FIRST: Set up the callback BEFORE loading the script
     window.onSpotifyWebPlaybackSDKReady = () => {
       console.log('✅ Spotify SDK Ready callback triggered')
 
+      // ✅ Double-check in callback
       if (window.spotifyPlayerInstance) {
-        console.log('Player already initialized in callback')
+        console.log('Player already initialized in callback, skipping')
         return
       }
 
@@ -71,20 +80,18 @@ export function SpotifyPlayerInitializer({
 
       const player = new window.Spotify.Player({
         name: 'GameOver Studio Player',
-        getOAuthToken: cb => {
-          const currentToken =
-            document.cookie
-              .split(';')
-              .find(c => c.trim().startsWith('spotify_access_token='))
-              ?.split('=')[1] || ''
-
-          cb(currentToken)
+        getOAuthToken: async cb => {
+          const accessToken = await getSpotifyAccessToken()
+          if (!accessToken) return
+          cb(accessToken)
         },
         volume: 0.5
       })
 
       player.addListener('ready', ({ device_id }) => {
         console.log('✅ Spotify Player Ready with Device ID:', device_id)
+        if (!window.spotifyPlayerInstance) return
+        window.spotifyPlayerInstance!.deviceId = device_id
       })
 
       player.addListener('not_ready', ({ device_id }) => {
@@ -97,9 +104,7 @@ export function SpotifyPlayerInitializer({
 
       player.addListener('authentication_error', ({ message }) => {
         console.error('❌ Authentication error:', message)
-        document.cookie = 'spotify_access_token=; Max-Age=0; path=/'
-        window.spotifyPlayerInstance = undefined
-        playerInitialized.current = false
+        window.spotifyPlayerInstance = undefined // ✅ Clear on error
       })
 
       player.addListener('account_error', ({ message }) => {
@@ -110,9 +115,40 @@ export function SpotifyPlayerInitializer({
         console.error('❌ Playback error:', message)
       })
 
-      player.addListener('player_state_changed', state => {
-        if (state) {
-          console.log('🎵 Playing:', state.track_window.current_track.name)
+      player.addListener('player_state_changed', async state => {
+        if (!state || isUpdatingRef.current) return
+        console.log('🔄 Spotify player state changed event received')
+
+        const currentTrack = state.track_window.current_track
+        const isPaused = state.paused
+
+        console.log('🎵 Player state:', currentTrack.name, 'Paused:', isPaused)
+
+        setPlayPause(!isPaused)
+
+        if (currentTrackIdRef.current === currentTrack.id) {
+          return
+        }
+
+        console.log('📀 New track detected:', currentTrack.name)
+
+        isUpdatingRef.current = true
+
+        try {
+          const track = new SpotifyTrack({
+            id: currentTrack.id,
+            name: currentTrack.name,
+            artists: currentTrack.artists,
+            album: currentTrack.album,
+            duration_ms: currentTrack.duration_ms,
+            uri: currentTrack.uri,
+            type: 'track',
+            source: 'spotify'
+          })
+
+          await setTrack(track)
+        } finally {
+          isUpdatingRef.current = false
         }
       })
 
@@ -120,7 +156,6 @@ export function SpotifyPlayerInitializer({
         if (success) {
           console.log('🎵 Spotify Player connected successfully!')
           window.spotifyPlayerInstance = player
-          playerInitialized.current = true
         } else {
           console.error('Failed to connect Spotify Player')
         }
@@ -145,22 +180,15 @@ export function SpotifyPlayerInitializer({
       document.body.appendChild(script)
     } else {
       console.log('✅ Spotify SDK already loaded')
-      // If SDK already loaded but player not initialized, trigger callback manually
       if (window.Spotify && !window.spotifyPlayerInstance) {
-        window.onSpotifyWebPlaybackSDKReady()
+        window.onSpotifyWebPlaybackSDKReady?.()
       }
     }
 
-    // Cleanup on unmount
     return () => {
-      if (window.spotifyPlayerInstance && playerInitialized.current) {
-        console.log('🔌 Disconnecting Spotify Player')
-        window.spotifyPlayerInstance.disconnect()
-        window.spotifyPlayerInstance = undefined
-        playerInitialized.current = false
-      }
+      // Keep player alive across navigations
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, setTrack, setPlayPause])
 
   return null
 }

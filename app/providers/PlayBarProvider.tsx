@@ -1,7 +1,7 @@
 'use client'
-import { Track } from '@/app/models/Track'
+import { Track, SpotifyTrack } from '@/app/models/Track'
 import { createContext, useState } from 'react'
-import { getBeatSignedUrl } from '../api'
+import { getBeatSignedUrl, getSpotifyAccessToken } from '../api'
 
 interface CachedUrl {
   url: string
@@ -30,35 +30,50 @@ export default function PlayBarProvider({
   const [urlCache, setUrlCache] = useState<Map<string, CachedUrl>>(new Map())
 
   const setTrack = async (track: Track | null) => {
-    if (track?.source === 'beat') {
-      if (!track?.id) {
-        setSelectedTrack(null)
-        return
-      }
+    if (!track) {
+      setSelectedTrack(null)
+      return
+    }
 
+    if (track.source === 'beat') {
+      if (window.spotifyPlayerInstance) {
+        await window.spotifyPlayerInstance.pause()
+      }
       const cached = urlCache.get(track.id)
       const now = Date.now()
 
-      // Check if cached URL exists and hasn't expired
       if (cached && cached.expiresAt > now) {
         setSelectedTrack({ ...track, audioUrl: cached.url } as Track)
       } else {
         const url = await getBeatSignedUrl(track.id)
-
-        // We use 55 min instead of 60 to ensure it doesn't expire mid-playback
         const expiresAt = now + 55 * 60 * 1000
-
         setUrlCache(prev => new Map(prev).set(track.id, { url, expiresAt }))
         setSelectedTrack({ ...track, audioUrl: url } as Track)
       }
-    } else {
-      setSelectedTrack(track)
+    } else if (track.source === 'spotify') {
+      const spotifyTrack = track as SpotifyTrack
+
+      if (!window.spotifyPlayerInstance) {
+        console.error('Spotify player not ready')
+        return
+      }
+
+      try {
+        if (track !== selectedTrack) {
+          console.log('Playing Spotify track:', spotifyTrack.name)
+          setSelectedTrack(track)
+          setIsPlaying(true)
+        }
+      } catch (error) {
+        console.error('Error playing Spotify track:', error)
+      }
     }
   }
 
   const setQueue = (track: Track, tracks: Track[]) => {
-    setCurrentIndex(tracks.findIndex(t => t.id === track.id))
-    setQueueState(tracks ?? [])
+    const index = tracks.findIndex(t => t.id === track.id)
+    setCurrentIndex(index)
+    setQueueState(tracks)
   }
 
   const setPlayPause = (value: boolean) => {
@@ -76,7 +91,7 @@ export default function PlayBarProvider({
     if (selectedTrack?.source === 'spotify') {
       await window.spotifyPlayerInstance?.nextTrack()
     } else {
-      if (queue && currentIndex < queue.length - 1) {
+      if (queue.length && currentIndex < queue.length - 1) {
         const newIndex = currentIndex + 1
         const nextTrack = queue[newIndex]
         setCurrentIndex(newIndex)
@@ -88,9 +103,8 @@ export default function PlayBarProvider({
   const onPrev = async () => {
     if (selectedTrack?.source === 'spotify') {
       await window.spotifyPlayerInstance?.previousTrack()
-      return
     } else {
-      if (queue && currentIndex > 0) {
+      if (queue.length && currentIndex > 0) {
         const newIndex = currentIndex - 1
         const prevTrack = queue[newIndex]
         setCurrentIndex(newIndex)
