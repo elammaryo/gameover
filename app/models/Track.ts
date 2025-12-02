@@ -44,25 +44,30 @@ export class SpotifyTrack extends BaseTrack {
   source: 'spotify' = 'spotify'
   name: string
   album: {
+    name: string
     images: [{ url: string }]
   }
-  artists: [{ name: string }]
-  spotifyId: string
-  albumName: string
-  previewUrl?: string
-  spotifyUrl: string
+  artists: [{ name: string; uri: string }]
+  mediaType: string
   images: { url: string; height: number; width: number }[]
 
   constructor(data: any) {
-    super(data)
+    super({
+      id: data.id,
+      title: data.name,
+      artist: data.artists?.[0]?.name || 'Unknown Artist',
+      durationMs: data.duration_ms,
+      artworkUrl: data.album?.images?.[0]?.url || data.images?.[0]?.url,
+      source: 'spotify'
+    })
+
+    this.id = data.id
     this.name = data.name
     this.album = data.album
-    this.spotifyId = data.spotifyId
     this.artists = data.artists
-    this.albumName = data.albumName
-    this.previewUrl = data.previewUrl
-    this.spotifyUrl = data.spotifyUrl
-    this.images = data.images
+    this.durationMs = data.duration_ms
+    this.mediaType = data.type || 'track'
+    this.images = data.album?.images || data.images || []
   }
 }
 
