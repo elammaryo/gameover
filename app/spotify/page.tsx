@@ -6,7 +6,7 @@ import { NavBar } from '../components/NavBar'
 import BlurText from '../components/BlurText'
 import Aurora from '../components/Aurora'
 import { PlaylistsSection } from '../components/PlaylistsSection'
-import { getPlaylists } from '../api'
+import { getPlaylists, getSpotifyAccessToken } from '../api'
 import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
 import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
@@ -38,7 +38,17 @@ export default function SpotifyPage() {
       .find(c => c.trim().startsWith('spotify_logged_in='))
       ?.split('=')[1]
 
-    setIsLoggedIn(loggedIn === 'true')
+    getSpotifyAccessToken().then(token => {
+      console.log('Spotify access token:', token)
+      const tokenExists = token !== undefined && token !== null
+      if (loggedIn === 'true' && tokenExists) {
+        setIsLoggedIn(true)
+      } else if (loggedIn === 'true' && !tokenExists) {
+        // TODO(): use refresh token to get a new access token
+      } else {
+        handleLogout().then(() => setIsLoggedIn(false))
+      }
+    })
 
     getPlaylists()
       .then(data => {

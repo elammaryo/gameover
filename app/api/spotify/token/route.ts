@@ -7,7 +7,7 @@ export async function GET() {
   if (!accessToken) {
     return NextResponse.json(
       { error: 'No access token found' },
-      { status: 401 }
+      { status: 200 }
     )
   }
   return NextResponse.json({ accessToken })
