@@ -281,7 +281,7 @@ export default function SpotifyPage() {
               </p>
             </div>
           ) : (
-            <PlaylistsSection playlists={playlists} isLoggedIn={isLoggedIn} />
+            <PlaylistsSection playlists={playlists} />
           )}
         </section>
 

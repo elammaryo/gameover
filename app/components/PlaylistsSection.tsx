@@ -3,13 +3,7 @@ import { Playlist } from '../models/Playlist'
 import Image from 'next/image'
 import { getSpotifyAccessToken, playSpotifyTrack } from '../api'
 
-export function PlaylistsSection({
-  playlists,
-  isLoggedIn
-}: {
-  playlists: Playlist[]
-  isLoggedIn: boolean
-}) {
+export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
   return (
     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
       {playlists.map(playlist => (
@@ -40,9 +34,6 @@ export function PlaylistsSection({
             <div
               className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform hover:scale-108'
               onClick={async e => {
-                if (!isLoggedIn) {
-                  return
-                }
                 const accessToken = await getSpotifyAccessToken()
                 fetch(playlist.tracks.href, {
                   headers: {
