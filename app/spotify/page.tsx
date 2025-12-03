@@ -39,14 +39,13 @@ export default function SpotifyPage() {
       ?.split('=')[1]
 
     getSpotifyAccessToken().then(token => {
-      console.log('Spotify access token:', token)
       const tokenExists = token !== undefined && token !== null
       if (loggedIn === 'true' && tokenExists) {
         setIsLoggedIn(true)
       } else if (loggedIn === 'true' && !tokenExists) {
         // TODO(): use refresh token to get a new access token
       } else {
-        handleLogout().then(() => setIsLoggedIn(false))
+        setIsLoggedIn(false)
       }
     })
 
@@ -54,7 +53,6 @@ export default function SpotifyPage() {
       .then(data => {
         setPlaylists(data)
         setLoading(false)
-        console.log(data[0])
       })
       .catch(error => {
         console.error('Error fetching playlists:', error)
