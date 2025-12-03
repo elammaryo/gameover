@@ -1,7 +1,7 @@
 export class Playlist {
   collaborative: boolean
   description: string | null
-  external_urls: any[]
+  external_urls: { spotify: string }
   href: string
   id: string
   images: any[]
@@ -16,7 +16,7 @@ export class Playlist {
   constructor(data: {
     collaborative: boolean
     description: string | null
-    external_urls: any[]
+    external_urls: { spotify: string }
     href: string
     id: string
     images: any[]

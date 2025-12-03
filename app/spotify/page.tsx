@@ -54,6 +54,7 @@ export default function SpotifyPage() {
       .then(data => {
         setPlaylists(data)
         setLoading(false)
+        console.log(data[0])
       })
       .catch(error => {
         console.error('Error fetching playlists:', error)
@@ -245,7 +246,7 @@ export default function SpotifyPage() {
                     </span>
                   </div>
                   <a
-                    href={playlists[0]?.external_urls[0]}
+                    href={playlists[0]?.external_urls.spotify}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-green-500 px-6 py-3 font-semibold text-black transition-all hover:scale-105 hover:bg-green-400'
