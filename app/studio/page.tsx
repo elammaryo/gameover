@@ -297,7 +297,7 @@ export default function Studio() {
               <p className='text-gray-400'>No playlists found.</p>
             </div>
           ) : (
-            <PlaylistsSection playlists={playlists} />
+            <PlaylistsSection playlists={playlists} isLoggedIn={false} />
           )}
         </section>
 
