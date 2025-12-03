@@ -1,6 +1,7 @@
 import { HiPlay } from 'react-icons/hi2'
 import { Playlist } from '../models/Playlist'
 import Image from 'next/image'
+import { getSpotifyAccessToken, playSpotifyTrack } from '../api'
 
 export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
   return (
@@ -32,7 +33,25 @@ export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
             </div>
             <div
               className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-xs font-semibold text-black transition-transform hover:scale-108'
-              onClick={e => {
+              onClick={async e => {
+                const accessToken = await getSpotifyAccessToken()
+                fetch(playlist.tracks.href, {
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`
+                  }
+                })
+                  .then(async response => {
+                    if (!response.ok) {
+                      throw new Error('Failed to play track')
+                    }
+                    const data = await response.json()
+                    const trackUris: string[] = []
+                    data.items.forEach((item: { track: { uri: string } }) => {
+                      trackUris.push(item.track.uri)
+                    })
+                    playSpotifyTrack({ uris: trackUris })
+                  })
+                  .catch(error => console.error('Error getting tracks', error))
                 e.stopPropagation() // Prevent outer button click
               }}
             >
