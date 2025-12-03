@@ -1,7 +1,7 @@
 'use client'
 import { Track, SpotifyTrack } from '@/app/models/Track'
 import { createContext, useState } from 'react'
-import { getBeatSignedUrl, getSpotifyAccessToken } from '../api'
+import { getBeatSignedUrl } from '../api'
 
 interface CachedUrl {
   url: string

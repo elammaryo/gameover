@@ -14,9 +14,9 @@ export function PlayerBar() {
     const [volume, setVolume] = useState(100)
     const audioRef = useRef<HTMLAudioElement>(null)
     const spotifyProgressInterval = useRef<NodeJS.Timeout | null>(null)
-    const isLoadingRef = useRef(false) // ✅ Track loading state
+    const isLoadingRef = useRef(false)
 
-    const { selectedTrack, setTrack, onNext, onPrev, isPlaying, setPlayPause } =
+    const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
       useContext(PlayBarContext)
     const track = selectedTrack
 
