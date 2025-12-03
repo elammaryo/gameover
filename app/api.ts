@@ -58,3 +58,25 @@ export async function getSpotifyAccessToken(): Promise<string | null> {
   const data = await res.json()
   return data.accessToken
 }
+
+export async function playSpotifyTrack({ uris }: { uris: string[] }) {
+  const deviceId = window.spotifyPlayerInstance?.deviceId
+  const accessToken = await getSpotifyAccessToken()
+  fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`
+    },
+    body: JSON.stringify({
+      uris: uris
+    })
+  })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error('Failed to play track')
+      }
+      window.spotifyPlayerInstance?.resume()
+    })
+    .catch(error => console.error('Error starting playback:', error))
+}
