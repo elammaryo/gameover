@@ -12,43 +12,42 @@ export async function GET() {
 
     if (!refreshToken) {
       cookiesStore.delete('spotify_logged_in')
-      return NextResponse.json(
-        { message: 'No refresh token found, logging out user' },
-        { status: 200 }
-      )
+      return NextResponse.json({
+        message: 'No refresh token found, logging out user',
+        status: 200
+      })
     }
 
     const token = await refreshAccessToken(refreshToken).catch(error => {
       console.error('Error refreshing Spotify access token:', error)
-      return NextResponse.json(
-        { message: 'Error refreshing access token' },
-        { status: 500 }
-      )
+      return NextResponse.json({
+        message: 'Error refreshing access token',
+        status: 500
+      })
     })
     accessToken = token.access_token
-    cookiesStore.delete('spotify_access_token')
-    cookiesStore.set('spotify_access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: token.expires_in
-    })
+    if (accessToken) {
+      cookiesStore.delete('spotify_access_token')
+      cookiesStore.set('spotify_access_token', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: token.expires_in
+      })
+    }
 
-    return NextResponse.json(
-      { accessToken: token.access_token },
-      { message: 'Access token refreshed successfully' }
-    )
+    return NextResponse.json({
+      accessToken: token.access_token,
+      statusText: 'Access token refreshed successfully'
+    })
   }
 
   if (!accessToken) {
-    return NextResponse.json(
-      { message: 'No access token found' },
-      { status: 200 }
-    )
+    return NextResponse.json({ message: 'No access token found', status: 200 })
   }
 
-  return NextResponse.json(
-    { accessToken },
-    { message: 'Access token retrieved successfully' },
-    { status: 200 }
-  )
+  return NextResponse.json({
+    accessToken,
+    statusText: 'Access token retrieved successfully',
+    status: 200
+  })
 }

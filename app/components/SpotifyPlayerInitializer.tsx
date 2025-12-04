@@ -82,6 +82,10 @@ export function SpotifyPlayerInitializer({
         name: 'GameOver Studio',
         getOAuthToken: async cb => {
           const accessToken = await getSpotifyAccessToken()
+          if (!accessToken) {
+            console.error('No access token available')
+            return
+          }
           cb(accessToken)
         },
         volume: 0.5
