@@ -1,10 +1,13 @@
 'use client'
 import NextImage from 'next/image'
-import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { HiShieldExclamation, HiXMark } from 'react-icons/hi2'
 import logo from '../../public/gameover-logo.png'
 
 export function NavBar({ selectedTab }: { selectedTab?: string }) {
+  const router = useRouter()
+  const pathname = usePathname()
   const tabs = ['studio', 'spotify', 'tech', 'about']
   const [showAlert, setShowAlert] = useState(false)
   const [hasBlocker, setHasBlocker] = useState(false)
@@ -95,53 +98,88 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
     detectBlocker()
   }, [])
 
+  const handleNavigation = (tab: string) => {
+    const currentIsHome = pathname === '/'
+    const nextIsMedia = tab === 'studio' || tab === 'spotify'
+
+    if (currentIsHome && nextIsMedia) {
+      const overlay = document.getElementById('transition-overlay')
+      const label = document.getElementById('transition-label')
+
+      if (overlay) {
+        overlay.style.opacity = '1'
+      }
+      if (label) {
+        label.classList.add('opacity-100', 'glitch-once')
+      }
+
+      setTimeout(() => {
+        router.push(`/${tab}`)
+      }, 500)
+    } else {
+      router.push(`/${tab}`)
+    }
+  }
+
   return (
     <>
-      <nav className='fixed top-0 z-50 flex w-full items-center justify-between gap-6 bg-black/50 px-8 py-6 backdrop-blur-sm sm:pr-18 sm:pl-10'>
-        <a href='/'>
+      <nav className='fixed top-0 z-20 flex w-full items-center justify-between gap-2 bg-black/50 px-4 py-4 backdrop-blur-sm sm:gap-6 sm:px-10 sm:py-7'>
+        <a href='/' className='flex-shrink-0'>
           <NextImage
             width={100}
             height={35}
             src={logo.src}
-            className='h-3.5 w-auto object-contain'
+            className='h-3 w-auto object-contain sm:h-3.5'
             alt='Logo'
           />
         </a>
 
-        <div className='flex items-center gap-6'>
-          <div className='flex space-x-5 sm:space-x-12'>
-            {tabs.map(tab => (
-              <div className='flex flex-col' key={tab}>
-                <a
-                  href={`/${tab}`}
-                  className={
-                    'text-white' + (selectedTab === tab ? ' font-bold' : '')
-                  }
+        {/* Center: Tabs + Status (shifted right on mobile, centered on desktop) */}
+        <div className='flex flex-1 items-center justify-end gap-3 sm:absolute sm:left-1/2 sm:-translate-x-1/2 sm:justify-center sm:gap-4'>
+          <div className='flex gap-6 text-sm sm:gap-10 sm:text-base'>
+            {tabs.map(tab => {
+              const isActive = selectedTab === tab
+              return (
+                <button
+                  key={tab}
+                  onClick={() => handleNavigation(tab)}
+                  className={`group relative font-mono text-xs tracking-[0.15em] whitespace-nowrap uppercase transition-all duration-200 sm:text-lg ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </a>
-                {selectedTab === tab && (
-                  <div className='mt-1 h-0.5 w-full bg-white'></div>
-                )}
-              </div>
-            ))}
+                  {tab}
+                  <span
+                    className={`absolute -bottom-1 left-0 h-[2px] w-full bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400 transition-all duration-300 ${
+                      isActive
+                        ? 'scale-x-100 opacity-100'
+                        : 'scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-50'
+                    }`}
+                  />
+                </button>
+              )
+            })}
           </div>
 
-          {/* Status Warning Button */}
+          {/* Status - Next to tabs */}
           {hasBlocker && (
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className='group relative flex items-center gap-2 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-3 py-2 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20'
+              className='group relative ml-2 flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-2 py-1.5 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20 sm:ml-4 sm:gap-2 sm:px-3 sm:py-2'
               aria-label='Content blocker detected'
             >
               {/* Pulsing dot indicator */}
-              <span className='absolute -top-1 -right-1 flex h-3 w-3'>
+              <span className='absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3'>
                 <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75'></span>
-                <span className='relative inline-flex h-3 w-3 rounded-full bg-amber-500'></span>
+                <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500 sm:h-3 sm:w-3'></span>
               </span>
 
               {/* Shield warning icon */}
-              <HiShieldExclamation size={20} className='text-amber-400' />
+              <HiShieldExclamation
+                size={18}
+                className='h-5 w-5 text-amber-400'
+              />
 
               {/* Status text (hidden on mobile) */}
               <span className='hidden text-xs font-medium text-amber-400 sm:inline'>
@@ -150,14 +188,17 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             </button>
           )}
 
-          {/* Checking indicator (optional) */}
+          {/* Checking indicator */}
           {isChecking && !hasBlocker && (
-            <div className='flex items-center gap-2 text-xs text-gray-500'>
-              <div className='h-2 w-2 animate-pulse rounded-full bg-gray-500'></div>
+            <div className='ml-2 flex flex-shrink-0 items-center gap-1.5 text-xs text-gray-500 sm:ml-4 sm:gap-2'>
+              <div className='h-1.5 w-1.5 animate-pulse rounded-full bg-gray-500 sm:h-2 sm:w-2'></div>
               <span className='hidden sm:inline'>Checking...</span>
             </div>
           )}
         </div>
+
+        {/* Right spacer for balance */}
+        <div className='w-[100px] flex-shrink-0 sm:w-[120px]' />
       </nav>
 
       {/* Alert Modal */}
