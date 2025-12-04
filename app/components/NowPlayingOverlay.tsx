@@ -10,6 +10,7 @@ import {
   HiXMark,
   HiChevronDown
 } from 'react-icons/hi2'
+import { HiVolumeUp } from 'react-icons/hi'
 import { BeatTrack, SpotifyTrack } from '../models/Track'
 import ElasticSlider from './ElasticSlider'
 
@@ -36,10 +37,12 @@ export function NowPlayingOverlay({
 }: NowPlayingOverlayProps) {
   const { selectedTrack, isPlaying, setPlayPause, onNext, onPrev } =
     useContext(PlayBarContext)
-  const [touchStart, setTouchStart] = useState(0)
-  const [touchEnd, setTouchEnd] = useState(0)
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
+    null
+  )
   const [dragY, setDragY] = useState(0)
   const overlayRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const isMobile =
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
@@ -57,16 +60,30 @@ export function NowPlayingOverlay({
 
   // Handle swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX)
+    // Only track touches on the scrollable content area
+    if (!contentRef.current?.contains(e.target as Node)) return
+
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    })
     setDragY(e.targetTouches[0].clientY)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
+    if (!touchStart) return
+
     const currentY = e.targetTouches[0].clientY
     const diff = currentY - dragY
-    if (diff > 0 && isMobile) {
-      // Only allow dragging down on mobile
+
+    // Only allow dragging down when at the top of scroll
+    if (
+      contentRef.current &&
+      contentRef.current.scrollTop === 0 &&
+      diff > 0 &&
+      isMobile
+    ) {
+      e.preventDefault() // Prevent scrolling while dragging
       overlayRef.current?.style.setProperty(
         'transform',
         `translateY(${diff}px)`
@@ -74,7 +91,9 @@ export function NowPlayingOverlay({
     }
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return
+
     const currentY = parseFloat(
       overlayRef.current?.style.transform.match(/translateY\(([^)]+)\)/)?.[1] ||
         '0'
@@ -84,26 +103,36 @@ export function NowPlayingOverlay({
       overlayRef.current.style.setProperty('transform', 'translateY(0)')
     }
 
+    const touchEnd = {
+      x: e.changedTouches[0].clientX,
+      y: e.changedTouches[0].clientY
+    }
+
     // Swipe down to close (mobile) - threshold 100px
     if (currentY > 100) {
       onClose()
+      setTouchStart(null)
+      setDragY(0)
       return
     }
 
-    // Swipe left/right to navigate
-    const swipeDistance = touchStart - touchEnd
+    // Calculate swipe distances
+    const swipeDistanceX = touchStart.x - touchEnd.x
+    const swipeDistanceY = Math.abs(touchStart.y - touchEnd.y)
     const minSwipeDistance = 50
 
-    if (swipeDistance > minSwipeDistance) {
-      // Swipe left - next track
-      onNext()
-    } else if (swipeDistance < -minSwipeDistance) {
-      // Swipe right - previous track
-      onPrev()
+    // Only trigger horizontal swipes if movement is primarily horizontal
+    if (Math.abs(swipeDistanceX) > minSwipeDistance && swipeDistanceY < 30) {
+      if (swipeDistanceX > 0) {
+        // Swipe left - next track
+        onNext()
+      } else {
+        // Swipe right - previous track
+        onPrev()
+      }
     }
 
-    setTouchStart(0)
-    setTouchEnd(0)
+    setTouchStart(null)
     setDragY(0)
   }
 
@@ -144,46 +173,48 @@ export function NowPlayingOverlay({
   // Mobile: Full-screen overlay
   if (isMobile) {
     return (
-      <>
-        {/* Main overlay */}
+      <div
+        className='fixed inset-0 z-[61] flex flex-col bg-gradient-to-b from-[#0a0810] via-[#05040A] to-black'
+        ref={overlayRef}
+        style={{ transition: 'transform 0.2s ease-out' }}
+      >
+        {/* Swipe indicator */}
+        <div className='pt-safe flex flex-shrink-0 justify-center pt-2 pb-3'>
+          <div className='h-1 w-12 rounded-full bg-white/30' />
+        </div>
+
+        {/* Header */}
+        <div className='flex flex-shrink-0 items-center justify-between px-4 pb-3'>
+          <button
+            onClick={onClose}
+            className='rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
+          >
+            <HiChevronDown size={24} />
+          </button>
+          <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
+            Now Playing
+          </span>
+          <button
+            onClick={onClose}
+            className='rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
+          >
+            <HiXMark size={24} />
+          </button>
+        </div>
+
+        {/* Scrollable Content - fills remaining space */}
         <div
-          className='pt-safe fixed inset-0 z-[61] overflow-y-auto bg-gradient-to-b from-[#0a0810] via-[#05040A] to-black'
+          ref={contentRef}
+          className='flex-1 overflow-x-hidden overflow-y-auto px-6 pb-6'
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          ref={overlayRef}
-          style={{ transition: 'transform 0.2s ease-out' }}
         >
-          {/* Swipe indicator */}
-          <div className='flex justify-center pt-2 pb-4'>
-            <div className='h-1 w-12 rounded-full bg-white/30' />
-          </div>
-
-          {/* Header */}
-          <div className='flex items-center justify-between px-4 pb-4'>
-            <button
-              onClick={onClose}
-              className='rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
-            >
-              <HiChevronDown size={24} />
-            </button>
-            <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-              Now Playing
-            </span>
-            <button
-              onClick={onClose}
-              className='rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
-            >
-              <HiXMark size={24} />
-            </button>
-          </div>
-
-          {/* Main Content */}
-          <div className='flex flex-col items-center px-6 pb-32'>
+          <div className='flex min-h-full flex-col items-center justify-center'>
             {/* Artwork */}
-            <div className='w-full max-w-md'>
+            <div className='w-full max-w-[min(85vw,400px)]'>
               {selectedTrack.artworkUrl ? (
-                <div className='relative aspect-square w-full overflow-hidden rounded-3xl shadow-2xl shadow-cyan-500/20'>
+                <div className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'>
                   <Image
                     src={selectedTrack.artworkUrl}
                     alt={selectedTrack.title}
@@ -192,22 +223,22 @@ export function NowPlayingOverlay({
                   />
                 </div>
               ) : (
-                <div className='aspect-square w-full rounded-3xl bg-gradient-to-br from-cyan-500 via-blue-500 to-fuchsia-500' />
+                <div className='aspect-square w-full rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-500 to-fuchsia-500' />
               )}
             </div>
 
             {/* Track Info */}
-            <div className='mt-8 w-full max-w-md'>
-              <h1 className='text-3xl font-bold text-white'>
+            <div className='mt-6 w-full max-w-[min(85vw,400px)]'>
+              <h1 className='text-xl font-bold text-white sm:text-2xl'>
                 {selectedTrack.title}
               </h1>
-              <p className='mt-2 text-lg text-gray-400'>
+              <p className='mt-1 text-sm text-gray-400 sm:text-base'>
                 {selectedTrack.artist}
               </p>
 
               {/* Metadata */}
               {beatTrack && (
-                <div className='mt-4 flex flex-wrap gap-2'>
+                <div className='mt-3 flex flex-wrap gap-2'>
                   <span className='rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300'>
                     {beatTrack.genre}
                   </span>
@@ -228,7 +259,7 @@ export function NowPlayingOverlay({
               )}
 
               {spotifyTrack && (
-                <div className='mt-4 flex flex-wrap gap-2'>
+                <div className='mt-3 flex flex-wrap gap-2'>
                   <span className='rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-semibold text-green-300'>
                     {spotifyTrack.album.name}
                   </span>
@@ -237,7 +268,7 @@ export function NowPlayingOverlay({
             </div>
 
             {/* Progress Bar */}
-            <div className='mt-8 w-full max-w-md'>
+            <div className='mt-5 w-full max-w-[min(85vw,400px)]'>
               <div
                 className='relative h-1 cursor-pointer overflow-hidden rounded-full bg-white/20'
                 onClick={handleProgressClick}
@@ -254,35 +285,37 @@ export function NowPlayingOverlay({
             </div>
 
             {/* Controls */}
-            <div className='mt-8 flex w-full max-w-md items-center justify-center gap-8'>
+            <div className='mt-5 flex w-full max-w-[min(85vw,400px)] items-center justify-center gap-4 sm:gap-6'>
               <button
                 onClick={onPrev}
                 disabled={!selectedTrack}
-                className='rounded-full p-3 text-white transition-transform hover:scale-110 disabled:opacity-50'
+                className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-50 sm:p-3'
               >
-                <HiBackward size={32} />
+                <HiBackward size={24} className='sm:h-7 sm:w-7' />
               </button>
               <button
                 onClick={handlePlayPause}
                 disabled={!selectedTrack}
-                className='flex h-20 w-20 items-center justify-center rounded-full bg-white text-black shadow-lg shadow-white/20 transition-transform hover:scale-105 disabled:opacity-50'
+                className='flex h-14 w-14 items-center justify-center rounded-full bg-white text-black shadow-lg shadow-white/20 transition-transform active:scale-95 disabled:opacity-50 sm:h-16 sm:w-16'
               >
-                {isPlaying ? <HiPause size={36} /> : <HiPlay size={36} />}
+                {isPlaying ? (
+                  <HiPause size={28} className='sm:h-8 sm:w-8' />
+                ) : (
+                  <HiPlay size={28} className='sm:h-8 sm:w-8' />
+                )}
               </button>
               <button
                 onClick={onNext}
                 disabled={!selectedTrack}
-                className='rounded-full p-3 text-white transition-transform hover:scale-110 disabled:opacity-50'
+                className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-50 sm:p-3'
               >
-                <HiForward size={32} />
+                <HiForward size={24} className='sm:h-7 sm:w-7' />
               </button>
             </div>
 
-            {/* Volume removed for mobile */}
-
             {/* Queue Preview */}
             {queue.length > 0 && (
-              <div className='mt-12 w-full max-w-md'>
+              <div className='mt-8 w-full max-w-[min(85vw,400px)]'>
                 <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
                   Next in Queue
                 </h3>
@@ -301,7 +334,7 @@ export function NowPlayingOverlay({
                           className='rounded-lg'
                         />
                       ) : (
-                        <div className='h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
+                        <div className='h-10 w-10 flex-shrink-0 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
                       )}
                       <div className='flex-1 overflow-hidden'>
                         <p className='truncate text-sm font-semibold text-white'>
@@ -318,7 +351,7 @@ export function NowPlayingOverlay({
             )}
           </div>
         </div>
-      </>
+      </div>
     )
   }
 
@@ -327,7 +360,7 @@ export function NowPlayingOverlay({
     <>
       {/* Side panel */}
       <div
-        className='fixed inset-y-0 right-0 z-30 w-[400px] border-l border-white/10 bg-[#05040A]/98 pb-20 shadow-2xl'
+        className='fixed inset-y-0 right-0 z-[61] w-[400px] border-l border-white/10 bg-[#05040A]/98 shadow-2xl'
         ref={overlayRef}
       >
         {/* Header */}
@@ -343,8 +376,8 @@ export function NowPlayingOverlay({
           </button>
         </div>
 
-        {/* Content */}
-        <div className='flex h-[calc(100vh-80px)] flex-col overflow-y-auto p-6'>
+        {/* Content - Scrollable with proper height */}
+        <div className='h-[calc(100vh-80px)] overflow-y-auto p-6'>
           {/* Artwork */}
           <div className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'>
             {selectedTrack.artworkUrl ? (
@@ -385,7 +418,7 @@ export function NowPlayingOverlay({
           </div>
 
           {/* Controls */}
-          <div className='mt-6 flex items-center justify-center gap-6'>
+          <div className='mt-6 mb-8 flex items-center justify-center gap-6'>
             <button
               onClick={onPrev}
               disabled={!selectedTrack}
@@ -407,6 +440,19 @@ export function NowPlayingOverlay({
             >
               <HiForward size={24} />
             </button>
+          </div>
+
+          {/* Volume */}
+          <div className='mt-6'>
+            <div className='flex -translate-x-4 items-center justify-center gap-4'>
+              <HiVolumeUp size={20} className='text-gray-400' />
+              <ElasticSlider
+                value={volume}
+                onChange={onVolumeChange}
+                maxValue={100}
+                startingValue={0}
+              />
+            </div>
           </div>
 
           {/* Beat Metadata */}

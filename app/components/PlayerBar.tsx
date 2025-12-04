@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import ElasticSlider from './ElasticSlider'
 import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
+import { HiVolumeUp } from 'react-icons/hi'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -20,8 +21,6 @@ export function PlayerBar() {
   const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
     useContext(PlayBarContext)
   const track = selectedTrack
-
-  // Only show PlayerBar on studio and spotify pages
   const shouldShowPlayer = pathname !== '/'
 
   // ✅ Handle Spotify progress
@@ -65,8 +64,6 @@ export function PlayerBar() {
     if (isLoadingRef.current) return
 
     isLoadingRef.current = true
-
-    // Reset current time when changing tracks
     setCurrentTime(0)
 
     const handleCanPlay = () => {
@@ -91,7 +88,6 @@ export function PlayerBar() {
     audio.addEventListener('canplay', handleCanPlay)
     audio.addEventListener('error', handleError)
 
-    // Load the new track
     audio.load()
 
     return () => {
@@ -118,7 +114,6 @@ export function PlayerBar() {
     }
   }, [isPlaying, selectedTrack?.source])
 
-  // Update volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100
@@ -351,7 +346,7 @@ export function PlayerBar() {
               data-volume-slider
               className='mr-10 hidden w-[30%] items-center justify-end gap-2 sm:flex'
             >
-              <span className='mr-5 text-[10px] text-gray-500'>VOL</span>
+              <HiVolumeUp size={20} className='mr-6 text-gray-400' />
               <ElasticSlider
                 value={volume}
                 onChange={val => setVolume(val)}
