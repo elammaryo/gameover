@@ -1,9 +1,8 @@
 const credentials = `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
 const authHeader = `Basic ${Buffer.from(credentials).toString('base64')}`
-const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN || ''
 const tokenEndpoint = 'https://accounts.spotify.com/api/token'
 
-export async function requestToken() {
+export async function requestMyToken() {
   try {
     const res = await fetch(tokenEndpoint, {
       method: 'POST',
@@ -26,7 +25,9 @@ export async function requestToken() {
   }
 }
 
-export async function refreshAccessToken() {
+export async function refreshAccessToken(refreshToken: string) {
+  if (!refreshToken) return
+
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken
