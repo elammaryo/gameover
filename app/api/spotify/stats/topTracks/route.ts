@@ -19,11 +19,14 @@ export async function GET() {
     })
   }
 
-  const res = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=5', {
-    headers: {
-      Authorization: `Bearer ${token?.access_token}`
+  const res = await fetch(
+    'https://api.spotify.com/v1/me/top/tracks?limit=5&time_range=short_term',
+    {
+      headers: {
+        Authorization: `Bearer ${token?.access_token}`
+      }
     }
-  })
+  )
   const data = await res.json()
 
   return new NextResponse(JSON.stringify({ topTracks: data.items ?? [] }), {
