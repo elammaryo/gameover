@@ -26,7 +26,7 @@ export async function requestMyToken() {
 }
 
 export async function refreshAccessToken(refreshToken: string) {
-  if (!refreshToken) return
+  if (!refreshToken) return null
 
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
