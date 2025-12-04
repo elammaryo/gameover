@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import ElasticSlider from './ElasticSlider'
 import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
+import { HiVolumeUp } from 'react-icons/hi'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -20,8 +21,6 @@ export function PlayerBar() {
   const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
     useContext(PlayBarContext)
   const track = selectedTrack
-
-  // Only show PlayerBar on studio and spotify pages
   const shouldShowPlayer = pathname !== '/'
 
   // ✅ Handle Spotify progress
@@ -65,8 +64,6 @@ export function PlayerBar() {
     if (isLoadingRef.current) return
 
     isLoadingRef.current = true
-
-    // Reset current time when changing tracks
     setCurrentTime(0)
 
     const handleCanPlay = () => {
@@ -91,7 +88,6 @@ export function PlayerBar() {
     audio.addEventListener('canplay', handleCanPlay)
     audio.addEventListener('error', handleError)
 
-    // Load the new track
     audio.load()
 
     return () => {
@@ -118,7 +114,6 @@ export function PlayerBar() {
     }
   }, [isPlaying, selectedTrack?.source])
 
-  // Update volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100
@@ -185,22 +180,9 @@ export function PlayerBar() {
     setCurrentTime(time)
   }
 
-  const handlePlayerBarClick = (e: React.MouseEvent) => {
-    // Don't open overlay if clicking on interactive elements
-    const target = e.target as HTMLElement
-    if (
-      target.closest('button') ||
-      target.closest('[data-progress-bar]') ||
-      target.closest('[data-volume-slider]')
-    ) {
-      return
-    }
-    setIsOverlayOpen(true)
-  }
-
   const handleArtworkClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setIsOverlayOpen(true)
+    setIsOverlayOpen(!isOverlayOpen)
   }
 
   function formatTime(seconds: number) {
@@ -212,7 +194,6 @@ export function PlayerBar() {
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
-  // Hide the player UI on pages other than studio/spotify, but keep the component mounted
   if (!shouldShowPlayer) {
     return (
       <>
@@ -252,14 +233,11 @@ export function PlayerBar() {
             src={track.audioUrl}
           />
         )}
-        <div className='px-0 pb-0'>
-          <div
-            className='flex w-full items-center gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] max-sm:pb-8 md:cursor-default'
-            onClick={handlePlayerBarClick}
-          >
+        <div className='pb-safe mb-safe px-0'>
+          <div className='relative flex w-full items-center justify-between gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] max-sm:pb-8 sm:py-8 md:cursor-default'>
             {/* LEFT: cover + titles */}
             <div
-              className='flex min-w-0 items-center gap-3 md:cursor-pointer'
+              className='flex min-w-0 flex-1 items-center gap-3 sm:w-[30%] sm:flex-none md:cursor-pointer'
               onClick={handleArtworkClick}
             >
               {track?.artworkUrl ? (
@@ -268,10 +246,10 @@ export function PlayerBar() {
                   height={100}
                   src={track.artworkUrl}
                   alt={track.title}
-                  className='h-10 w-10 rounded-xl'
+                  className='h-10 w-10 flex-shrink-0 rounded-xl'
                 />
               ) : (
-                <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
+                <div className='h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
               )}
               <div className='flex min-w-0 flex-col'>
                 <span className='truncate text-sm font-semibold'>
@@ -282,7 +260,7 @@ export function PlayerBar() {
                 </span>
               </div>
               {isPlaying && (
-                <div className='ml-1 flex h-4 items-end gap-[2px] text-cyan-300'>
+                <div className='ml-1 hidden h-4 flex-shrink-0 items-end gap-[2px] text-cyan-300 sm:flex'>
                   <span className='eq-bar-1 w-[2px] bg-cyan-300' />
                   <span className='eq-bar-2 w-[2px] bg-cyan-300' />
                   <span className='eq-bar-3 w-[2px] bg-cyan-300' />
@@ -290,10 +268,10 @@ export function PlayerBar() {
               )}
             </div>
 
-            {/* CENTER: time + progress + controls */}
-            <div className='flex flex-1 items-center justify-center'>
-              <div className='flex w-full max-w-[520px] flex-col items-end gap-2 sm:items-center'>
-                <div className='flex items-center justify-center gap-2 pl-2'>
+            {/* CENTER: time + progress + controls - Absolutely centered on desktop */}
+            <div className='pointer-events-none absolute left-1/2 hidden -translate-x-1/2 sm:block'>
+              <div className='pointer-events-auto flex flex-col items-center gap-2'>
+                <div className='flex items-center justify-center gap-2'>
                   <button
                     onClick={onPrev}
                     disabled={!track}
@@ -317,7 +295,7 @@ export function PlayerBar() {
                   </button>
                 </div>
 
-                <div className='flex w-full items-center gap-2 max-sm:hidden'>
+                <div className='flex w-[30vw] items-center gap-2'>
                   <span className='text-[10px] text-gray-500'>
                     {formatTime(currentTime)}
                   </span>
@@ -338,12 +316,37 @@ export function PlayerBar() {
               </div>
             </div>
 
+            {/* Mobile controls - shown only on mobile */}
+            <div className='flex flex-1 items-center justify-end gap-2 sm:hidden'>
+              <button
+                onClick={onPrev}
+                disabled={!track}
+                className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+              >
+                <HiBackward size={14} />
+              </button>
+              <button
+                onClick={onPlayPause}
+                disabled={!track?.id}
+                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
+              >
+                {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
+              </button>
+              <button
+                onClick={onNext}
+                disabled={!track}
+                className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+              >
+                <HiForward size={14} />
+              </button>
+            </div>
+
             {/* RIGHT: volume */}
             <div
               data-volume-slider
-              className='hidden basis-[22%] items-center justify-center gap-2 sm:flex'
+              className='mr-10 hidden w-[30%] items-center justify-end gap-2 sm:flex'
             >
-              <span className='mr-5 text-[10px] text-gray-500'>VOL</span>
+              <HiVolumeUp size={20} className='mr-6 text-gray-400' />
               <ElasticSlider
                 value={volume}
                 onChange={val => setVolume(val)}

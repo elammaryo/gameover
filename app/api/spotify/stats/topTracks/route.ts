@@ -8,9 +8,11 @@ let token: {
   expires_at: number
 } | null = null
 
+const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN || ''
+
 export async function GET() {
   if (!token?.access_token || Date.now() >= token.expires_at) {
-    token = await refreshAccessToken()
+    token = await refreshAccessToken(refreshToken)
   }
 
   if (!token) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requestToken } from '@/lib/spotify'
+import { requestMyToken } from '@/lib/spotify'
 
 const userId = process.env.USER_ID
 let token: {
@@ -12,7 +12,7 @@ let token: {
 export async function GET(request: Request) {
   try {
     if (!token?.access_token || Date.now() >= token.expires_at) {
-      token = await requestToken()
+      token = await requestMyToken()
     }
 
     const res = await fetch(
