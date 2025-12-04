@@ -79,10 +79,9 @@ export function SpotifyPlayerInitializer({
       console.log('🎵 Initializing Spotify Player...')
 
       const player = new window.Spotify.Player({
-        name: 'GameOver Studio Player',
+        name: 'GameOver Studio',
         getOAuthToken: async cb => {
           const accessToken = await getSpotifyAccessToken()
-          if (!accessToken) return
           cb(accessToken)
         },
         volume: 0.5
@@ -104,7 +103,7 @@ export function SpotifyPlayerInitializer({
 
       player.addListener('authentication_error', ({ message }) => {
         console.error('❌ Authentication error:', message)
-        window.spotifyPlayerInstance = undefined // ✅ Clear on error
+        window.spotifyPlayerInstance = undefined
       })
 
       player.addListener('account_error', ({ message }) => {
