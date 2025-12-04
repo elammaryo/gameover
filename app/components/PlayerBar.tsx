@@ -5,180 +5,243 @@ import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { NowPlayingOverlay } from './NowPlayingOverlay'
 
 export function PlayerBar() {
   const pathname = usePathname()
-  if (pathname === '/studio' || pathname === '/spotify') {
-    const [currentTime, setCurrentTime] = useState(0)
-    const [duration, setDuration] = useState(0)
-    const [volume, setVolume] = useState(100)
-    const audioRef = useRef<HTMLAudioElement>(null)
-    const spotifyProgressInterval = useRef<NodeJS.Timeout | null>(null)
-    const isLoadingRef = useRef(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(100)
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const spotifyProgressInterval = useRef<NodeJS.Timeout | null>(null)
+  const isLoadingRef = useRef(false)
 
-    const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
-      useContext(PlayBarContext)
-    const track = selectedTrack
+  const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause } =
+    useContext(PlayBarContext)
+  const track = selectedTrack
 
-    // ✅ Handle Spotify progress
-    useEffect(() => {
-      if (selectedTrack?.source === 'spotify' && window.spotifyPlayerInstance) {
-        if (spotifyProgressInterval.current) {
-          clearInterval(spotifyProgressInterval.current)
-        }
+  // Only show PlayerBar on studio and spotify pages
+  const shouldShowPlayer = pathname !== '/'
 
-        if (selectedTrack.durationMs) {
-          setDuration(selectedTrack.durationMs / 1000)
-        }
-
-        spotifyProgressInterval.current = setInterval(async () => {
-          const state = await window.spotifyPlayerInstance?.getCurrentState()
-          if (state) {
-            setCurrentTime(state.position / 1000)
-            setDuration(state.duration / 1000)
-          }
-        }, 100)
-
-        return () => {
-          if (spotifyProgressInterval.current) {
-            clearInterval(spotifyProgressInterval.current)
-          }
-        }
-      } else {
-        if (spotifyProgressInterval.current) {
-          clearInterval(spotifyProgressInterval.current)
-          spotifyProgressInterval.current = null
-        }
-      }
-    }, [selectedTrack?.source, selectedTrack?.id])
-
-    // ✅ Update audio element when track changes
-    useEffect(() => {
-      const audio = audioRef.current
-      if (!audio || !track?.audioUrl || track?.source !== 'beat') return
-
-      // Prevent loading if already loading
-      if (isLoadingRef.current) return
-
-      isLoadingRef.current = true
-
-      // Reset current time when changing tracks
-      setCurrentTime(0)
-
-      const handleCanPlay = () => {
-        isLoadingRef.current = false
-        audio
-          .play()
-          .then(() => {
-            setPlayPause(true)
-          })
-          .catch(err => {
-            console.error('Auto-play error:', err)
-            setPlayPause(false)
-          })
+  // ✅ Handle Spotify progress
+  useEffect(() => {
+    if (selectedTrack?.source === 'spotify' && window.spotifyPlayerInstance) {
+      if (spotifyProgressInterval.current) {
+        clearInterval(spotifyProgressInterval.current)
       }
 
-      const handleError = () => {
-        isLoadingRef.current = false
-        console.error('Audio load error')
-        setPlayPause(false)
+      if (selectedTrack.durationMs) {
+        setDuration(selectedTrack.durationMs / 1000)
       }
 
-      audio.addEventListener('canplay', handleCanPlay)
-      audio.addEventListener('error', handleError)
-
-      // Load the new track
-      audio.load()
+      spotifyProgressInterval.current = setInterval(async () => {
+        const state = await window.spotifyPlayerInstance?.getCurrentState()
+        if (state) {
+          setCurrentTime(state.position / 1000)
+          setDuration(state.duration / 1000)
+        }
+      }, 100)
 
       return () => {
-        audio.removeEventListener('canplay', handleCanPlay)
-        audio.removeEventListener('error', handleError)
-      }
-    }, [track?.audioUrl, track?.id])
-
-    // ✅ Play/pause control
-    useEffect(() => {
-      const audio = audioRef.current
-      if (!audio || selectedTrack?.source !== 'beat') return
-
-      if (isPlaying) {
-        const playPromise = audio.play()
-        if (playPromise !== undefined) {
-          playPromise.catch(err => {
-            console.error('Play error:', err)
-            setPlayPause(false)
-          })
+        if (spotifyProgressInterval.current) {
+          clearInterval(spotifyProgressInterval.current)
         }
+      }
+    } else {
+      if (spotifyProgressInterval.current) {
+        clearInterval(spotifyProgressInterval.current)
+        spotifyProgressInterval.current = null
+      }
+    }
+  }, [selectedTrack?.source, selectedTrack?.id])
+
+  // ✅ Update audio element when track changes
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !track?.audioUrl || track?.source !== 'beat') return
+
+    // Prevent loading if already loading
+    if (isLoadingRef.current) return
+
+    isLoadingRef.current = true
+
+    // Reset current time when changing tracks
+    setCurrentTime(0)
+
+    const handleCanPlay = () => {
+      isLoadingRef.current = false
+      audio
+        .play()
+        .then(() => {
+          setPlayPause(true)
+        })
+        .catch(err => {
+          console.error('Auto-play error:', err)
+          setPlayPause(false)
+        })
+    }
+
+    const handleError = () => {
+      isLoadingRef.current = false
+      console.error('Audio load error')
+      setPlayPause(false)
+    }
+
+    audio.addEventListener('canplay', handleCanPlay)
+    audio.addEventListener('error', handleError)
+
+    // Load the new track
+    audio.load()
+
+    return () => {
+      audio.removeEventListener('canplay', handleCanPlay)
+      audio.removeEventListener('error', handleError)
+    }
+  }, [track?.audioUrl, track?.id])
+
+  // ✅ Play/pause control
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || selectedTrack?.source !== 'beat') return
+
+    if (isPlaying) {
+      const playPromise = audio.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.error('Play error:', err)
+          setPlayPause(false)
+        })
+      }
+    } else {
+      audio.pause()
+    }
+  }, [isPlaying, selectedTrack?.source])
+
+  // Update volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100
+    }
+
+    if (window.spotifyPlayerInstance) {
+      window.spotifyPlayerInstance.setVolume(volume / 100)
+    }
+  }, [volume])
+
+  function onPlayPause() {
+    setPlayPause(!isPlaying)
+    if (selectedTrack?.source === 'spotify') {
+      const player = window.spotifyPlayerInstance
+      if (!isPlaying) {
+        player?.resume()
       } else {
-        audio.pause()
-      }
-    }, [isPlaying, selectedTrack?.source])
-
-    // Update volume
-    useEffect(() => {
-      if (audioRef.current) {
-        audioRef.current.volume = volume / 100
-      }
-
-      if (window.spotifyPlayerInstance) {
-        window.spotifyPlayerInstance.setVolume(volume / 100)
-      }
-    }, [volume])
-
-    function onPlayPause() {
-      setPlayPause(!isPlaying)
-      if (selectedTrack?.source === 'spotify') {
-        const player = window.spotifyPlayerInstance
-        if (!isPlaying) {
-          player?.resume()
-        } else {
-          player?.pause()
-        }
+        player?.pause()
       }
     }
+  }
 
-    function handleTimeUpdate() {
-      if (audioRef.current && selectedTrack?.source === 'beat') {
-        setCurrentTime(audioRef.current.currentTime)
-      }
+  function handleTimeUpdate() {
+    if (audioRef.current && selectedTrack?.source === 'beat') {
+      setCurrentTime(audioRef.current.currentTime)
     }
+  }
 
-    function handleLoadedMetadata() {
-      if (audioRef.current && selectedTrack?.source === 'beat') {
-        setDuration(audioRef.current.duration)
-      }
+  function handleLoadedMetadata() {
+    if (audioRef.current && selectedTrack?.source === 'beat') {
+      setDuration(audioRef.current.duration)
     }
+  }
 
-    function handleEnded() {
-      onNext()
-    }
+  function handleEnded() {
+    onNext()
+  }
 
-    function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const percent = (e.clientX - rect.left) / rect.width
-      const newTime = percent * duration
+  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const percent = (e.clientX - rect.left) / rect.width
+    const newTime = percent * duration
 
-      if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
-        window.spotifyPlayerInstance.seek(newTime * 1000) // Convert to ms
-        setCurrentTime(newTime)
-        return
-      }
-
-      if (!audioRef.current) return
-      audioRef.current.currentTime = newTime
+    if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
+      window.spotifyPlayerInstance.seek(newTime * 1000) // Convert to ms
       setCurrentTime(newTime)
+      return
     }
 
-    function formatTime(seconds: number) {
-      if (isNaN(seconds)) return '0:00'
-      const mins = Math.floor(seconds / 60)
-      const secs = Math.floor(seconds % 60)
-      return `${mins}:${secs.toString().padStart(2, '0')}`
+    if (!audioRef.current) return
+    audioRef.current.currentTime = newTime
+    setCurrentTime(newTime)
+  }
+
+  function handleSeekFromOverlay(time: number) {
+    if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
+      window.spotifyPlayerInstance.seek(time * 1000) // Convert to ms
+      setCurrentTime(time)
+      return
     }
 
-    const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+    if (!audioRef.current) return
+    audioRef.current.currentTime = time
+    setCurrentTime(time)
+  }
 
+  const handlePlayerBarClick = (e: React.MouseEvent) => {
+    // Don't open overlay if clicking on interactive elements
+    const target = e.target as HTMLElement
+    if (
+      target.closest('button') ||
+      target.closest('[data-progress-bar]') ||
+      target.closest('[data-volume-slider]')
+    ) {
+      return
+    }
+    setIsOverlayOpen(true)
+  }
+
+  const handleArtworkClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsOverlayOpen(true)
+  }
+
+  function formatTime(seconds: number) {
+    if (isNaN(seconds)) return '0:00'
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+
+  // Hide the player UI on pages other than studio/spotify, but keep the component mounted
+  if (!shouldShowPlayer) {
     return (
+      <>
+        {/* Keep audio element alive even when UI is hidden */}
+        {track?.source === 'beat' && track?.audioUrl && (
+          <audio
+            ref={audioRef}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onEnded={handleEnded}
+            src={track.audioUrl}
+          />
+        )}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <NowPlayingOverlay
+        isOpen={isOverlayOpen}
+        onClose={() => setIsOverlayOpen(false)}
+        currentTime={currentTime}
+        duration={duration}
+        volume={volume}
+        onVolumeChange={setVolume}
+        onSeek={handleSeekFromOverlay}
+      />
+
       <div className='fixed inset-x-0 bottom-0 z-40'>
         {track?.source === 'beat' && track?.audioUrl && (
           <audio
@@ -190,9 +253,15 @@ export function PlayerBar() {
           />
         )}
         <div className='px-0 pb-0'>
-          <div className='flex w-full items-center gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] max-sm:pb-8'>
+          <div
+            className='flex w-full items-center gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] max-sm:pb-8 md:cursor-default'
+            onClick={handlePlayerBarClick}
+          >
             {/* LEFT: cover + titles */}
-            <div className='flex min-w-0 items-center gap-3'>
+            <div
+              className='flex min-w-0 items-center gap-3 md:cursor-pointer'
+              onClick={handleArtworkClick}
+            >
               {track?.artworkUrl ? (
                 <Image
                   width={100}
@@ -253,6 +322,7 @@ export function PlayerBar() {
                     {formatTime(currentTime)}
                   </span>
                   <div
+                    data-progress-bar
                     className='relative h-[5px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
                     onClick={handleSeek}
                   >
@@ -269,7 +339,10 @@ export function PlayerBar() {
             </div>
 
             {/* RIGHT: volume */}
-            <div className='hidden basis-[22%] items-center justify-center gap-2 sm:flex'>
+            <div
+              data-volume-slider
+              className='hidden basis-[22%] items-center justify-center gap-2 sm:flex'
+            >
               <span className='mr-5 text-[10px] text-gray-500'>VOL</span>
               <ElasticSlider
                 value={volume}
@@ -281,6 +354,6 @@ export function PlayerBar() {
           </div>
         </div>
       </div>
-    )
-  }
+    </>
+  )
 }
