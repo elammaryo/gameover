@@ -6,7 +6,7 @@ export async function GET() {
   const cookiesStore = await cookies()
   let accessToken = cookiesStore.get('spotify_access_token')?.value || null
 
-  if (!accessToken || accessToken.expires_at <= Date.now()) {
+  if (!accessToken) {
     const refreshToken =
       cookiesStore.get('spotify_refresh_token')?.value || null
 
