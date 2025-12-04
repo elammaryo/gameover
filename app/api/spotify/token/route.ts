@@ -18,7 +18,7 @@ export async function GET() {
       )
     }
 
-    token = await refreshAccessToken(refreshToken).catch(error => {
+    const token = await refreshAccessToken(refreshToken).catch(error => {
       console.error('Error refreshing Spotify access token:', error)
       return NextResponse.json(
         { message: 'Error refreshing access token' },
