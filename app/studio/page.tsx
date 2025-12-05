@@ -65,15 +65,12 @@ export default function Studio() {
     }
   }, [beatsLoading, playlistsLoading])
 
-  const featuredBeats = beats.filter(
-    beat =>
-      beat.id === '109' ||
-      beat.id === '79' ||
-      beat.id === '84' ||
-      beat.id === '80' ||
-      beat.id === '88' ||
-      beat.id === '91'
-  )
+  const featuredBeatIds: string[] = ['109', '91', '84', '80', '88', '79']
+  const featuredBeats: BeatTrack[] = beats
+    .filter(beat => featuredBeatIds.includes(beat.id))
+    .sort(
+      (a, b) => featuredBeatIds.indexOf(a.id) - featuredBeatIds.indexOf(b.id)
+    )
 
   return (
     <main className='relative min-h-screen bg-[#07050A] pb-20 text-white'>
