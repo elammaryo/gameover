@@ -255,7 +255,7 @@ export default function AboutPage() {
           <div className='mb-6 flex items-center gap-3'>
             <HiMusicalNote className='text-purple-500' size={24} />
             <h2 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-              Most Played Tracks (Last Month)
+              Most Played Tracks (Past Month)
             </h2>
           </div>
 
