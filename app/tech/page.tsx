@@ -401,7 +401,7 @@ function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
         </section>
 
         {/* GITHUB CTA */}
-        <section>
+        <section className='mb-24'>
           <div className='rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-500/10 to-blue-500/5 p-8 text-center backdrop-blur-sm'>
             <SiGithub className='mx-auto mb-4 text-gray-300' size={48} />
             <h3 className='mb-3 text-2xl font-bold text-white'>

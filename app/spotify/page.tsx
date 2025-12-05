@@ -285,7 +285,7 @@ export default function SpotifyPage() {
         </section>
 
         {/* SPOTIFY PROFILE LINK */}
-        <section className='mt-16'>
+        <section className='mt-16 mb-24'>
           <div className='rounded-2xl border border-green-400/20 bg-gradient-to-r from-green-500/10 to-emerald-500/5 p-8 text-center backdrop-blur-sm'>
             <SiSpotify className='mx-auto mb-4 text-green-500' size={48} />
             <h3 className='mb-3 text-2xl font-bold text-white'>

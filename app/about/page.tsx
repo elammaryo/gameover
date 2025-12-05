@@ -471,7 +471,7 @@ export default function AboutPage() {
         </section>
 
         {/* TECH STACK TEASER */}
-        <section>
+        <section className='mb-24'>
           <div className='relative overflow-hidden rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/5 p-8 backdrop-blur-sm'>
             <div className='relative z-10 text-center'>
               <HiGlobeAlt className='mx-auto mb-4 text-cyan-400' size={48} />
