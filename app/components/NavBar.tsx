@@ -134,7 +134,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
           />
         </a>
 
-        {/* Center: Tabs + Status (shifted right on mobile, centered on desktop) */}
         <div className='flex flex-1 items-center justify-end gap-3 sm:absolute sm:left-1/2 sm:-translate-x-1/2 sm:justify-center sm:gap-4'>
           <div className='flex gap-6 text-sm sm:gap-10 sm:text-base'>
             {tabs.map(tab => {
@@ -162,33 +161,29 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             })}
           </div>
 
-          {/* Status - Next to tabs */}
+          {/* Status */}
           {hasBlocker && (
             <button
               onClick={() => setShowAlert(!showAlert)}
               className='group relative ml-2 flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-2 py-1.5 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20 sm:ml-4 sm:gap-2 sm:px-3 sm:py-2'
               aria-label='Content blocker detected'
             >
-              {/* Pulsing dot indicator */}
               <span className='absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3'>
                 <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75'></span>
                 <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500 sm:h-3 sm:w-3'></span>
               </span>
 
-              {/* Shield warning icon */}
               <HiShieldExclamation
                 size={18}
                 className='h-5 w-5 text-amber-400'
               />
 
-              {/* Status text (hidden on mobile) */}
               <span className='hidden text-xs font-medium text-amber-400 sm:inline'>
                 Status
               </span>
             </button>
           )}
 
-          {/* Checking indicator */}
           {isChecking && !hasBlocker && (
             <div className='ml-2 flex flex-shrink-0 items-center gap-1.5 text-xs text-gray-500 sm:ml-4 sm:gap-2'>
               <div className='h-1.5 w-1.5 animate-pulse rounded-full bg-gray-500 sm:h-2 sm:w-2'></div>
@@ -196,8 +191,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             </div>
           )}
         </div>
-
-        {/* Right spacer for balance */}
         <div className='w-[100px] flex-shrink-0 sm:w-[120px]' />
       </nav>
 
@@ -212,7 +205,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             onClick={e => e.stopPropagation()}
           >
             <div className='rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-6 shadow-2xl backdrop-blur-xl'>
-              {/* Close button */}
               <button
                 onClick={() => setShowAlert(false)}
                 className='absolute top-4 right-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
@@ -221,12 +213,10 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 <HiXMark size={20} />
               </button>
 
-              {/* Icon */}
               <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/25'>
                 <HiShieldExclamation size={28} className='text-white' />
               </div>
 
-              {/* Content */}
               <h3 className='mb-2 text-xl font-bold text-white'>
                 Content Blocker Detected
               </h3>
@@ -236,7 +226,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 to adjust your blocker settings.
               </p>
 
-              {/* How to Fix */}
               <div className='mb-4 rounded-xl border border-white/10 bg-white/5 p-4'>
                 <p className='mb-3 text-xs font-semibold tracking-wider text-amber-400 uppercase'>
                   How to Fix
@@ -271,8 +260,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 </ul>
               </div>
 
-              {/* Common Blockers */}
-              <div className='mb-4 rounded-xl border border-white/10 bg-white/5 p-4'>
+              <div className='mb-8 rounded-xl border border-white/10 bg-white/5 p-4'>
                 <p className='mb-2 text-xs font-semibold tracking-wider text-amber-400 uppercase'>
                   Common Causes
                 </p>
@@ -292,13 +280,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 </div>
               </div>
 
-              {/* Alternative */}
-              <p className='mb-4 text-xs text-gray-400'>
-                <strong className='text-gray-300'>Alternative:</strong> You can
-                browse playlists and open tracks directly in the Spotify app.
-              </p>
-
-              {/* Action button */}
               <button
                 onClick={() => setShowAlert(false)}
                 className='w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02]'

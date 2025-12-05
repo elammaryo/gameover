@@ -86,7 +86,7 @@ export default function SpotifyPage() {
   return (
     <main className='relative min-h-screen bg-[#07050A] text-white'>
       <SpotifyPlayerInitializer isLoggedIn={isLoggedIn} />
-      {/* Aurora background */}
+
       <div className='pointer-events-none fixed inset-0 opacity-40'>
         <Aurora
           colorStops={['#1DB954', '#1ed760', '#00ff7f']}
@@ -109,7 +109,6 @@ export default function SpotifyPage() {
               </h1>
             </div>
 
-            {/* Login/Logout Button in Header */}
             {isLoggedIn ? (
               <button
                 onClick={async () => {
@@ -146,7 +145,7 @@ export default function SpotifyPage() {
           </p>
         </header>
 
-        {/* LOGIN CTA BANNER (prominent placement) */}
+        {/* LOGIN CTA BANNER */}
         {!isLoggedIn && (
           <section className='mb-12'>
             <div className='group relative overflow-hidden rounded-2xl border border-green-500/30 bg-gradient-to-br from-green-500/15 via-emerald-500/10 to-transparent p-8 backdrop-blur-sm transition-all hover:border-green-500/50'>

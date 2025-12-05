@@ -138,7 +138,6 @@ export default function TechPage() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] pt-10 text-white'>
-      {/* Aurora background */}
       <div className='pointer-events-none fixed inset-0 opacity-30'>
         <Aurora
           colorStops={['#5227FF', '#00eaff', '#ff00ea']}

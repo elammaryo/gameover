@@ -30,7 +30,6 @@ export default function Home() {
 
   return (
     <div className='relative min-h-screen w-full bg-[#07050A] font-sans'>
-      {/* Aurora Background */}
       <div className='pointer-events-none fixed inset-0 opacity-30'>
         <Aurora
           colorStops={['#00d4ff', '#ec4899', '#a855f7']}
@@ -45,7 +44,6 @@ export default function Home() {
       {/* HERO SECTION */}
       <main className='flex min-h-screen items-center justify-center'>
         <div className='inset-0 flex w-screen max-lg:justify-center'>
-          {/* Sentinel Image */}
           <div className='flex w-[50vw] items-center justify-center max-lg:hidden'>
             <Image
               width={8000}
@@ -60,7 +58,6 @@ export default function Home() {
             />
           </div>
 
-          {/* Hero Content */}
           <div className='flex w-full flex-col items-start justify-center p-12 lg:w-1/2'>
             <Image
               width={520}
@@ -85,7 +82,6 @@ export default function Home() {
               listening experience.
             </p>
 
-            {/* CTAs */}
             <div className='mt-12 flex w-full flex-wrap gap-4'>
               <Button
                 onClick={enterStudio}
@@ -111,7 +107,6 @@ export default function Home() {
               </Button>
             </div>
 
-            {/* Scroll indicator */}
             <div className='absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce'>
               <span className='text-xs text-gray-500'>Scroll to explore</span>
             </div>
@@ -127,7 +122,6 @@ export default function Home() {
           </h2>
 
           <div className='mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3'>
-            {/* Card 1 */}
             <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-cyan-400/60 hover:bg-white/10'>
               <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600'>
                 <span className='text-2xl'>🎵</span>
@@ -141,7 +135,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Card 2 */}
             <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-fuchsia-400/60 hover:bg-white/10'>
               <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600'>
                 <span className='text-2xl'>🎧</span>
@@ -155,7 +148,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Card 3 */}
             <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-green-400/60 hover:bg-white/10'>
               <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600'>
                 <span className='text-2xl'>💻</span>
@@ -170,7 +162,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Final CTA */}
           <div className='mt-16 text-center'>
             <Button
               onClick={enterStudio}
@@ -188,7 +179,6 @@ export default function Home() {
       <footer className='relative z-10 border-t border-white/10 bg-[#07050A] py-12'>
         <div className='container mx-auto px-4'>
           <div className='flex flex-col items-center gap-6'>
-            {/* Logo */}
             <Image
               width={260}
               height={35}
@@ -198,7 +188,6 @@ export default function Home() {
               loading='lazy'
             />
 
-            {/* Social Links */}
             <div className='flex items-center gap-6'>
               <a
                 href='https://soundcloud.com/goproductions'
@@ -249,7 +238,6 @@ export default function Home() {
               </a>
             </div>
 
-            {/* Copyright */}
             <p className='text-sm text-gray-500'>
               © {new Date().getFullYear()} GameOver. All rights reserved.
             </p>

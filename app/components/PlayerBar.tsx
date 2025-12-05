@@ -197,7 +197,6 @@ export function PlayerBar() {
   if (!shouldShowPlayer) {
     return (
       <>
-        {/* Keep audio element alive even when UI is hidden */}
         {track?.source === 'beat' && track?.audioUrl && (
           <audio
             ref={audioRef}
@@ -268,7 +267,7 @@ export function PlayerBar() {
               )}
             </div>
 
-            {/* CENTER: time + progress + controls - Absolutely centered on desktop */}
+            {/* CENTER: time + progress + controls */}
             <div className='pointer-events-none absolute left-1/2 hidden -translate-x-1/2 sm:block'>
               <div className='pointer-events-auto flex flex-col items-center gap-2'>
                 <div className='flex items-center justify-center gap-2'>
@@ -316,7 +315,7 @@ export function PlayerBar() {
               </div>
             </div>
 
-            {/* Mobile controls - shown only on mobile */}
+            {/* Mobile controls */}
             <div className='flex flex-1 items-center justify-end gap-2 sm:hidden'>
               <button
                 onClick={onPrev}

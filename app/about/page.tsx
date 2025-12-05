@@ -100,7 +100,6 @@ export default function AboutPage() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] text-white'>
-      {/* Purple/Pink Aurora for personal touch */}
       <div className='pointer-events-none fixed inset-0 opacity-35'>
         <Aurora
           colorStops={['#a855f7', '#ec4899', '#8b5cf6']}
@@ -117,11 +116,9 @@ export default function AboutPage() {
         <header className='mb-16'>
           {/* Profile Card */}
           <div className='relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-fuchsia-500/5 p-8 backdrop-blur-sm md:p-12'>
-            {/* Background gradient accent */}
             <div className='pointer-events-none absolute top-0 right-0 h-96 w-96 bg-gradient-to-bl from-purple-500/20 to-transparent blur-3xl' />
 
             <div className='relative z-10 flex flex-col items-center gap-8 md:flex-row'>
-              {/* Profile Photo */}
               <div className='relative flex-shrink-0'>
                 <div className='h-40 w-40 overflow-hidden rounded-2xl border-2 border-purple-500/40 bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 shadow-2xl shadow-purple-500/20 md:h-48 md:w-48'>
                   <Image
@@ -134,7 +131,6 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              {/* Bio */}
               <div className='flex flex-1 flex-col gap-4 text-center md:text-left'>
                 <div>
                   <h1 className='mb-2 font-mono text-xs tracking-[0.35em] text-purple-400 uppercase'>
@@ -150,7 +146,6 @@ export default function AboutPage() {
                   experimental sound design.
                 </p>
 
-                {/* Quick Stats Inline */}
                 <div className='flex flex-wrap items-center justify-center gap-4 md:justify-start'>
                   <div className='flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-2'>
                     <HiClock className='text-purple-400' size={16} />
@@ -175,7 +170,6 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Extended Stats */}
           <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
             <div className='group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-green-400/40 hover:bg-white/10'>
               <div className='flex items-center gap-3'>
@@ -242,7 +236,6 @@ export default function AboutPage() {
                 key={artist.name}
                 className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm transition-all hover:border-green-400/40 hover:bg-white/10'
               >
-                {/* Artist Image */}
                 <div className='relative aspect-square w-full overflow-hidden'>
                   <Image
                     src={
@@ -255,20 +248,14 @@ export default function AboutPage() {
                     height={300}
                     className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
                   />
-                  {/* Ranking badge */}
                   <div className='absolute top-3 left-3 flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-lg font-bold text-white shadow-lg'>
                     {index + 1}
                   </div>
-                  {/* Gradient overlay */}
                   <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent' />
                 </div>
 
-                {/* Artist Info */}
                 <div className='absolute right-0 bottom-0 left-0 p-4'>
                   <div className='font-semibold text-white'>{artist.name}</div>
-                  <div className='text-sm text-green-400'>
-                    {/* {artist.plays} plays */}
-                  </div>
                 </div>
               </div>
             ))}
@@ -290,7 +277,6 @@ export default function AboutPage() {
                 key={track?.name}
                 className='group flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm transition-all hover:border-purple-400/40 hover:bg-white/10'
               >
-                {/* Album Cover */}
                 <div className='relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg'>
                   <Image
                     src={track.images[0].url ?? ''}
@@ -299,13 +285,11 @@ export default function AboutPage() {
                     height={64}
                     className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-110'
                   />
-                  {/* Ranking badge */}
                   <div className='absolute top-1 left-1 flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-xs font-bold text-white shadow-lg'>
                     {index + 1}
                   </div>
                 </div>
 
-                {/* Track Info */}
                 <div className='min-w-0 flex-1'>
                   <div className='truncate font-semibold text-white'>
                     {track.name}
@@ -313,14 +297,6 @@ export default function AboutPage() {
                   <div className='truncate text-sm text-gray-400'>
                     {track.artists.join(', ')}
                   </div>
-                </div>
-
-                {/* Play Count */}
-                <div className='text-right'>
-                  <div className='text-sm font-semibold text-purple-400'>
-                    {/* {track.plays} */}
-                  </div>
-                  <div className='text-xs text-gray-500'>plays</div>
                 </div>
               </div>
             ))}
@@ -415,7 +391,7 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Full-Stack Developer Card */}
+            {/* Software Engineer Card */}
             <div className='group relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 p-8 backdrop-blur-sm transition-all hover:border-cyan-400/40'>
               <div className='pointer-events-none absolute top-0 right-0 h-64 w-64 bg-gradient-to-bl from-cyan-500/20 to-transparent blur-3xl' />
 

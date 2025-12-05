@@ -202,7 +202,6 @@ export function NowPlayingOverlay({
           </button>
         </div>
 
-        {/* Scrollable Content - fills remaining space */}
         <div
           ref={contentRef}
           className='flex-1 overflow-x-hidden overflow-y-auto px-6 pb-6'
@@ -211,7 +210,6 @@ export function NowPlayingOverlay({
           onTouchEnd={handleTouchEnd}
         >
           <div className='flex min-h-full flex-col items-center justify-center'>
-            {/* Artwork */}
             <div className='w-full max-w-[min(85vw,400px)]'>
               {selectedTrack.artworkUrl ? (
                 <div className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'>
@@ -358,12 +356,10 @@ export function NowPlayingOverlay({
   // Desktop: Side panel with backdrop
   return (
     <>
-      {/* Side panel */}
       <div
         className='fixed inset-y-0 right-0 z-[61] w-[400px] border-l border-white/10 bg-[#05040A]/98 shadow-2xl'
         ref={overlayRef}
       >
-        {/* Header */}
         <div className='flex items-center justify-between border-b border-white/10 p-6'>
           <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
             Now Playing
@@ -376,9 +372,7 @@ export function NowPlayingOverlay({
           </button>
         </div>
 
-        {/* Content - Scrollable with proper height */}
         <div className='h-[calc(100vh-80px)] overflow-y-auto p-6'>
-          {/* Artwork */}
           <div className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'>
             {selectedTrack.artworkUrl ? (
               <Image

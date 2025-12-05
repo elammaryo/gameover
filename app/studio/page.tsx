@@ -77,7 +77,6 @@ export default function Studio() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] pb-20 text-white'>
-      {/* Cyan/Blue Aurora background for cohesive studio vibe */}
       <div className='pointer-events-none fixed inset-0 opacity-30'>
         <Aurora
           colorStops={['#00d4ff', '#0ea5e9', '#3b82f6']}
@@ -112,7 +111,6 @@ export default function Studio() {
             browse curated Spotify playlists for the perfect vibe.
           </p>
 
-          {/* Genre Pills */}
           <div className='flex flex-wrap items-center gap-3'>
             {['Trap', 'Drill', 'Afrobeats', 'Experimental'].map(genre => (
               <span
@@ -146,7 +144,6 @@ export default function Studio() {
 
         {/* LIBRARY STATS */}
         <section className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-          {/* Total Beats */}
           <div className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-cyan-400/40 hover:bg-white/10'>
             <div className='absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
             <div className='relative z-10'>
@@ -257,7 +254,7 @@ export default function Studio() {
             </div>
 
             <div className='hidden text-xs tracking-[0.18em] text-gray-500 uppercase sm:block'>
-              <span className='text-cyan-400'>●</span> Vibe · BPM · Energy
+              Vibe · BPM · Energy
             </div>
           </div>
         </section>

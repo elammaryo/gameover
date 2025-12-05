@@ -105,7 +105,6 @@ function FeaturedBeatsSection({
                     {track.artist}
                   </p>
 
-                  {/* Metadata */}
                   <div className='mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-500'>
                     <span>{track.bpm} BPM</span>
                     {track.key && <span>· {track.key}</span>}
