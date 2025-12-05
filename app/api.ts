@@ -7,6 +7,12 @@ export async function getSpotifyPlaylists(): Promise<Playlist[]> {
   return data.playlists.map((item: any) => new Playlist(item))
 }
 
+export async function getBeatsPlaylists(): Promise<Playlist[]> {
+  const res = await fetch('/api/beats/playlists')
+  const data = await res.json()
+  return data.playlists.map((item: any) => new Playlist(item))
+}
+
 export async function getBeats(): Promise<BeatTrack[]> {
   const res = await fetch('/api/beats')
   const data = await res.json()
