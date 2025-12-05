@@ -6,7 +6,7 @@ import { NavBar } from '../components/NavBar'
 import BlurText from '../components/BlurText'
 import Aurora from '../components/Aurora'
 import { PlaylistsSection } from '../components/PlaylistsSection'
-import { getPlaylists, getSpotifyAccessToken } from '../api'
+import { getSpotifyPlaylists, getSpotifyAccessToken } from '../api'
 import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
 import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
@@ -49,7 +49,7 @@ export default function SpotifyPage() {
       }
     })
 
-    getPlaylists()
+    getSpotifyPlaylists()
       .then(data => {
         setPlaylists(data)
         setLoading(false)

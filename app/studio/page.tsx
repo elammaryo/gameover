@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { NavBar } from '../components/NavBar'
 import FeaturedBeatsSection from '../components/FeaturedBeatCard'
-import { getBeats, getPlaylists } from '../api'
+import { getBeats, getSpotifyPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
 import { BeatTrack } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
@@ -34,7 +34,7 @@ export default function Studio() {
         setBeatsLoading(false)
       })
 
-    getPlaylists()
+    getSpotifyPlaylists()
       .then((data: Playlist[]) => {
         setPlaylists(data)
         setPlaylistsLoading(false)
