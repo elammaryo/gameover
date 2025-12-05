@@ -149,7 +149,7 @@ export default function AboutPage() {
                     >
                       {stat.icon}
                       <span className={`text-sm font-semibold text-white`}>
-                        {stat.value} {stat.label}
+                        {stat.label}
                       </span>
                     </div>
                   ))}
