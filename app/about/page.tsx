@@ -39,28 +39,19 @@ export default function AboutPage() {
 
   const stats = [
     {
-      label: 'Years Producing',
-      value: '5+',
-      icon: <HiClock size={20} />,
-      color: 'cyan'
+      label: '4+ Years',
+      icon: <HiClock className='text-purple-400' size={16} />,
+      color: 'purple-500'
     },
     {
-      label: 'Beats Created',
-      value: '100+',
-      icon: <HiMusicalNote size={20} />,
-      color: 'purple'
+      label: '100+ Beats',
+      icon: <HiMusicalNote className='text-fuchsia-400' size={16} />,
+      color: 'fuchsia-500'
     },
     {
-      label: 'Genres Explored',
-      value: '8',
-      icon: <HiSparkles size={20} />,
-      color: 'fuchsia'
-    },
-    {
-      label: 'Spotify Hours',
-      value: '12K+',
-      icon: <HiHeart size={20} />,
-      color: 'green'
+      label: '8 Genres',
+      icon: <HiSparkles className='text-cyan-500' size={16} />,
+      color: 'cyan-500'
     }
   ]
 
@@ -151,24 +142,17 @@ export default function AboutPage() {
                 </p>
 
                 <div className='flex flex-wrap items-center justify-center gap-4 md:justify-start'>
-                  <div className='flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-2'>
-                    <HiClock className='text-purple-400' size={16} />
-                    <span className='text-sm font-semibold text-white'>
-                      5+ Years
-                    </span>
-                  </div>
-                  <div className='flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 py-2'>
-                    <HiMusicalNote className='text-fuchsia-400' size={16} />
-                    <span className='text-sm font-semibold text-white'>
-                      100+ Beats
-                    </span>
-                  </div>
-                  <div className='flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2'>
-                    <HiSparkles className='text-cyan-400' size={16} />
-                    <span className='text-sm font-semibold text-white'>
-                      8 Genres
-                    </span>
-                  </div>
+                  {stats.map(stat => (
+                    <div
+                      key={stat.label}
+                      className={`border-${stat.color}/30 flex items-center gap-2 rounded-full border bg-${stat.color}/10 px-4 py-2`}
+                    >
+                      {stat.icon}
+                      <span className={`text-sm font-semibold text-white`}>
+                        {stat.value} {stat.label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -181,8 +165,8 @@ export default function AboutPage() {
                   <SiSpotify size={20} />
                 </div>
                 <div>
-                  <div className='text-2xl font-bold text-white'>8.2K</div>
-                  <div className='text-xs text-gray-400'>Hours Listened</div>
+                  <div className='text-2xl font-bold text-white'>56K+</div>
+                  <div className='text-xs text-gray-400'>Minutes Listened</div>
                 </div>
               </div>
             </div>
@@ -217,7 +201,7 @@ export default function AboutPage() {
                   <HiHeart size={20} />
                 </div>
                 <div>
-                  <div className='text-2xl font-bold text-white'>35+</div>
+                  <div className='text-2xl font-bold text-white'>95+</div>
                   <div className='text-xs text-gray-400'>Playlists Created</div>
                 </div>
               </div>
@@ -319,7 +303,7 @@ export default function AboutPage() {
                 How It Started
               </h3>
               <p className='leading-relaxed text-gray-300'>
-                My journey into music production began 5 years ago when I first
+                My journey into music production began 4 years ago when I first
                 discovered FL Studio. What started as a hobby quickly became a
                 passion. I spent countless hours learning sound design,
                 sampling, and arrangement techniques.
@@ -409,23 +393,23 @@ export default function AboutPage() {
                 </h3>
 
                 <p className='mb-4 text-gray-300'>
-                  Building modern web experiences with Next.js, AWS, . This
-                  site? Built from scratch with custom shaders, serverless
-                  functions, and a focus on performance and design.
+                  Full-stack developer and technical co-founder with production
+                  experience shipping features users depend on. From mobile apps
+                  to web platforms, I build scalable systems end-to-end.
                 </p>
 
                 <div className='space-y-2 text-sm text-gray-400'>
                   <div className='flex items-center gap-2'>
                     <div className='h-1.5 w-1.5 rounded-full bg-cyan-400' />
-                    <span>Next.js & React</span>
+                    <span>Flutter, React, Next.js & Node.js</span>
                   </div>
                   <div className='flex items-center gap-2'>
                     <div className='h-1.5 w-1.5 rounded-full bg-blue-400' />
-                    <span>AWS & Serverless</span>
+                    <span>Firebase, AWS & CI/CD pipelines</span>
                   </div>
                   <div className='flex items-center gap-2'>
                     <div className='h-1.5 w-1.5 rounded-full bg-indigo-400' />
-                    <span>WebGL & Custom Shaders</span>
+                    <span>Technical Lead at SuperOver</span>
                   </div>
                 </div>
               </div>

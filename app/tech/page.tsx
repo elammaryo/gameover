@@ -254,7 +254,7 @@ export default function TechPage() {
                   description: 'Returns all beats with metadata'
                 },
                 {
-                  endpoint: '/api/beats/signed-url',
+                  endpoint: '/api/beats/signedUrl',
                   description: 'Generates a signed URL for a specific beat'
                 }
               ].map(route => (
