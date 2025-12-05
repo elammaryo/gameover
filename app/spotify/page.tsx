@@ -42,8 +42,6 @@ export default function SpotifyPage() {
       const tokenExists = token !== undefined && token !== null
       if (loggedIn === 'true' && tokenExists) {
         setIsLoggedIn(true)
-      } else if (loggedIn === 'true' && !tokenExists) {
-        // TODO(): use refresh token to get a new access token
       } else {
         setIsLoggedIn(false)
       }
