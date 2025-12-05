@@ -18,10 +18,6 @@ export default function Home() {
 
     if (!overlay) return
 
-    const sfx = new Audio('/sfx/whoosh.mp3')
-    sfx.volume = 0.4
-    sfx.play().catch(() => {})
-
     overlay.style.opacity = '1'
     if (label) {
       label.classList.add('opacity-100', 'glitch-once')
@@ -46,7 +42,7 @@ export default function Home() {
 
       <NavBar />
 
-      {/* HERO SECTION - Full screen, no scroll */}
+      {/* HERO SECTION */}
       <main className='flex min-h-screen items-center justify-center'>
         <div className='inset-0 flex w-screen max-lg:justify-center'>
           {/* Sentinel Image */}
@@ -58,6 +54,7 @@ export default function Home() {
               className='h-screen object-cover px-12 pt-16'
               alt='Sentinel'
               quality={75}
+              decoding='async'
               priority
               placeholder='blur'
             />
@@ -122,7 +119,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* TEASER SECTION - Below the fold */}
+      {/* TEASER SECTION */}
       <section className='relative z-10 bg-gradient-to-b from-transparent to-[#07050A] py-24'>
         <div className='container mx-auto px-4'>
           <h2 className='text-center font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
@@ -198,6 +195,7 @@ export default function Home() {
               src={logo.src}
               className='w-64 opacity-70'
               alt='GameOver Logo'
+              loading='lazy'
             />
 
             {/* Social Links */}
