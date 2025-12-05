@@ -33,7 +33,7 @@ export async function getSpotifyTopTracks(): Promise<SpotifyTrack[]> {
       new SpotifyTrack({
         ...item,
         images: item.album.images,
-        artists: [item.artists.map((a: any) => a.name)]
+        artists: item.artists.map((a: any) => a.name)
       })
   )
 }
