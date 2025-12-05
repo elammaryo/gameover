@@ -29,8 +29,12 @@ export default function AboutPage() {
   >([])
 
   useEffect(() => {
-    getSpotifyTopTracks().then(tracks => setTopTracks(tracks))
-    getSpotifyTopArtists().then(artists => setTopArtists(artists))
+    getSpotifyTopTracks()
+      .then(tracks => setTopTracks(tracks))
+      .catch(err => console.error(err))
+    getSpotifyTopArtists()
+      .then(artists => setTopArtists(artists))
+      .catch(err => console.error(err))
   }, [])
 
   const stats = [
