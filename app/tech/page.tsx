@@ -15,12 +15,12 @@ import {
   SiAmazonwebservices,
   SiGithub
 } from 'react-icons/si'
-import { HiCloud, HiSparkles } from 'react-icons/hi2'
+import { HiCloud, HiSparkles, HiCircleStack } from 'react-icons/hi2'
 import { HiCode } from 'react-icons/hi'
 
 const techStack = [
   {
-    category: 'Frontend & Framework',
+    category: 'Languages & Framework',
     icon: <HiCode size={24} />,
     technologies: [
       {
@@ -58,34 +58,34 @@ const techStack = [
         description: 'Cloud storage for audio files'
       },
       {
+        name: 'Spotify API + OAuth 2.0',
+        icon: <SiSpotify size={32} />,
+        color: '#1DB954',
+        description: 'Web Playback SDK + token refresh'
+      },
+      {
         name: 'Vercel',
         icon: <SiVercel size={32} />,
         color: '#FFFFFF',
         description: 'Serverless deployment & hosting'
-      },
-      {
-        name: 'Spotify API + OAuth 2.0',
-        icon: <SiSpotify size={32} />,
-        color: '#1DB954',
-        description: 'Web Playback SDK (coming soon)'
       }
     ]
   },
   {
-    category: 'Creative & UI',
-    icon: <HiSparkles size={24} />,
+    category: 'State & Data Management',
+    icon: <HiCircleStack size={24} />,
     technologies: [
       {
-        name: 'Custom Audio Player',
-        description: 'Built-in controls & visualizer'
+        name: 'React Context API',
+        description: 'Global playback state & queue management'
       },
       {
-        name: 'Elastic Interactions',
-        description: 'Physics-based UI components'
+        name: 'In-Memory Caching',
+        description: 'S3 URL caching with 55min expiration'
       },
       {
-        name: 'Dynamic Animations',
-        description: 'Motion-powered transitions'
+        name: 'Cookie-Based Sessions',
+        description: 'Spotify OAuth token storage'
       }
     ]
   }
@@ -95,27 +95,26 @@ const features = [
   {
     title: 'Spotify OAuth 2.0 Integration',
     description:
-      'Full OAuth flow with token management, automatic refresh, and real-time playlist/track data fetching from Spotify Web API.',
+      'Full OAuth flow with cookie-based session management, automatic token refresh, and server-side token caching. Supports both client credentials and user authorization flows.',
     gradient: 'from-green-500 to-emerald-600'
   },
   {
-    title: 'AWS S3 Audio Delivery',
+    title: 'AWS S3 Pre-Signed URLs',
     description:
-      'Pre-signed URLs with 55-minute expiration cache. Next.js API routes handle secure access to private S3 objects with automatic URL refresh.',
+      'Dynamic audio delivery with 55-minute URL expiration and intelligent caching. Server-side signing prevents credential exposure while maintaining performance.',
     gradient: 'from-cyan-500 to-blue-600'
   },
   {
-    title: 'Custom Audio Player',
+    title: 'Dual Audio Sources',
     description:
-      'Built from scratch using HTML5 Audio API with React Context for playback controls, queue navigation, progress tracking, and volume management.',
-    gradient: 'from-purple-500 to-fuchsia-600'
-  },
-
-  {
-    title: 'Smart Caching Layer',
-    description:
-      'In-memory URL and token caching with expiration logic reduces API calls by 80% and prevents mid-playback failures.',
+      'Unified playback interface supporting both HTML5 Audio API for beats and Spotify Web Playback SDK for streaming. Context-aware controls adapt to the active source.',
     gradient: 'from-orange-500 to-red-600'
+  },
+  {
+    title: 'Persistent Audio Playback',
+    description:
+      'Audio continues playing seamlessly across page navigation using React Context and root layout mounting. Smart state management prevents interruptions during route changes.',
+    gradient: 'from-purple-500 to-fuchsia-600'
   }
 ]
 
@@ -162,9 +161,9 @@ export default function TechPage() {
             direction='top'
             className='text-4xl font-bold sm:text-5xl lg:text-6xl'
           />
-          <p className='max-w-4xl text-lg text-gray-300 sm:text-xl'>
-            A modern full-stack web app powered by Next.js, AWS cloud storage,
-            and custom-built audio playback.
+          <p className='max-w-5xl text-lg text-gray-300 sm:text-xl'>
+            A modern full stack Next.js portfolio with OAuth 2.0, AWS cloud
+            integration, and custom audio playback architecture.
           </p>
         </header>
 
@@ -288,6 +287,10 @@ export default function TechPage() {
                   endpoint: '/api/spotify/callback',
                   description:
                     'Handles OAuth callback and exchanges code for tokens'
+                },
+                {
+                  endpoint: '/api/spotify/token',
+                  description: 'Retrieves or refreshes Spotify access token'
                 }
               ].map(route => (
                 <div
@@ -400,6 +403,69 @@ function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
           </div>
         </section>
 
+        {/* SECURITY & BEST PRACTICES */}
+        <section className='mb-20'>
+          <h2 className='mb-8 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
+            Security & Best Practices
+          </h2>
+          <div className='grid gap-4 sm:grid-cols-2'>
+            {[
+              {
+                title: 'Environment Variable Management',
+                points: [
+                  'All secrets in .env with .gitignore protection',
+                  'Separate client and server environment variables',
+                  'Vercel environment variable configuration'
+                ]
+              },
+              {
+                title: 'Cookie Security',
+                points: [
+                  'HttpOnly cookies for sensitive tokens',
+                  'Secure flag in production',
+                  'SameSite attribute for CSRF protection'
+                ]
+              },
+              {
+                title: 'API Route Protection',
+                points: [
+                  'Server-side only secret access',
+                  'Token refresh logic in API routes',
+                  'Error handling without exposing internals'
+                ]
+              },
+              {
+                title: 'Type Safety',
+                points: [
+                  'Strict TypeScript configuration',
+                  'No any types in production code',
+                  'Discriminated unions for track types'
+                ]
+              }
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className='rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm'
+              >
+                <h3 className='mb-3 text-lg font-semibold text-white'>
+                  {item.title}
+                </h3>
+                <ul className='space-y-2'>
+                  {item.points.map((point, i) => (
+                    <li
+                      key={i}
+                      className='flex items-center gap-2 text-sm text-gray-300'
+                    >
+                      <span className='mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cyan-400' />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* GITHUB CTA */}
         <section className='mb-24'>
           <div className='rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-500/10 to-blue-500/5 p-8 text-center backdrop-blur-sm'>
@@ -408,8 +474,11 @@ function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
               Check Out The Code
             </h3>
             <p className='mb-6 text-gray-400'>
-              View the full source code and explore how this site was built from
-              scratch
+              View the full source code, architecture decisions, and
+              implementation details.
+              <span className='mt-1 block text-sm text-gray-500'>
+                Clean codebase • Full TypeScript • Production-ready
+              </span>
             </p>
             <a
               href='https://github.com/elammaryo'
