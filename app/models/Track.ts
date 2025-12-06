@@ -9,7 +9,7 @@ abstract class BaseTrack {
   source: TrackSource
   audioUrl: string
 
-  constructor(data: any) {
+  constructor(data: BaseTrack) {
     this.id = data.id
     this.title = data.title
     this.artist = data.artist
@@ -29,7 +29,7 @@ export class BeatTrack extends BaseTrack {
   tags?: string[]
   key?: string
 
-  constructor(data: any) {
+  constructor(data: BeatTrack) {
     super(data)
     this.bpm = data.bpm
     this.subtitle = data.subtitle
@@ -51,7 +51,7 @@ export class SpotifyTrack extends BaseTrack {
   mediaType: string
   images: { url: string; height: number; width: number }[]
 
-  constructor(data: any) {
+  constructor(data: SpotifyTrack) {
     super({
       id: data.id,
       title: data.name,

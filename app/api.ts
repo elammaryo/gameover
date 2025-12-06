@@ -4,19 +4,19 @@ import { Track, BeatTrack, SpotifyTrack } from './models/Track'
 export async function getSpotifyPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/spotify/playlists')
   const data = await res.json()
-  return data.playlists.map((item: any) => new Playlist(item))
+  return data.playlists.map((item: Playlist) => new Playlist(item))
 }
 
 export async function getBeatsPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/beats/playlists')
   const data = await res.json()
-  return data.playlists.map((item: any) => new Playlist(item))
+  return data.playlists.map((item: Playlist) => new Playlist(item))
 }
 
 export async function getBeats(): Promise<BeatTrack[]> {
   const res = await fetch('/api/beats')
   const data = await res.json()
-  return data.map((item: any) => new BeatTrack(item))
+  return data.map((item: BeatTrack) => new BeatTrack(item))
 }
 
 export async function getBeatSignedUrl(trackId: string): Promise<string> {
@@ -35,11 +35,11 @@ export async function getSpotifyTopTracks(): Promise<SpotifyTrack[]> {
   const res = await fetch('/api/spotify/stats/topTracks')
   const data = await res.json()
   return data.topTracks.map(
-    (item: any) =>
+    (item: SpotifyTrack) =>
       new SpotifyTrack({
         ...item,
         images: item.album.images,
-        artists: item.artists.map((a: any) => a.name)
+        artists: item.artists.map((a: { name: string }) => a.name)
       })
   )
 }
@@ -47,10 +47,12 @@ export async function getSpotifyTopTracks(): Promise<SpotifyTrack[]> {
 export async function getSpotifyTopArtists(): Promise<[]> {
   const res = await fetch('/api/spotify/stats/topArtists')
   const data = await res.json()
-  return data.topArtists.map((item: any) => ({
-    name: item.name,
-    images: item.images
-  }))
+  return data.topArtists.map(
+    (item: { name: string; images: { url: string }[] }) => ({
+      name: item.name,
+      images: item.images
+    })
+  )
 }
 
 export async function spotifyLoginUrl() {

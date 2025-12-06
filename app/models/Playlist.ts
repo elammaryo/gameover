@@ -4,7 +4,7 @@ export class Playlist {
   external_urls: { spotify: string }
   href: string
   id: string
-  images: any[]
+  images: { url: string }[]
   name: string
   primary_color: string | null
   public: boolean
@@ -19,7 +19,7 @@ export class Playlist {
     external_urls: { spotify: string }
     href: string
     id: string
-    images: any[]
+    images: { url: string }[]
     name: string
     primary_color: string | null
     public: boolean

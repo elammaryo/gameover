@@ -11,7 +11,7 @@ import {
   HiChevronDown
 } from 'react-icons/hi2'
 import { HiVolumeUp } from 'react-icons/hi'
-import { BeatTrack, SpotifyTrack } from '../models/Track'
+import { BeatTrack, SpotifyTrack, Track } from '../models/Track'
 import ElasticSlider from './ElasticSlider'
 
 interface NowPlayingOverlayProps {
@@ -22,7 +22,7 @@ interface NowPlayingOverlayProps {
   volume: number
   onVolumeChange: (value: number) => void
   onSeek: (time: number) => void
-  queue?: any[]
+  queue?: Track[]
 }
 
 export function NowPlayingOverlay({

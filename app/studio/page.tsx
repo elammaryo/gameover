@@ -29,7 +29,7 @@ export default function Studio() {
         setBeats(data)
         setBeatsLoading(false)
       })
-      .catch((error: any) => {
+      .catch((error: Error) => {
         console.error('Error fetching beats:', error)
         setBeatsLoading(false)
       })
@@ -39,7 +39,7 @@ export default function Studio() {
         setPlaylists(data)
         setPlaylistsLoading(false)
       })
-      .catch((error: any) => {
+      .catch((error: Error) => {
         console.error('Error fetching playlists:', error)
         setPlaylistsLoading(false)
       })
