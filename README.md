@@ -11,7 +11,7 @@ custom audio playback.
 - **Spotify OAuth 2.0** - Full authentication flow with token refresh
 - **AWS S3 Integration** - Secure audio delivery with signed URLs
 - **Real-time Playback** - Seamless navigation without interrupting music
-- **Custom WebGL Shaders** - Aurora background animations
+- **WebGL Shaders** - Aurora background animations
 - **Responsive Design** - Mobile-first approach
 
 ## 🛠️ Tech Stack
