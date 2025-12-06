@@ -1,36 +1,144 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎵 GameOver - Music Producer Portfolio
 
-## Getting Started
+A modern full-stack portfolio showcasing premium beats, Spotify integration, and
+custom audio playback.
 
-First, run the development server:
+![Demo](screenshot.png)
+
+## 🚀 Features
+
+- **Custom Audio Player** - Built from scratch with React + HTML5 Audio API
+- **Spotify OAuth 2.0** - Full authentication flow with token refresh
+- **AWS S3 Integration** - Secure audio delivery with signed URLs
+- **Real-time Playback** - Seamless navigation without interrupting music
+- **Custom WebGL Shaders** - Aurora background animations
+- **Responsive Design** - Mobile-first approach
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
+- Motion (Framer Motion)
+
+### Backend & Cloud
+
+- Next.js API Routes (serverless)
+- AWS S3 (audio storage)
+- Spotify Web API
+- Vercel (hosting)
+
+### Audio
+
+- HTML5 Audio API
+- Custom playback controls
+- Queue management
+- Progress tracking
+
+## 📦 Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/elammaryo/gameover.git
+cd gameover
+
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env
+# Fill in your API keys and secrets
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔐 Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example` for required variables:
 
-## Learn More
+- **Spotify API**: Get credentials from
+  [Spotify Developer Dashboard](https://developer.spotify.com)
+- **AWS S3**: Configure bucket and IAM credentials
+- **Redirect URI**: Set to `http://localhost:3000/api/spotify/callback` for dev
 
-To learn more about Next.js, take a look at the following resources:
+## 🏗️ Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+├── api/              # Next.js API routes
+│   ├── beats/        # Audio delivery endpoints
+│   └── spotify/      # OAuth & data fetching
+├── components/       # Reusable React components
+├── models/           # TypeScript types
+├── providers/        # React Context providers
+└── pages/            # Route pages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+lib/
+└── spotify.ts        # Spotify API utilities
 
-## Deploy on Vercel
+public/               # Static assets
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔒 Security
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- ✅ Environment variables for all secrets
+- ✅ Server-side API calls only
+- ✅ S3 signed URLs with expiration
+- ✅ OAuth 2.0 with PKCE flow
+- ✅ HttpOnly cookies for tokens
+- ✅ No hardcoded credentials
+
+## 📝 API Routes
+
+### Audio Delivery
+
+- `GET /api/beats` - List all beats
+- `POST /api/beats/signedUrl` - Generate signed S3 URL
+
+### Spotify Auth
+
+- `GET /api/spotify/login` - Initiate OAuth flow
+- `GET /api/spotify/callback` - Handle OAuth callback
+- `GET /api/spotify/token` - Get/refresh access token
+
+### Spotify Data
+
+- `GET /api/spotify/playlists` - Fetch user playlists
+- `GET /api/spotify/stats/topTracks` - User's top tracks
+- `GET /api/spotify/stats/topArtists` - User's top artists
+
+## 🎨 Design
+
+Custom-built with:
+
+- Tailwind CSS for styling
+- WebGL shaders for aurora backgrounds
+- Motion for smooth animations
+- Elastic interactions for slider components
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE)
+
+## 🤝 Contributing
+
+This is a personal portfolio project, but feel free to fork and customize for
+your own use!
+
+## 👤 Author
+
+**Omer Elammary**
+
+- Website: [gameover.studio](https://gameover.studio)
+- LinkedIn: [@omerelammary](https://linkedin.com/in/omerelammary)
+- GitHub: [@elammaryo](https://github.com/elammaryo)
+
+---
+
+Built with ❤️ using Next.js and deployed on Vercel
