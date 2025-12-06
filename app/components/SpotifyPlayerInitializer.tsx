@@ -141,11 +141,12 @@ export function SpotifyPlayerInitializer({
           const track = new SpotifyTrack({
             id: currentTrack.id,
             name: currentTrack.name,
+            title: currentTrack.name,
             artists: currentTrack.artists,
             album: currentTrack.album,
-            duration_ms: currentTrack.duration_ms,
-            uri: currentTrack.uri,
-            type: 'track',
+            durationMs: currentTrack.durationMs,
+            audioUrl: currentTrack.uri,
+            mediaType: currentTrack.mediaType,
             source: 'spotify'
           })
 

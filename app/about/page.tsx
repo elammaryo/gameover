@@ -267,7 +267,7 @@ export default function AboutPage() {
               >
                 <div className='relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg'>
                   <Image
-                    src={track.images[0].url ?? ''}
+                    src={track?.images?.[0]?.url ?? ''}
                     alt={track.name}
                     width={64}
                     height={64}
@@ -283,7 +283,7 @@ export default function AboutPage() {
                     {track.name}
                   </div>
                   <div className='truncate text-sm text-gray-400'>
-                    {track.artists.join(', ')}
+                    {track.artists.map(artist => artist.name).join(', ')}
                   </div>
                 </div>
               </div>
