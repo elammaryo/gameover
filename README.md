@@ -3,7 +3,8 @@
 A modern full-stack portfolio showcasing premium beats, Spotify integration, and
 custom audio playback.
 
-![Demo](screenshot.png)
+![Website Deploy](https://deploy-badge.vercel.app/?url=http%3A%2F%2Fgameover.studio&name=GameOver)
+Visit Live Studio: [GameOver Studio](https://gameover.studio)
 
 ## 🚀 Features
 
