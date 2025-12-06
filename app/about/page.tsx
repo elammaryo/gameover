@@ -50,8 +50,8 @@ export default function AboutPage() {
     },
     {
       label: '8 Genres',
-      icon: <HiSparkles className='text-cyan-500' size={16} />,
-      color: 'cyan-500'
+      icon: <HiSparkles className='text-cyan-400' size={16} />,
+      color: 'cyan-400'
     }
   ]
 
