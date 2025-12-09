@@ -24,17 +24,23 @@ export async function GET(request: Request) {
     cookieStore.set('spotify_access_token', tokens.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: tokens.expires_in
+      maxAge: tokens.expires_in,
+      sameSite: 'lax',
+      path: '/'
     })
     cookieStore.set('spotify_refresh_token', tokens.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 30 // 30 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      sameSite: 'lax',
+      path: '/'
     })
     cookieStore.set('spotify_logged_in', 'true', {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 30 // 30 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      sameSite: 'lax',
+      path: '/'
     })
 
     return NextResponse.redirect(new URL('/spotify?success=true', request.url))

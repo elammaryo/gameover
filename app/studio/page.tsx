@@ -34,16 +34,6 @@ export default function Studio() {
         setBeatsLoading(false)
       })
 
-    getSpotifyPlaylists()
-      .then((data: Playlist[]) => {
-        setPlaylists(data)
-        setPlaylistsLoading(false)
-      })
-      .catch((error: Error) => {
-        console.error('Error fetching playlists:', error)
-        setPlaylistsLoading(false)
-      })
-
     const overlay = document.getElementById('transition-overlay')
     const label = document.getElementById('transition-label')
 
@@ -276,16 +266,16 @@ export default function Studio() {
             ) : (
               <BeatsSection beats={beats} />
             )
-          ) : playlistsLoading ? (
-            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className='h-64 animate-pulse rounded-2xl bg-white/5'
-                />
-              ))}
-            </div>
-          ) : playlists.length === 0 ? (
+          ) : // ) : playlistsLoading ? (
+          //   <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          //     {[...Array(6)].map((_, i) => (
+          //       <div
+          //         key={i}
+          //         className='h-64 animate-pulse rounded-2xl bg-white/5'
+          //       />
+          //     ))}
+          //   </div>
+          playlists.length === 0 ? (
             <div className='flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm'>
               <HiSparkles className='text-gray-600' size={48} />
               <p className='text-gray-400'>No playlists found.</p>

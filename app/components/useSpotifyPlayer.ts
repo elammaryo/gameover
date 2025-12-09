@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useContext } from 'react'
 import { getSpotifyAccessToken } from '../api'
-import { PlayBarContext } from '../providers/PlayBarProvider'
-import { SpotifyTrack } from '../models/Track'
+import { SpotifyTrack, Track } from '../models/Track'
 
 declare global {
   interface Window {
@@ -37,12 +36,17 @@ interface SpotifyPlayer {
   deviceId: string
 }
 
-export function SpotifyPlayerInitializer({
-  isLoggedIn
+export function useSpotifyPlayer({
+  isLoggedIn,
+  setTrack,
+  setPlayPause,
+  selectedTrack
 }: {
   isLoggedIn: boolean
+  setTrack: (track: Track) => {}
+  setPlayPause: (value: boolean) => void
+  selectedTrack: Track | null
 }) {
-  const { setTrack, selectedTrack, setPlayPause } = useContext(PlayBarContext)
   const currentTrackIdRef = useRef<string | null>(null)
   const isUpdatingRef = useRef(false)
 
@@ -144,13 +148,13 @@ export function SpotifyPlayerInitializer({
             title: currentTrack.name,
             artists: currentTrack.artists,
             album: currentTrack.album,
-            durationMs: currentTrack.durationMs,
+            duration_ms: currentTrack.durationMs,
             audioUrl: currentTrack.uri,
             mediaType: currentTrack.mediaType,
             source: 'spotify'
           })
 
-          await setTrack(track)
+          setTrack(track)
         } finally {
           isUpdatingRef.current = false
         }
@@ -193,6 +197,4 @@ export function SpotifyPlayerInitializer({
       // Keep player alive across navigations
     }
   }, [isLoggedIn, setTrack, setPlayPause])
-
-  return null
 }

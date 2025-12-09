@@ -30,8 +30,8 @@ export function PlayerBar() {
         clearInterval(spotifyProgressInterval.current)
       }
 
-      if (selectedTrack.durationMs) {
-        setDuration(selectedTrack.durationMs / 1000)
+      if (selectedTrack.duration_ms) {
+        setDuration(selectedTrack.duration_ms / 1000)
       }
 
       spotifyProgressInterval.current = setInterval(async () => {
@@ -244,7 +244,7 @@ export function PlayerBar() {
                   width={100}
                   height={100}
                   src={track.artworkUrl}
-                  alt={track.title}
+                  alt={track.title ?? 'Track Artwork'}
                   className='h-10 w-10 flex-shrink-0 rounded-xl'
                 />
               ) : (

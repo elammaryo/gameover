@@ -11,7 +11,6 @@ import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
 import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
 import { handleLogin, handleLogout } from '@/lib/spotify'
-import { SpotifyPlayerInitializer } from '../components/SpotifyPlayerInitializer'
 
 export default function SpotifyPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
@@ -83,8 +82,6 @@ export default function SpotifyPage() {
 
   return (
     <main className='relative min-h-screen bg-[#07050A] text-white'>
-      <SpotifyPlayerInitializer isLoggedIn={isLoggedIn} />
-
       <div className='pointer-events-none fixed inset-0 opacity-40'>
         <Aurora
           colorStops={['#1DB954', '#1ed760', '#00ff7f']}

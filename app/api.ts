@@ -1,5 +1,5 @@
 import { Playlist } from './models/Playlist'
-import { Track, BeatTrack, SpotifyTrack } from './models/Track'
+import { BeatTrack, SpotifyTrack } from './models/Track'
 
 export async function getSpotifyPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/spotify/playlists')
@@ -11,6 +11,12 @@ export async function getBeatsPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/beats/playlists')
   const data = await res.json()
   return data.playlists.map((item: Playlist) => new Playlist(item))
+}
+
+export async function getPlaylistTracks(playlistId: string) {
+  const res = await fetch(`/api/spotify/playlist/${playlistId}`)
+  const data = await res.json()
+  return data.playlist
 }
 
 export async function getBeats(): Promise<BeatTrack[]> {
