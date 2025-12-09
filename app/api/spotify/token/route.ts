@@ -31,7 +31,9 @@ export async function GET() {
       cookiesStore.set('spotify_access_token', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: token.expires_in
+        maxAge: token.expires_in,
+        sameSite: 'lax',
+        path: '/'
       })
     }
 
