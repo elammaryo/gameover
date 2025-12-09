@@ -144,7 +144,7 @@ export function SpotifyPlayerInitializer({
             title: currentTrack.name,
             artists: currentTrack.artists,
             album: currentTrack.album,
-            durationMs: currentTrack.durationMs,
+            duration_ms: currentTrack.durationMs,
             audioUrl: currentTrack.uri,
             mediaType: currentTrack.mediaType,
             source: 'spotify'

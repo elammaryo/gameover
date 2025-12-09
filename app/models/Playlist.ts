@@ -1,3 +1,5 @@
+import { BeatTrack, SpotifyTrack, Track } from './Track'
+
 export class Playlist {
   collaborative: boolean
   description: string | null
@@ -6,12 +8,13 @@ export class Playlist {
   id: string
   images: { url: string }[]
   name: string
-  primary_color: string | null
   public: boolean
   snapshot_id: string
-  tracks: { href: string; total: number }
+  tracks: { href: string; items: { track: SpotifyTrack }[]; total: number }
   type: 'playlist'
   uri: string
+  items?: SpotifyTrack[] | BeatTrack[] = []
+  owner: { displayName: string; id: string }
 
   constructor(data: {
     collaborative: boolean
@@ -21,12 +24,13 @@ export class Playlist {
     id: string
     images: { url: string }[]
     name: string
-    primary_color: string | null
     public: boolean
     snapshot_id: string
-    tracks: { href: string; total: number }
+    tracks: { href: string; items: { track: SpotifyTrack }[]; total: number }
     type: 'playlist'
     uri: string
+    items?: SpotifyTrack[] | BeatTrack[]
+    owner: { displayName: string; id: string }
   }) {
     this.collaborative = data.collaborative
     this.description = data.description
@@ -35,11 +39,12 @@ export class Playlist {
     this.id = data.id
     this.images = data.images
     this.name = data.name
-    this.primary_color = data.primary_color
+    this.items = data.items
     this.public = data.public
     this.snapshot_id = data.snapshot_id
     this.tracks = data.tracks
     this.type = data.type
     this.uri = data.uri
+    this.owner = data.owner
   }
 }

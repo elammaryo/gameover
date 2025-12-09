@@ -4,7 +4,7 @@ abstract class BaseTrack {
   id: string
   title: string
   artist?: string
-  durationMs?: number
+  duration_ms?: number
   artworkUrl?: string
   source: TrackSource
   audioUrl: string
@@ -13,7 +13,7 @@ abstract class BaseTrack {
     this.id = data.id
     this.title = data.title
     this.artist = data.artist
-    this.durationMs = data.durationMs
+    this.duration_ms = data.duration_ms
     this.artworkUrl = data.artworkUrl
     this.source = data.source
     this.audioUrl = data.audioUrl
@@ -56,7 +56,7 @@ export class SpotifyTrack extends BaseTrack {
       id: data.id,
       title: data.title,
       artist: data.artists?.[0]?.name || 'Unknown Artist',
-      durationMs: data.durationMs,
+      duration_ms: data.duration_ms,
       artworkUrl: data.album?.images?.[0]?.url || data.images?.[0]?.url,
       source: 'spotify',
       audioUrl: data.audioUrl
@@ -66,7 +66,7 @@ export class SpotifyTrack extends BaseTrack {
     this.name = data.name
     this.album = data.album
     this.artists = data.artists
-    this.durationMs = data.durationMs
+    this.duration_ms = data.duration_ms
     this.mediaType = data?.mediaType
     this.images = data.album?.images || data.images || []
   }
