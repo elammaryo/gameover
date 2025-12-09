@@ -8,6 +8,7 @@ abstract class BaseTrack {
   artworkUrl?: string
   source: TrackSource
   audioUrl: string
+  uri?: string
 
   constructor(data: BaseTrack) {
     this.id = data.id
@@ -59,7 +60,8 @@ export class SpotifyTrack extends BaseTrack {
       duration_ms: data.duration_ms,
       artworkUrl: data.album?.images?.[0]?.url || data.images?.[0]?.url,
       source: 'spotify',
-      audioUrl: data.audioUrl
+      audioUrl: data.audioUrl,
+      uri: data.uri
     })
 
     this.id = data.id
@@ -69,6 +71,7 @@ export class SpotifyTrack extends BaseTrack {
     this.duration_ms = data.duration_ms
     this.mediaType = data?.mediaType
     this.images = data.album?.images || data.images || []
+    this.uri = data.uri
   }
 }
 
