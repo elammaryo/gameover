@@ -57,7 +57,7 @@ export default function Studio() {
     }
   }, [beatsLoading, playlistsLoading])
 
-  const featuredBeatIds: string[] = ['109', '91', '74', '80', '17', '79']
+  const featuredBeatIds: string[] = ['109', '91', '46', '80', '17', '79']
   const featuredBeats: BeatTrack[] = beats
     .filter(beat => featuredBeatIds.includes(beat.id))
     .sort(
