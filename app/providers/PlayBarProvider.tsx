@@ -1,7 +1,8 @@
 'use client'
 import { Track, SpotifyTrack } from '@/app/models/Track'
-import { createContext, useState } from 'react'
+import { createContext, useEffect, useState } from 'react'
 import { getBeatSignedUrl } from '../api'
+import { useSpotifyPlayer } from '../components/useSpotifyPlayer'
 
 interface CachedUrl {
   url: string
@@ -29,6 +30,15 @@ export default function PlayBarProvider({
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [currentIndex, setCurrentIndex] = useState<number>(-1)
   const [urlCache, setUrlCache] = useState<Map<string, CachedUrl>>(new Map())
+  const [loggedIn, setLoggedIn] = useState<boolean>(false)
+  useEffect(() => {
+    const isLoggedIn = document.cookie
+      .split(';')
+      .find(c => c.trim().startsWith('spotify_logged_in='))
+      ?.split('=')[1]
+
+    setLoggedIn(!!isLoggedIn)
+  }, [])
 
   const setTrack = async (track: Track | null) => {
     if (!track) {
@@ -61,7 +71,6 @@ export default function PlayBarProvider({
 
       try {
         if (track !== selectedTrack) {
-          console.log('Playing Spotify track:', spotifyTrack.name)
           setSelectedTrack(track)
           setIsPlaying(true)
         }
@@ -113,6 +122,13 @@ export default function PlayBarProvider({
       }
     }
   }
+
+  useSpotifyPlayer({
+    isLoggedIn: !!loggedIn,
+    setTrack,
+    setPlayPause,
+    selectedTrack
+  })
 
   return (
     <PlayBarContext.Provider
