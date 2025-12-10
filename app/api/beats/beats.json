@@ -233,5 +233,101 @@
     "bpm": 144,
     "key": "D Minor",
     "genre": "Drill Remix"
+  },
+  {
+    "id": "17",
+    "title": "Starlight",
+    "subtitle": "Roddy Ricch Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#17 Starlight [Trap Re-mixed] (Cmaj_130bpm).mp3",
+    "mood": "Melodic",
+    "bpm": 130,
+    "key": "C Major",
+    "genre": "Trap"
+  },
+  {
+    "id": "36",
+    "title": "Galactica",
+    "subtitle": "Lil Uzi Vert Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#36.mp3",
+    "mood": "Spacey",
+    "bpm": 150,
+    "genre": "Trap"
+  },
+  {
+    "id": "37",
+    "title": "Cobra",
+    "subtitle": "Roddy Ricch x Gunna Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#37 Cobra [Roddy Ricch x Gunna Type Beat] (mixed).mp3",
+    "mood": "Melodic",
+    "bpm": 130,
+    "genre": "Trap"
+  },
+  {
+    "id": "41",
+    "title": "Senses",
+    "subtitle": "Tion Wayne Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#41 Senses [Drill Re-mixed 2] (C#min_134bpm).mp3",
+    "mood": "Dark",
+    "bpm": 134,
+    "key": "C# Minor",
+    "genre": "Drill"
+  },
+  {
+    "id": "46",
+    "title": "Tidal Wave",
+    "subtitle": "Roddy Ricch x Gunna Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#46 Tidal Wave [Drill Re-Mixed] (130bpm).mp3",
+    "mood": "Dark",
+    "bpm": 130,
+    "genre": "Drill"
+  },
+  {
+    "id": "61",
+    "title": "Adrenaline",
+    "subtitle": "24k Goldn Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#61 Adrenaline [Trap Re-Mixed] (Amin_160bpm).mp3",
+    "mood": "Energetic",
+    "bpm": 160,
+    "key": "A Minor",
+    "genre": "Trap"
+  },
+  {
+    "id": "74",
+    "title": "Cash Central",
+    "subtitle": "Central Cee Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#74 Drip Central [Drill Re-Mixed] (C#min_139bpm).wav",
+    "mood": "Energetic",
+    "bpm": 139,
+    "key": "C# Minor",
+    "genre": "UK Drill"
+  },
+  {
+    "id": "55",
+    "title": "Dash",
+    "subtitle": "",
+    "artist": "GameOver",
+    "s3Key": "Beats/#55 Dash 2 (Mixed G#_min).mp3",
+    "mood": "Energetic",
+    "bpm": 110,
+    "key": "G# Minor",
+    "genre": "Trap"
+  },
+  {
+    "id": "75",
+    "title": "75 - R&Bish",
+    "subtitle": "24k Goldn Type Beat",
+    "artist": "GameOver",
+    "s3Key": "Beats/#75 [RnB-ish] (D#min).mp3",
+    "mood": "Energetic",
+    "bpm": 165,
+    "key": "C# Minor",
+    "genre": "UK Drill"
   }
 ]

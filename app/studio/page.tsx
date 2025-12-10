@@ -34,6 +34,8 @@ export default function Studio() {
         setBeatsLoading(false)
       })
 
+    setPlaylistsLoading(false)
+
     const overlay = document.getElementById('transition-overlay')
     const label = document.getElementById('transition-label')
 
@@ -55,7 +57,7 @@ export default function Studio() {
     }
   }, [beatsLoading, playlistsLoading])
 
-  const featuredBeatIds: string[] = ['109', '91', '84', '80', '88', '79']
+  const featuredBeatIds: string[] = ['109', '91', '46', '80', '17', '79']
   const featuredBeats: BeatTrack[] = beats
     .filter(beat => featuredBeatIds.includes(beat.id))
     .sort(
