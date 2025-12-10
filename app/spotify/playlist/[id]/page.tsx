@@ -43,15 +43,50 @@ export default function PlaylistDetailPage() {
 
   const playlistTracks = playlist?.tracks.items || []
 
-  const handlePlayTrack = (track: SpotifyTrack) => {
+  const isPlaylistPlaying =
+    playlistTracks.some(item => item.track.id === selectedTrack?.id) &&
+    isPlaying
+
+  const handlePlayPlaylist = () => {
+    if (isPlaylistPlaying) {
+      setPlayPause(false)
+    } else {
+      const firstTrack = playlistTracks[0]?.track
+      if (!firstTrack || !playlist) return
+
+      playSpotifyTrack({
+        contextUri: playlist.uri,
+        offset: 0
+      })
+
+      setTrack(new SpotifyTrack({ ...firstTrack, title: firstTrack.name }))
+      setQueue(
+        new SpotifyTrack({ ...firstTrack, title: firstTrack.name }),
+        playlistTracks.map(
+          item => new SpotifyTrack({ ...item.track, title: item.track.name })
+        )
+      )
+    }
+  }
+
+  const handlePlayTrack = (track: SpotifyTrack, index: number) => {
     if (isPlaying && selectedTrack?.id === track.id) {
       setPlayPause(false)
     } else if (selectedTrack?.id === track.id) {
       setPlayPause(true)
     } else {
-      playSpotifyTrack({ uris: [track.uri ?? ''] })
-      setTrack(new SpotifyTrack({ ...track }))
-      setQueue(track, playlistTracks.map(item => item.track) || [])
+      playSpotifyTrack({
+        contextUri: playlist?.uri,
+        offset: index
+      })
+
+      setTrack(new SpotifyTrack({ ...track, title: track.name }))
+      setQueue(
+        track,
+        playlistTracks.map(
+          item => new SpotifyTrack({ ...item.track, title: item.track.name })
+        )
+      )
     }
   }
 
@@ -157,10 +192,9 @@ export default function PlaylistDetailPage() {
                 {playlist.name}
               </h1>
               {playlist.description && (
-                <p
-                  className='max-w-2xl text-gray-300'
-                  dangerouslySetInnerHTML={{ __html: playlist.description }}
-                />
+                <p className='max-w-2xl text-gray-300'>
+                  {playlist.description}
+                </p>
               )}
               <div className='flex flex-wrap items-center gap-2 text-sm text-gray-400'>
                 <span className='font-semibold text-white'>
@@ -174,11 +208,23 @@ export default function PlaylistDetailPage() {
 
               {/* Actions */}
               <div className='mt-4 flex flex-wrap items-center gap-4'>
+                {/* ✅ Play/Pause Playlist Button */}
+                <button
+                  onClick={handlePlayPlaylist}
+                  className='group flex h-14 w-14 items-center justify-center rounded-full bg-green-500 shadow-lg shadow-green-500/25 transition-all hover:scale-105 hover:bg-green-400'
+                >
+                  {isPlaylistPlaying ? (
+                    <HiPause size={24} className='text-black' />
+                  ) : (
+                    <HiPlay size={24} className='ml-1 text-black' />
+                  )}
+                </button>
+
                 <a
                   href={playlist.external_urls?.spotify}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='inline-flex items-center gap-2 rounded-full bg-green-500 px-8 py-3 font-semibold text-black transition-all hover:scale-105 hover:bg-green-400'
+                  className='inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10'
                 >
                   <SiSpotify size={20} />
                   Open in Spotify
@@ -189,7 +235,7 @@ export default function PlaylistDetailPage() {
         </section>
 
         {/* Tracks List */}
-        <section>
+        <section className='mb-30'>
           <div className='mb-4 grid grid-cols-[auto_1fr_1fr_auto] gap-4 border-b border-white/10 px-4 pb-2 text-sm font-semibold text-gray-400'>
             <div className='text-center'>#</div>
             <div>Title</div>
@@ -205,12 +251,11 @@ export default function PlaylistDetailPage() {
               const track = item.track
               const isCurrentTrack = selectedTrack?.id === track.id
               const trackIsPlaying = isCurrentTrack && isPlaying
-              const hasPreview = true
 
               return (
                 <div
                   key={track.id}
-                  onClick={() => handlePlayTrack(track)}
+                  onClick={() => handlePlayTrack(track, index)}
                   className={`group grid cursor-pointer grid-cols-[auto_1fr_1fr_auto] items-center gap-4 rounded-lg px-4 py-3 transition-all hover:bg-white/5 ${
                     isCurrentTrack ? 'bg-white/10' : ''
                   }`}
@@ -247,7 +292,7 @@ export default function PlaylistDetailPage() {
                   {/* Track Info */}
                   <div className='flex min-w-0 items-center gap-3'>
                     <div className='relative h-12 w-12 flex-shrink-0 overflow-hidden rounded'>
-                      {track.album.images[0].url ? (
+                      {track.album.images[0]?.url ? (
                         <Image
                           src={track.album.images[0].url}
                           alt={track.album.name ?? 'Album Cover'}
@@ -281,28 +326,12 @@ export default function PlaylistDetailPage() {
                   </div>
 
                   {/* Duration */}
-                  <div className='flex items-center justify-end gap-2 text-sm text-gray-400'>
-                    {!hasPreview && (
-                      <span className='text-xs text-gray-500'>
-                        (Full on Spotify)
-                      </span>
-                    )}
+                  <div className='flex items-center justify-end text-sm text-gray-400'>
                     <span>{formatDuration(track.duration_ms ?? 0)}</span>
                   </div>
                 </div>
               )
             })}
-          </div>
-        </section>
-
-        {/* Info Banner */}
-        <section className='mt-12'>
-          <div className='rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-center backdrop-blur-sm'>
-            <p className='text-sm text-gray-400'>
-              <span className='text-green-400'>💡 Tip:</span> Tracks with
-              previews play 30-second clips. Click "Full on Spotify" tracks to
-              listen to the complete song.
-            </p>
           </div>
         </section>
       </div>

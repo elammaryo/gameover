@@ -73,9 +73,23 @@ export async function getSpotifyAccessToken(): Promise<string | null> {
   return data.accessToken
 }
 
-export async function playSpotifyTrack({ uris }: { uris: string[] }) {
+export async function playSpotifyTrack({
+  uris,
+  contextUri,
+  offset
+}: {
+  uris?: string[]
+  contextUri?: string
+  offset?: number
+}) {
   const deviceId = window.spotifyPlayerInstance?.deviceId
   const accessToken = await getSpotifyAccessToken()
+
+  if (!deviceId || !accessToken) {
+    console.error('Cannot play track: Missing device ID or access token')
+    return
+  }
+
   fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
     method: 'PUT',
     headers: {
@@ -83,7 +97,9 @@ export async function playSpotifyTrack({ uris }: { uris: string[] }) {
       Authorization: `Bearer ${accessToken}`
     },
     body: JSON.stringify({
-      uris: uris
+      uris: uris,
+      context_uri: contextUri,
+      offset: { position: offset }
     })
   })
     .then(async response => {
