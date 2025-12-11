@@ -4,7 +4,7 @@ import { BeatTrack, SpotifyTrack } from './models/Track'
 export async function getSpotifyPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/spotify/playlists')
   const data = await res.json()
-  return data.map(
+  return data.playlists.map(
     (item: Playlist) => new Playlist({ ...item, type: 'spotify' })
   )
 }
