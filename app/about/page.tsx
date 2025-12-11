@@ -41,17 +41,20 @@ export default function AboutPage() {
     {
       label: '4+ Years',
       icon: <HiClock className='text-purple-400' size={16} />,
-      color: 'purple-500'
+      bgClass: 'bg-purple-500/10',
+      borderClass: 'border-purple-500/30'
     },
     {
       label: '100+ Beats',
       icon: <HiMusicalNote className='text-fuchsia-400' size={16} />,
-      color: 'fuchsia-500'
+      bgClass: 'bg-fuchsia-500/10',
+      borderClass: 'border-fuchsia-500/30'
     },
     {
       label: '8 Genres',
       icon: <HiSparkles className='text-cyan-400' size={16} />,
-      color: 'cyan-400'
+      bgClass: 'bg-cyan-400/10',
+      borderClass: 'border-cyan-400/30'
     }
   ]
 
@@ -145,10 +148,10 @@ export default function AboutPage() {
                   {stats.map(stat => (
                     <div
                       key={stat.label}
-                      className={`border-${stat.color}/30 flex items-center gap-2 rounded-full border bg-${stat.color}/10 px-4 py-2`}
+                      className={`flex items-center gap-2 rounded-full border px-4 py-2 ${stat.borderClass} ${stat.bgClass}`}
                     >
                       {stat.icon}
-                      <span className={`text-sm font-semibold text-white`}>
+                      <span className='text-sm font-semibold text-white'>
                         {stat.label}
                       </span>
                     </div>
@@ -369,7 +372,7 @@ export default function AboutPage() {
                   </div>
                   <div className='flex items-center gap-2'>
                     <div className='h-1.5 w-1.5 rounded-full bg-fuchsia-400' />
-                    <span>5+ years experience</span>
+                    <span>4+ years experience</span>
                   </div>
                   <div className='flex items-center gap-2'>
                     <div className='h-1.5 w-1.5 rounded-full bg-pink-400' />
