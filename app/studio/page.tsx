@@ -96,7 +96,7 @@ export default function Studio() {
           </div>
 
           <BlurText
-            text='Premium Beats & Curated Playlists'
+            text='Welcome to the Sound Lab'
             delay={50}
             animateBy='words'
             direction='top'
@@ -104,8 +104,8 @@ export default function Studio() {
           />
 
           <p className='max-w-3xl text-lg text-gray-300 sm:text-xl'>
-            Explore hard-hitting trap, drill, and afrobeats. Stream directly or
-            browse curated Spotify playlists for the perfect vibe.
+            Hard-hitting trap, drill, and afrobeats crafted for artists. Stream
+            instantly or explore curated collections tailored for every mood.
           </p>
 
           <div className='flex flex-wrap items-center gap-3'>
@@ -276,16 +276,7 @@ export default function Studio() {
             ) : (
               <BeatsSection beats={beats} />
             )
-          ) : // ) : playlistsLoading ? (
-          //   <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          //     {[...Array(6)].map((_, i) => (
-          //       <div
-          //         key={i}
-          //         className='h-64 animate-pulse rounded-2xl bg-white/5'
-          //       />
-          //     ))}
-          //   </div>
-          playlists.length === 0 ? (
+          ) : playlists.length === 0 ? (
             <div className='flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm'>
               <HiSparkles className='text-gray-600' size={48} />
               <p className='text-gray-400'>No playlists found.</p>
