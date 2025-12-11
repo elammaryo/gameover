@@ -4,13 +4,16 @@ import { BeatTrack, SpotifyTrack } from './models/Track'
 export async function getSpotifyPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/spotify/playlists')
   const data = await res.json()
-  return data.playlists.map((item: Playlist) => new Playlist(item))
+  return data.map(
+    (item: Playlist) => new Playlist({ ...item, type: 'spotify' })
+  )
 }
 
 export async function getBeatsPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/beats/playlists')
   const data = await res.json()
-  return data.playlists.map((item: Playlist) => new Playlist(item))
+  console.log(data)
+  return data.map((item: Playlist) => new Playlist({ ...item, type: 'beat' }))
 }
 
 export async function getPlaylistTracks(playlistId: string) {

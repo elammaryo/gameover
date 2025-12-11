@@ -1,4 +1,4 @@
-import { BeatTrack, SpotifyTrack, Track } from './Track'
+import { BeatTrack, SpotifyTrack } from './Track'
 
 export class Playlist {
   collaborative: boolean
@@ -11,7 +11,8 @@ export class Playlist {
   public: boolean
   snapshot_id: string
   tracks: { href: string; items: { track: SpotifyTrack }[]; total: number }
-  type: 'playlist'
+  trackIds?: string[] = []
+  type: 'spotify' | 'beat'
   uri: string
   items?: SpotifyTrack[] | BeatTrack[] = []
   owner: { displayName: string; id: string }
@@ -27,7 +28,7 @@ export class Playlist {
     public: boolean
     snapshot_id: string
     tracks: { href: string; items: { track: SpotifyTrack }[]; total: number }
-    type: 'playlist'
+    type: 'spotify' | 'beat'
     uri: string
     items?: SpotifyTrack[] | BeatTrack[]
     owner: { displayName: string; id: string }
