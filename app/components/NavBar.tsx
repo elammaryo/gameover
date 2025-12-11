@@ -2,7 +2,8 @@
 import NextImage from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { HiShieldExclamation, HiXMark } from 'react-icons/hi2'
+import { HiShieldExclamation, HiXMark, HiBars3 } from 'react-icons/hi2'
+import { AnimatePresence, motion } from 'motion/react'
 import logo from '../../public/gameover-logo.png'
 
 export function NavBar({ selectedTab }: { selectedTab?: string }) {
@@ -12,6 +13,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
   const [showAlert, setShowAlert] = useState(false)
   const [hasBlocker, setHasBlocker] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const detectBlocker = async () => {
@@ -98,9 +100,16 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
     detectBlocker()
   }, [])
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
+
   const handleNavigation = (tab: string) => {
     const currentIsHome = pathname === '/'
     const nextIsMedia = tab === 'studio' || tab === 'spotify'
+
+    setIsMobileMenuOpen(false) // Close menu on navigation
 
     if (currentIsHome && nextIsMedia) {
       const overlay = document.getElementById('transition-overlay')
@@ -123,7 +132,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
 
   return (
     <>
-      <nav className='fixed top-0 z-20 flex w-full items-center justify-between gap-2 bg-black/50 px-4 py-4 backdrop-blur-sm sm:gap-6 sm:px-10 sm:py-7'>
+      <nav className='fixed top-0 z-50 flex w-full items-center justify-between gap-2 bg-black/50 px-4 py-4 backdrop-blur-sm sm:gap-6 sm:px-10 sm:py-7'>
         <a href='/' className='flex-shrink-0'>
           <NextImage
             width={100}
@@ -134,15 +143,16 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
           />
         </a>
 
-        <div className='flex flex-1 items-center justify-end gap-3 sm:absolute sm:left-1/2 sm:-translate-x-1/2 sm:justify-center sm:gap-4'>
-          <div className='flex gap-6 text-sm sm:gap-10 sm:text-base'>
+        {/* Desktop Navigation */}
+        <div className='hidden flex-1 items-center justify-end gap-3 sm:absolute sm:left-1/2 sm:flex sm:-translate-x-1/2 sm:justify-center sm:gap-4'>
+          <div className='flex gap-10 text-base'>
             {tabs.map(tab => {
               const isActive = selectedTab === tab
               return (
                 <button
                   key={tab}
                   onClick={() => handleNavigation(tab)}
-                  className={`group relative font-mono text-xs tracking-[0.15em] whitespace-nowrap uppercase transition-all duration-200 sm:text-lg ${
+                  className={`group relative font-mono text-lg tracking-[0.15em] whitespace-nowrap uppercase transition-all duration-200 ${
                     isActive
                       ? 'text-white'
                       : 'text-gray-500 hover:text-gray-300'
@@ -165,12 +175,12 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
           {hasBlocker && (
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className='group relative ml-2 flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-2 py-1.5 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20 sm:ml-4 sm:gap-2 sm:px-3 sm:py-2'
+              className='group relative ml-4 flex flex-shrink-0 items-center gap-2 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-3 py-2 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20'
               aria-label='Content blocker detected'
             >
-              <span className='absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3'>
+              <span className='absolute -top-1 -right-1 flex h-3 w-3'>
                 <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75'></span>
-                <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500 sm:h-3 sm:w-3'></span>
+                <span className='relative inline-flex h-3 w-3 rounded-full bg-amber-500'></span>
               </span>
 
               <HiShieldExclamation
@@ -178,21 +188,137 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 className='h-5 w-5 text-amber-400'
               />
 
-              <span className='hidden text-xs font-medium text-amber-400 sm:inline'>
-                Status
-              </span>
+              <span className='text-xs font-medium text-amber-400'>Status</span>
             </button>
           )}
 
           {isChecking && !hasBlocker && (
-            <div className='ml-2 flex flex-shrink-0 items-center gap-1.5 text-xs text-gray-500 sm:ml-4 sm:gap-2'>
-              <div className='h-1.5 w-1.5 animate-pulse rounded-full bg-gray-500 sm:h-2 sm:w-2'></div>
-              <span className='hidden sm:inline'>Checking...</span>
+            <div className='ml-4 flex flex-shrink-0 items-center gap-2 text-xs text-gray-500'>
+              <div className='h-2 w-2 animate-pulse rounded-full bg-gray-500'></div>
+              <span>Checking...</span>
             </div>
           )}
         </div>
-        <div className='w-[100px] flex-shrink-0 sm:w-[120px]' />
+
+        {/* Mobile Right Section */}
+        <div className='flex items-center gap-2 sm:hidden'>
+          {/* Status Indicator - Mobile */}
+          {hasBlocker && (
+            <button
+              onClick={() => setShowAlert(!showAlert)}
+              className='group relative flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-2 py-1.5 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20'
+              aria-label='Content blocker detected'
+            >
+              <span className='absolute -top-1 -right-1 flex h-2.5 w-2.5'>
+                <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75'></span>
+                <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500'></span>
+              </span>
+
+              <HiShieldExclamation size={16} className='text-amber-400' />
+            </button>
+          )}
+
+          {isChecking && !hasBlocker && (
+            <div className='flex flex-shrink-0 items-center'>
+              <div className='h-1.5 w-1.5 animate-pulse rounded-full bg-gray-500'></div>
+            </div>
+          )}
+
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className='rounded-lg p-2 text-white transition-colors hover:bg-white/10'
+            aria-label='Open menu'
+          >
+            <HiBars3 size={24} />
+          </button>
+        </div>
+
+        <div className='hidden w-[120px] flex-shrink-0 sm:block' />
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className='fixed inset-0 z-[55] bg-black/80 backdrop-blur-sm sm:hidden'
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Menu Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{
+                type: 'spring',
+                damping: 30,
+                stiffness: 300
+              }}
+              className='fixed inset-y-0 right-0 z-[56] w-[75vw] max-w-[300px] border-l border-white/10 bg-[#05040A]/98 shadow-2xl sm:hidden'
+            >
+              {/* Menu Header */}
+              <div className='flex items-center justify-between border-b border-white/10 p-4'>
+                <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
+                  Menu
+                </span>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className='rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
+                  aria-label='Close menu'
+                >
+                  <HiXMark size={20} />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <div className='flex flex-col gap-1 p-4'>
+                {tabs.map(tab => {
+                  const isActive = selectedTab === tab
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => handleNavigation(tab)}
+                      className={`group relative rounded-xl px-4 py-4 text-left font-mono text-sm tracking-[0.15em] uppercase transition-all ${
+                        isActive
+                          ? 'bg-white/10 text-white'
+                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {tab}
+                      {isActive && (
+                        <span className='absolute top-1/2 left-0 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 via-blue-400 to-fuchsia-400' />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Footer Info */}
+              <div className='absolute right-0 bottom-0 left-0 border-t border-white/10 p-4'>
+                <div className='flex items-center gap-2'>
+                  <NextImage
+                    width={80}
+                    height={28}
+                    src={logo.src}
+                    className='h-3 w-auto object-contain opacity-50'
+                    alt='Logo'
+                  />
+                </div>
+                <p className='mt-2 text-xs text-gray-500'>
+                  © {new Date().getFullYear()} GameOver
+                </p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Alert Modal */}
       {showAlert && hasBlocker && (
