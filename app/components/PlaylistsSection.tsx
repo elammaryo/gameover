@@ -19,7 +19,11 @@ export function PlaylistsSection({
           key={playlist.id}
           className='bg-white/5/5 flex cursor-pointer flex-col gap-3 rounded-2xl border border-white/5 p-5 transition-colors hover:border-fuchsia-400/60 hover:bg-white/10'
           onClick={() => {
-            router.push(`/spotify/playlist/${playlist.id}`)
+            if (playlist.type === 'spotify') {
+              router.push(`/spotify/playlist/${playlist.id}`)
+            } else {
+              router.push(`/beats/playlist/${playlist.id}`)
+            }
           }}
         >
           <div className='h-full w-full overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-500'>
@@ -38,7 +42,9 @@ export function PlaylistsSection({
             <div className='flex flex-col items-start gap-1'>
               <span className='text-sm font-semibold'>{playlist.name}</span>
               <span className='text-xs text-gray-400'>
-                Spotify · Vibe session
+                {playlist.type === 'spotify'
+                  ? 'Spotify · Vibe session'
+                  : 'Beats · Vibe session'}
               </span>
             </div>
             <div
