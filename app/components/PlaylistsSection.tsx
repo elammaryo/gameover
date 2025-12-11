@@ -22,7 +22,7 @@ export function PlaylistsSection({
             if (playlist.type === 'spotify') {
               router.push(`/spotify/playlist/${playlist.id}`)
             } else {
-              router.push(`/beats/playlist/${playlist.id}`)
+              router.push(`/studio/playlist/${playlist.name.toLowerCase()}`)
             }
           }}
         >

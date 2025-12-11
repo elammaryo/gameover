@@ -12,7 +12,6 @@ export async function getSpotifyPlaylists(): Promise<Playlist[]> {
 export async function getBeatsPlaylists(): Promise<Playlist[]> {
   const res = await fetch('/api/beats/playlists')
   const data = await res.json()
-  console.log(data)
   return data.map((item: Playlist) => new Playlist({ ...item, type: 'beat' }))
 }
 
