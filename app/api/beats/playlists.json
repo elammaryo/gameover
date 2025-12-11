@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Remixes",
+    "description": "",
+    "href": "",
+    "id": "1",
+    "images": [""],
+    "trackIds": ["91", "56"]
+  },
+  {
+    "name": "Drill",
+    "description": "",
+    "href": "",
+    "id": "1",
+    "images": [""],
+    "trackIds": ["88", "84", "34"]
+  },
+  {
+    "name": "Afrobeats",
+    "description": "",
+    "href": "",
+    "id": "1",
+    "images": [""],
+    "trackIds": ["109", "107"]
+  },
+  {
+    "name": "Trap",
+    "description": "",
+    "href": "",
+    "id": "1",
+    "images": [""],
+    "trackIds": ["80", "86", "99"]
+  }
+]
