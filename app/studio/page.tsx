@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { NavBar } from '../components/NavBar'
 import FeaturedBeatsSection from '../components/FeaturedBeatCard'
-import { getBeats, getSpotifyPlaylists } from '../api'
+import { getBeats, getBeatsPlaylists, getSpotifyPlaylists } from '../api'
 import { Playlist } from '../models/Playlist'
 import { BeatTrack } from '../models/Track'
 import { PlaylistsSection } from '../components/PlaylistsSection'
@@ -34,7 +34,15 @@ export default function Studio() {
         setBeatsLoading(false)
       })
 
-    setPlaylistsLoading(false)
+    getBeatsPlaylists()
+      .then((data: Playlist[]) => {
+        setPlaylists(data)
+        setPlaylistsLoading(false)
+      })
+      .catch((error: Error) => {
+        console.error('Error fetching playlists:', error)
+        setPlaylistsLoading(false)
+      })
 
     const overlay = document.getElementById('transition-overlay')
     const label = document.getElementById('transition-label')
