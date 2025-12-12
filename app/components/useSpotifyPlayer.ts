@@ -205,19 +205,22 @@ export function useSpotifyPlayer({
   }, [isLoggedIn, setTrack, setPlayPause])
 }
 
-function updateMediaSession(track: any) {
+function updateMediaSession(track: Track) {
   if (!('mediaSession' in navigator)) return
 
   navigator.mediaSession.metadata = new MediaMetadata({
     title: track.name || 'Unknown Track',
     artist:
-      track.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
+      track.artists?.map((a: { name: string }) => a.name).join(', ') ||
+      'Unknown Artist',
     album: track.album?.name || 'Unknown Album',
     artwork:
-      track.album?.images?.map((img: any) => ({
-        src: img.url,
-        sizes: `${img.width}x${img.height}`,
-        type: 'image/jpeg'
-      })) || []
+      track.album?.images?.map(
+        (img: { src: string; width: number; height: number }) => ({
+          src: img.url,
+          sizes: `${img.width}x${img.height}`,
+          type: 'image/jpeg'
+        })
+      ) || []
   })
 }
