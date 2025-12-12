@@ -48,12 +48,12 @@ export function PlaylistsSection({
       }
 
       const tracks: SpotifyTrack[] = data.items.map(
-        (item: { track: SpotifyTra }) => ({
+        (item: { track: SpotifyTrack }) => ({
           id: item.track.id,
           title: item.track.name,
           artist: item.track.artists[0]?.name || 'Unknown Artist',
           artworkUrl: item.track.album?.images?.[0]?.url || '',
-          uri: item.track.uri,
+          uri: item.track.uri as string,
           source: 'spotify' as const,
           duration_ms: item.track.duration_ms,
           album: {
@@ -64,10 +64,12 @@ export function PlaylistsSection({
       )
 
       const firstTrack = tracks[0]
+      if (!firstTrack) return null
+
       await setTrack(firstTrack)
       setQueue(firstTrack, tracks)
 
-      const trackUris = tracks.map(t => t.uri)
+      const trackUris: string[] = tracks.map(t => t.uri ?? '')
       await playSpotifyTrack({ uris: trackUris, offset: 0 })
     } catch (error) {
       console.error('Error playing playlist:', error)

@@ -205,7 +205,7 @@ export function useSpotifyPlayer({
   }, [isLoggedIn, setTrack, setPlayPause])
 }
 
-function updateMediaSession(track: Track) {
+function updateMediaSession(track: SpotifyTrack) {
   if (!('mediaSession' in navigator)) return
 
   navigator.mediaSession.metadata = new MediaMetadata({
@@ -216,7 +216,7 @@ function updateMediaSession(track: Track) {
     album: track.album?.name || 'Unknown Album',
     artwork:
       track.album?.images?.map(
-        (img: { src: string; width: number; height: number }) => ({
+        (img: { url: string; height: number; width: number }) => ({
           src: img.url,
           sizes: `${img.width}x${img.height}`,
           type: 'image/jpeg'
