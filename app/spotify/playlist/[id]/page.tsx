@@ -47,14 +47,14 @@ export default function PlaylistDetailPage() {
     playlistTracks.some(item => item.track.id === selectedTrack?.id) &&
     isPlaying
 
-  const handlePlayPlaylist = () => {
+  const handlePlayPlaylist = async () => {
     if (isPlaylistPlaying) {
       setPlayPause(false)
     } else {
       const firstTrack = playlistTracks[0]?.track
       if (!firstTrack || !playlist) return
 
-      playSpotifyTrack({
+      await playSpotifyTrack({
         contextUri: playlist.uri,
         offset: 0
       })
@@ -69,13 +69,13 @@ export default function PlaylistDetailPage() {
     }
   }
 
-  const handlePlayTrack = (track: SpotifyTrack, index: number) => {
+  const handlePlayTrack = async (track: SpotifyTrack, index: number) => {
     if (isPlaying && selectedTrack?.id === track.id) {
       setPlayPause(false)
     } else if (selectedTrack?.id === track.id) {
       setPlayPause(true)
     } else {
-      playSpotifyTrack({
+      await playSpotifyTrack({
         contextUri: playlist?.uri,
         offset: index
       })
