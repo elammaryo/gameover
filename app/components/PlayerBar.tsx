@@ -206,204 +206,190 @@ export function PlayerBar() {
   }
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  if (!shouldShowPlayer) {
+  if (shouldShowPlayer) {
     return (
       <>
-        {track?.source === 'beat' && track?.audioUrl && (
-          <audio
-            ref={audioRef}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleEnded}
-            src={track.audioUrl}
-          />
-        )}
-      </>
-    )
-  }
+        <NowPlayingOverlay
+          isOpen={isOverlayOpen}
+          onClose={() => setIsOverlayOpen(false)}
+          currentTime={currentTime}
+          duration={duration}
+          volume={volume}
+          onVolumeChange={setVolume}
+          onSeek={handleSeekFromOverlay}
+          queue={queue}
+        />
 
-  return (
-    <>
-      <NowPlayingOverlay
-        isOpen={isOverlayOpen}
-        onClose={() => setIsOverlayOpen(false)}
-        currentTime={currentTime}
-        duration={duration}
-        volume={volume}
-        onVolumeChange={setVolume}
-        onSeek={handleSeekFromOverlay}
-        queue={queue}
-      />
-
-      <div className='fixed inset-x-0 bottom-0 z-40'>
-        {track?.source === 'beat' && track?.audioUrl && (
-          <audio
-            ref={audioRef}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleEnded}
-            src={track.audioUrl}
-          />
-        )}
-        <div className='pb-safe mb-safe px-0'>
-          <div
-            onClick={handlePlayerBarClick}
-            className={`relative flex w-full items-center justify-between gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] transition-colors max-sm:pb-8 sm:py-8 md:cursor-default`}
-          >
-            {/* LEFT: cover + titles */}
+        <div className='fixed inset-x-0 bottom-0 z-40'>
+          {track?.source === 'beat' && track?.audioUrl && (
+            <audio
+              ref={audioRef}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={handleEnded}
+              src={track.audioUrl}
+            />
+          )}
+          <div className='pb-safe mb-safe px-0'>
             <div
-              className={`flex min-w-0 flex-1 items-center gap-3 sm:w-[30%] sm:flex-none ${
-                !isMobile && track ? 'md:cursor-pointer' : ''
-              }`}
-              onClick={
-                !isMobile
-                  ? e => {
-                      e.stopPropagation()
-                      if (track) setIsOverlayOpen(true)
-                    }
-                  : undefined
-              }
+              onClick={handlePlayerBarClick}
+              className={`relative flex w-full items-center justify-between gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] transition-colors max-sm:pb-8 sm:py-8 md:cursor-default`}
             >
-              {track?.artworkUrl ? (
-                <Image
-                  width={100}
-                  height={100}
-                  src={track.artworkUrl}
-                  alt={track.title ?? 'Track Artwork'}
-                  className='h-10 w-10 flex-shrink-0 rounded-xl'
-                />
-              ) : (
-                <div className='h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
-              )}
-              <div className='flex min-w-0 flex-col'>
-                <span className='truncate text-sm font-semibold'>
-                  {track?.title || 'No track selected'}
-                </span>
-                <span className='truncate text-xs text-gray-400'>
-                  {track?.artist || 'Select a beat to start'}
-                </span>
-              </div>
-              {isPlaying && (
-                <div className='ml-1 hidden h-4 flex-shrink-0 items-end gap-[2px] text-cyan-300 sm:flex'>
-                  <span className='eq-bar-1 w-[2px] bg-cyan-300' />
-                  <span className='eq-bar-2 w-[2px] bg-cyan-300' />
-                  <span className='eq-bar-3 w-[2px] bg-cyan-300' />
-                </div>
-              )}
-            </div>
-
-            {/* CENTER: time + progress + controls - DESKTOP ONLY */}
-            <div className='pointer-events-none absolute left-1/2 hidden -translate-x-1/2 sm:block'>
-              <div className='pointer-events-auto flex flex-col items-center gap-2'>
-                <div className='flex items-center justify-center gap-2'>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation()
-                      onPrev()
-                    }}
-                    disabled={!track}
-                    className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                  >
-                    <HiBackward size={14} />
-                  </button>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation()
-                      onPlayPause()
-                    }}
-                    disabled={!track?.id}
-                    className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
-                  >
-                    {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
-                  </button>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation()
-                      onNext()
-                    }}
-                    disabled={!track}
-                    className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                  >
-                    <HiForward size={14} />
-                  </button>
-                </div>
-
-                <div className='flex w-[30vw] items-center gap-2'>
-                  <span className='text-[10px] text-gray-500'>
-                    {formatTime(currentTime)}
+              {/* LEFT: cover + titles */}
+              <div
+                className={`flex min-w-0 flex-1 items-center gap-3 sm:w-[30%] sm:flex-none ${
+                  !isMobile && track ? 'md:cursor-pointer' : ''
+                }`}
+                onClick={
+                  !isMobile
+                    ? e => {
+                        e.stopPropagation()
+                        if (track) setIsOverlayOpen(true)
+                      }
+                    : undefined
+                }
+              >
+                {track?.artworkUrl ? (
+                  <Image
+                    width={100}
+                    height={100}
+                    src={track.artworkUrl}
+                    alt={track.title ?? 'Track Artwork'}
+                    className='h-10 w-10 flex-shrink-0 rounded-xl'
+                  />
+                ) : (
+                  <div className='h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
+                )}
+                <div className='flex min-w-0 flex-col'>
+                  <span className='truncate text-sm font-semibold'>
+                    {track?.title || 'No track selected'}
                   </span>
-                  <div
-                    data-progress-bar
-                    className='relative h-[5px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
-                    onClick={e => {
-                      e.stopPropagation()
-                      handleSeek(e)
-                    }}
-                  >
-                    <div
-                      className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400 transition-all'
-                      style={{ width: `${progress}%` }}
-                    />
+                  <span className='truncate text-xs text-gray-400'>
+                    {track?.artist || 'Select a beat to start'}
+                  </span>
+                </div>
+                {isPlaying && (
+                  <div className='ml-1 hidden h-4 flex-shrink-0 items-end gap-[2px] text-cyan-300 sm:flex'>
+                    <span className='eq-bar-1 w-[2px] bg-cyan-300' />
+                    <span className='eq-bar-2 w-[2px] bg-cyan-300' />
+                    <span className='eq-bar-3 w-[2px] bg-cyan-300' />
                   </div>
-                  <span className='text-[10px] text-gray-500'>
-                    {formatTime(duration)}
-                  </span>
+                )}
+              </div>
+
+              {/* CENTER: time + progress + controls - DESKTOP ONLY */}
+              <div className='pointer-events-none absolute left-1/2 hidden -translate-x-1/2 sm:block'>
+                <div className='pointer-events-auto flex flex-col items-center gap-2'>
+                  <div className='flex items-center justify-center gap-2'>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        onPrev()
+                      }}
+                      disabled={!track}
+                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                    >
+                      <HiBackward size={14} />
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        onPlayPause()
+                      }}
+                      disabled={!track?.id}
+                      className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
+                    >
+                      {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        onNext()
+                      }}
+                      disabled={!track}
+                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                    >
+                      <HiForward size={14} />
+                    </button>
+                  </div>
+
+                  <div className='flex w-[30vw] items-center gap-2'>
+                    <span className='text-[10px] text-gray-500'>
+                      {formatTime(currentTime)}
+                    </span>
+                    <div
+                      data-progress-bar
+                      className='relative h-[5px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
+                      onClick={e => {
+                        e.stopPropagation()
+                        handleSeek(e)
+                      }}
+                    >
+                      <div
+                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400 transition-all'
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className='text-[10px] text-gray-500'>
+                      {formatTime(duration)}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Mobile controls */}
-            <div className='flex flex-1 items-center justify-end gap-2 sm:hidden'>
-              <button
-                onClick={e => {
-                  e.stopPropagation()
-                  onPrev()
-                }}
-                disabled={!track}
-                className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-              >
-                <HiBackward size={14} />
-              </button>
-              <button
-                onClick={e => {
-                  e.stopPropagation()
-                  onPlayPause()
-                }}
-                disabled={!track?.id}
-                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
-              >
-                {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
-              </button>
-              <button
-                onClick={e => {
-                  e.stopPropagation()
-                  onNext()
-                }}
-                disabled={!track}
-                className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-              >
-                <HiForward size={14} />
-              </button>
-            </div>
+              {/* Mobile controls */}
+              <div className='flex flex-1 items-center justify-end gap-2 sm:hidden'>
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    onPrev()
+                  }}
+                  disabled={!track}
+                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                >
+                  <HiBackward size={14} />
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    onPlayPause()
+                  }}
+                  disabled={!track?.id}
+                  className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
+                >
+                  {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    onNext()
+                  }}
+                  disabled={!track}
+                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                >
+                  <HiForward size={14} />
+                </button>
+              </div>
 
-            {/* RIGHT: volume - DESKTOP ONLY */}
-            <div
-              data-volume-slider
-              className='mr-10 hidden w-[30%] items-center justify-end gap-2 sm:flex'
-              onClick={e => e.stopPropagation()}
-            >
-              <HiVolumeUp size={20} className='mr-6 text-gray-400' />
-              <ElasticSlider
-                value={volume}
-                onChange={val => setVolume(val)}
-                maxValue={100}
-                startingValue={0}
-              />
+              {/* RIGHT: volume - DESKTOP ONLY */}
+              <div
+                data-volume-slider
+                className='mr-10 hidden w-[30%] items-center justify-end gap-2 sm:flex'
+                onClick={e => e.stopPropagation()}
+              >
+                <HiVolumeUp size={20} className='mr-6 text-gray-400' />
+                <ElasticSlider
+                  value={volume}
+                  onChange={val => setVolume(val)}
+                  maxValue={100}
+                  startingValue={0}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </>
-  )
+      </>
+    )
+  }
+  return null
 }
