@@ -139,6 +139,7 @@ export function useSpotifyPlayer({
         console.log('🎵 Player state:', currentTrack.name, 'Paused:', isPaused)
 
         setPlayPause(!isPaused)
+        updateMediaSession(currentTrack)
 
         if (currentTrackIdRef.current === currentTrack.id) {
           return
@@ -200,8 +201,23 @@ export function useSpotifyPlayer({
       }
     }
 
-    return () => {
-      // Keep player alive across navigations
-    }
+    return () => {}
   }, [isLoggedIn, setTrack, setPlayPause])
+}
+
+function updateMediaSession(track: any) {
+  if (!('mediaSession' in navigator)) return
+
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.name || 'Unknown Track',
+    artist:
+      track.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
+    album: track.album?.name || 'Unknown Album',
+    artwork:
+      track.album?.images?.map((img: any) => ({
+        src: img.url,
+        sizes: `${img.width}x${img.height}`,
+        type: 'image/jpeg'
+      })) || []
+  })
 }

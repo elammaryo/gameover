@@ -56,32 +56,21 @@ export function PlayerBar() {
     ) {
       return
     }
-
-    // Set metadata for native media controls
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: track.title || 'Unknown Track',
-      artist: track.artist || 'Unknown Artist',
-      album:
-        track.source === 'spotify' && 'album' in track
-          ? track.album?.name
-          : 'GameOver Studio',
-      artwork:
-        track.source === 'spotify'
-          ? [
-              {
-                src: track.artworkUrl || '',
-                sizes: '512x512',
-                type: 'image/png'
-              }
-            ]
-          : [
-              {
-                src: track.artworkUrl || '',
-                sizes: '512x512',
-                type: 'image/png'
-              }
-            ]
-    })
+    if (track.source === 'beat') {
+      // Set metadata for native media controls
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: track.title || 'Unknown Track',
+        artist: track.artist || 'Unknown Artist',
+        album: 'GameOver Studio',
+        artwork: [
+          {
+            src: track.artworkUrl || '',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      })
+    }
 
     navigator.mediaSession.setActionHandler('play', () => {
       setPlayPause(true)
