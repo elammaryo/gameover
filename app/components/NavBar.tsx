@@ -138,7 +138,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
   return (
     <>
       <nav className='fixed top-0 z-50 flex w-full items-center justify-between gap-2 bg-black/50 px-4 py-4 backdrop-blur-sm sm:gap-6 sm:px-10 sm:py-7'>
-        <a href='/' className='flex-shrink-0'>
+        <a onClick={() => router.push('/')} className='flex-shrink-0'>
           <NextImage
             width={100}
             height={35}

@@ -5,11 +5,9 @@ import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
 import { HiVolumeUp } from 'react-icons/hi'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
 import { NowPlayingOverlay } from './NowPlayingOverlay'
 
 export function PlayerBar() {
-  const pathname = usePathname()
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(100)
@@ -21,7 +19,7 @@ export function PlayerBar() {
   const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause, queue } =
     useContext(PlayBarContext)
   const track = selectedTrack
-  const shouldShowPlayer = pathname !== '/' && selectedTrack
+  const shouldShowPlayer = !!selectedTrack
 
   const isMobile =
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
