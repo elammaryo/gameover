@@ -43,7 +43,7 @@ export function PlayerBar() {
       navigator.mediaSession.setPositionState({
         duration: duration,
         playbackRate: 1,
-        position: currentTime
+        position: Math.max(0, Math.min(currentTime, duration))
       })
     }
   }, [currentTime, duration, track?.source])
@@ -142,7 +142,7 @@ export function PlayerBar() {
             navigator.mediaSession.setPositionState({
               duration: dur,
               playbackRate: 1,
-              position: position
+              position: Math.max(0, Math.min(position, dur))
             })
           }
         }
