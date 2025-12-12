@@ -26,7 +26,109 @@ export function PlayerBar() {
   const isMobile =
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
 
-  // ✅ Handle Spotify progress
+  // playback state updates
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+    }
+  }, [isPlaying])
+
+  // position state for beats
+  useEffect(() => {
+    if (
+      track?.source === 'beat' &&
+      'mediaSession' in navigator &&
+      duration > 0
+    ) {
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: 1,
+        position: currentTime
+      })
+    }
+  }, [currentTime, duration, track?.source])
+
+  useEffect(() => {
+    if (
+      !track ||
+      typeof navigator === 'undefined' ||
+      !('mediaSession' in navigator)
+    ) {
+      return
+    }
+
+    // Set metadata for native media controls
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title || 'Unknown Track',
+      artist: track.artist || 'Unknown Artist',
+      album:
+        track.source === 'spotify' && 'album' in track
+          ? track.album?.name
+          : 'GameOver Studio',
+      artwork:
+        track.source === 'spotify'
+          ? [
+              {
+                src: track.artworkUrl || '',
+                sizes: '512x512',
+                type: 'image/png'
+              }
+            ]
+          : [
+              {
+                src: track.artworkUrl || '',
+                sizes: '512x512',
+                type: 'image/png'
+              }
+            ]
+    })
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      setPlayPause(true)
+    })
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      setPlayPause(false)
+    })
+
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      onNext()
+    })
+
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      onPrev()
+    })
+
+    // Disable seek buttons
+    navigator.mediaSession.setActionHandler('seekbackward', null)
+    navigator.mediaSession.setActionHandler('seekforward', null)
+
+    navigator.mediaSession.setActionHandler('seekto', details => {
+      if (details.seekTime !== undefined) {
+        const audio = audioRef.current
+        if (audio && track.source === 'beat') {
+          audio.currentTime = details.seekTime
+          setCurrentTime(details.seekTime)
+        } else if (track.source === 'spotify' && window.spotifyPlayerInstance) {
+          window.spotifyPlayerInstance.seek(details.seekTime * 1000)
+        }
+      }
+    })
+
+    // Cleanup
+    return () => {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = null
+        navigator.mediaSession.setActionHandler('play', null)
+        navigator.mediaSession.setActionHandler('pause', null)
+        navigator.mediaSession.setActionHandler('nexttrack', null)
+        navigator.mediaSession.setActionHandler('previoustrack', null)
+        navigator.mediaSession.setActionHandler('seekto', null)
+      }
+    }
+  }, [track, setPlayPause, onNext, onPrev])
+
+  // Handle Spotify progress
   useEffect(() => {
     if (selectedTrack?.source === 'spotify' && window.spotifyPlayerInstance) {
       if (spotifyProgressInterval.current) {
@@ -40,11 +142,22 @@ export function PlayerBar() {
       spotifyProgressInterval.current = setInterval(async () => {
         const state = await window.spotifyPlayerInstance?.getCurrentState()
         if (state) {
-          setCurrentTime(state.position / 1000)
-          setDuration(state.duration / 1000)
-        }
-      }, 100)
+          const position = state.position / 1000
+          const dur = state.duration / 1000
 
+          setCurrentTime(position)
+          setDuration(dur)
+
+          // Spotify position state
+          if ('mediaSession' in navigator && dur > 0) {
+            navigator.mediaSession.setPositionState({
+              duration: dur,
+              playbackRate: 1,
+              position: position
+            })
+          }
+        }
+      }, 1000)
       return () => {
         if (spotifyProgressInterval.current) {
           clearInterval(spotifyProgressInterval.current)
@@ -58,7 +171,7 @@ export function PlayerBar() {
     }
   }, [selectedTrack?.source, selectedTrack?.id])
 
-  // ✅ Update audio element when track changes
+  // Update audio on track changes
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
@@ -105,7 +218,7 @@ export function PlayerBar() {
     }
   }, [track?.audioUrl, track?.id])
 
-  // ✅ Play/pause control
+  // Play/pause control
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || selectedTrack?.source !== 'beat') return
