@@ -41,8 +41,14 @@ export function NowPlayingOverlay({
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
     null
   )
+  const [touchStartTime, setTouchStartTime] = useState<number>(0)
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(
+    null
+  )
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const isMobile =
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
@@ -51,6 +57,13 @@ export function NowPlayingOverlay({
   const currentTrackIndex = queue.findIndex(t => t.id === selectedTrack?.id)
   const upcomingTracks =
     currentTrackIndex >= 0 ? queue.slice(currentTrackIndex + 1) : []
+
+  // Get next and previous tracks for mobile preview
+  const nextTrack =
+    currentTrackIndex >= 0 && currentTrackIndex < queue.length - 1
+      ? queue[currentTrackIndex + 1]
+      : null
+  const prevTrack = currentTrackIndex > 0 ? queue[currentTrackIndex - 1] : null
 
   // Close on escape key
   useEffect(() => {
@@ -65,7 +78,6 @@ export function NowPlayingOverlay({
 
   // Handle swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Only track touches on the main content area, not scrollable queue
     const target = e.target as HTMLElement
     if (target.closest('[data-scrollable]')) return
 
@@ -73,6 +85,7 @@ export function NowPlayingOverlay({
       x: e.targetTouches[0].clientX,
       y: e.targetTouches[0].clientY
     })
+    setTouchStartTime(Date.now())
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -88,7 +101,7 @@ export function NowPlayingOverlay({
     const isVerticalDrag = Math.abs(diffY) > diffX
 
     if (isAtTop && isDraggingDown && isVerticalDrag) {
-      e.preventDefault() // Prevent scrolling while dragging
+      e.preventDefault()
       overlayRef.current.style.transform = `translateY(${diffY * 0.6}px)`
       overlayRef.current.style.transition = 'none'
     }
@@ -104,9 +117,11 @@ export function NowPlayingOverlay({
 
     const diffY = touchEnd.y - touchStart.y
     const diffX = touchEnd.x - touchStart.x
+    const distance = Math.abs(diffX)
+    const timeElapsed = Date.now() - touchStartTime
+    const velocity = distance / timeElapsed
     const isVerticalDrag = Math.abs(diffY) > Math.abs(diffX)
 
-    // Reset transition
     overlayRef.current.style.transition = ''
 
     // Swipe down to close
@@ -119,23 +134,41 @@ export function NowPlayingOverlay({
         }
       }, 300)
     } else if (isVerticalDrag) {
-      // Snap back if didn't meet threshold
       overlayRef.current.style.transform = 'translateY(0)'
     } else {
-      const minSwipeDistance = 50
+      // Horizontal swipe to change track
+      const minSwipeDistance = 60
+      const minVelocity = 0.3
 
       overlayRef.current.style.transform = 'translateY(0)'
 
-      if (Math.abs(diffX) > minSwipeDistance) {
-        if (diffX < 0) {
-          onNext()
-        } else {
-          onPrev()
+      if (distance > minSwipeDistance && velocity > minVelocity) {
+        if (diffX < 0 && nextTrack) {
+          setSwipeDirection('left')
+          setIsTransitioning(true)
+          setTimeout(() => {
+            onNext()
+            setTimeout(() => {
+              setIsTransitioning(false)
+              setSwipeDirection(null)
+            }, 400)
+          }, 50)
+        } else if (diffX > 0 && prevTrack) {
+          setSwipeDirection('right')
+          setIsTransitioning(true)
+          setTimeout(() => {
+            onPrev()
+            setTimeout(() => {
+              setIsTransitioning(false)
+              setSwipeDirection(null)
+            }, 400)
+          }, 50)
         }
       }
     }
 
     setTouchStart(null)
+    setTouchStartTime(0)
   }
 
   const handlePlayPause = () => {
@@ -200,7 +233,6 @@ export function NowPlayingOverlay({
   const beatTrack = isBeat ? (selectedTrack as BeatTrack) : null
   const spotifyTrack = !isBeat ? (selectedTrack as SpotifyTrack) : null
 
-  // Mobile: Full-screen overlay with slide-up animation
   if (isMobile) {
     return (
       <AnimatePresence>
@@ -248,85 +280,174 @@ export function NowPlayingOverlay({
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <div className='flex min-h-full flex-col items-center justify-center'>
-                <div className='w-full max-w-[min(85vw,400px)]'>
-                  {selectedTrack.artworkUrl ? (
-                    <div className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'>
-                      <Image
-                        src={selectedTrack.artworkUrl}
-                        alt={selectedTrack.title}
-                        fill
-                        className='object-cover'
-                      />
-                    </div>
-                  ) : (
-                    <div className='aspect-square w-full rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-500 to-fuchsia-500' />
+              <div className='flex min-h-full flex-col items-center justify-center gap-6'>
+                {/* Album Art Swipe Animation */}
+                <div className='relative w-full max-w-[min(85vw,400px)]'>
+                  <AnimatePresence mode='popLayout' initial={false}>
+                    <motion.div
+                      key={selectedTrack.id}
+                      initial={
+                        swipeDirection === 'left'
+                          ? { x: '100%', opacity: 0, scale: 0.8 }
+                          : swipeDirection === 'right'
+                            ? { x: '-100%', opacity: 0, scale: 0.8 }
+                            : false
+                      }
+                      animate={{ x: 0, opacity: 1, scale: 1 }}
+                      exit={
+                        swipeDirection === 'left'
+                          ? { x: '-100%', opacity: 0, scale: 0.8 }
+                          : swipeDirection === 'right'
+                            ? { x: '100%', opacity: 0, scale: 0.8 }
+                            : { opacity: 0 }
+                      }
+                      transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 30,
+                        opacity: { duration: 0.2 }
+                      }}
+                      className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'
+                    >
+                      {selectedTrack.artworkUrl ? (
+                        <Image
+                          src={selectedTrack.artworkUrl}
+                          alt={selectedTrack.title}
+                          fill
+                          className='object-cover'
+                          priority
+                        />
+                      ) : (
+                        <div className='h-full w-full bg-gradient-to-br from-cyan-500 via-blue-500 to-fuchsia-500' />
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {touchStart && (
+                    <>
+                      {/* Next track preview */}
+                      {nextTrack && nextTrack.artworkUrl && (
+                        <div className='pointer-events-none absolute top-0 -right-16 h-full w-16 opacity-40'>
+                          <Image
+                            src={nextTrack.artworkUrl}
+                            alt='Next'
+                            fill
+                            className='rounded-l-2xl object-cover'
+                          />
+                        </div>
+                      )}
+
+                      {/* Previous track preview */}
+                      {prevTrack && prevTrack.artworkUrl && (
+                        <div className='pointer-events-none absolute top-0 -left-16 h-full w-16 opacity-40'>
+                          <Image
+                            src={prevTrack.artworkUrl}
+                            alt='Previous'
+                            fill
+                            className='rounded-r-2xl object-cover'
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
-                {/* Track Info */}
-                <div className='mt-6 w-full max-w-[min(85vw,400px)]'>
-                  <h1 className='text-xl font-bold text-white sm:text-2xl'>
-                    {selectedTrack.title}
-                  </h1>
-                  <p className='mt-1 text-sm text-gray-400 sm:text-base'>
-                    {selectedTrack.artist}
-                  </p>
+                {/* Track Info with Slide Animation */}
+                <AnimatePresence mode='wait'>
+                  <motion.div
+                    key={selectedTrack.id}
+                    initial={
+                      swipeDirection
+                        ? {
+                            x: swipeDirection === 'left' ? 50 : -50,
+                            opacity: 0
+                          }
+                        : false
+                    }
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={
+                      swipeDirection
+                        ? {
+                            x: swipeDirection === 'left' ? -50 : 50,
+                            opacity: 0
+                          }
+                        : { opacity: 0 }
+                    }
+                    transition={{ duration: 0.3 }}
+                    className='w-full max-w-[min(85vw,400px)]'
+                  >
+                    <h1 className='text-xl font-bold text-white sm:text-2xl'>
+                      {selectedTrack.title}
+                    </h1>
+                    <p className='mt-1 text-sm text-gray-400 sm:text-base'>
+                      {selectedTrack.artist}
+                    </p>
 
-                  {/* Metadata */}
-                  {beatTrack && (
-                    <div className='mt-3 flex flex-wrap gap-2'>
-                      <span className='rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300'>
-                        {beatTrack.genre}
-                      </span>
-                      <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
-                        {beatTrack.bpm} BPM
-                      </span>
-                      {beatTrack.key && (
-                        <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
-                          {beatTrack.key}
+                    {/* Metadata */}
+                    {beatTrack && (
+                      <div className='mt-3 flex flex-wrap gap-2'>
+                        <span className='rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300'>
+                          {beatTrack.genre}
                         </span>
-                      )}
-                      {beatTrack.mood && (
                         <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
-                          {beatTrack.mood}
+                          {beatTrack.bpm} BPM
                         </span>
-                      )}
-                    </div>
-                  )}
+                        {beatTrack.key && (
+                          <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
+                            {beatTrack.key}
+                          </span>
+                        )}
+                        {beatTrack.mood && (
+                          <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
+                            {beatTrack.mood}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-                  {spotifyTrack && (
-                    <div className='mt-3 flex flex-wrap gap-2'>
-                      <span className='rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-semibold text-green-300'>
-                        {spotifyTrack.album.name}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                    {spotifyTrack && (
+                      <div className='mt-3 flex flex-wrap gap-2'>
+                        <span className='rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-semibold text-green-300'>
+                          {spotifyTrack.album.name}
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
 
-                {/* Progress Bar */}
-                <div className='mt-5 w-full max-w-[min(85vw,400px)]'>
-                  <div
-                    className='relative h-1 cursor-pointer overflow-hidden rounded-full bg-white/20'
-                    onClick={handleProgressClick}
+                {/* Progress Bar with Reset Animation */}
+                <AnimatePresence mode='wait'>
+                  <motion.div
+                    key={selectedTrack.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className='w-full max-w-[min(85vw,400px)]'
                   >
                     <div
-                      className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400'
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <div className='mt-2 flex justify-between text-xs text-gray-500'>
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                </div>
+                      className='relative h-1 cursor-pointer overflow-hidden rounded-full bg-white/20'
+                      onClick={handleProgressClick}
+                    >
+                      <motion.div
+                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400'
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.1 }}
+                      />
+                    </div>
+                    <div className='mt-2 flex justify-between text-xs text-gray-500'>
+                      <span>{formatTime(currentTime)}</span>
+                      <span>{formatTime(duration)}</span>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
 
                 {/* Controls */}
-                <div className='mt-5 flex w-full max-w-[min(85vw,400px)] items-center justify-center gap-4 sm:gap-6'>
+                <div className='flex w-full max-w-[min(85vw,400px)] items-center justify-center gap-4 sm:gap-6'>
                   <button
                     onClick={onPrev}
-                    disabled={!selectedTrack}
-                    className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-50 sm:p-3'
+                    disabled={!prevTrack}
+                    className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-30 sm:p-3'
                   >
                     <HiBackward size={24} className='sm:h-7 sm:w-7' />
                   </button>
@@ -343,8 +464,8 @@ export function NowPlayingOverlay({
                   </button>
                   <button
                     onClick={onNext}
-                    disabled={!selectedTrack}
-                    className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-50 sm:p-3'
+                    disabled={!nextTrack}
+                    className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-30 sm:p-3'
                   >
                     <HiForward size={24} className='sm:h-7 sm:w-7' />
                   </button>
@@ -352,7 +473,10 @@ export function NowPlayingOverlay({
 
                 {/* Queue */}
                 {upcomingTracks.length > 0 && (
-                  <div className='mt-8 w-full max-w-[min(85vw,400px)]'>
+                  <div
+                    className='w-full max-w-[min(85vw,400px)]'
+                    data-scrollable
+                  >
                     <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
                       Up Next ({upcomingTracks.length})
                     </h3>
