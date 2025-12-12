@@ -21,7 +21,7 @@ export function PlayerBar() {
   const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause, queue } =
     useContext(PlayBarContext)
   const track = selectedTrack
-  const shouldShowPlayer = pathname !== '/'
+  const shouldShowPlayer = pathname !== '/' && selectedTrack
 
   const isMobile =
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
