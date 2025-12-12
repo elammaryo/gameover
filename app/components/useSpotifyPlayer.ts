@@ -129,7 +129,7 @@ export function useSpotifyPlayer({
       })
 
       player.addListener('player_state_changed', async state => {
-        if (!isSpotifyAudioSource) return
+        if (!isSpotifyAudioSource.current) return
         if (!state || isUpdatingRef.current) return
         console.log('🔄 Spotify player state changed event received')
 
