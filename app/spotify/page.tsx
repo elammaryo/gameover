@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { NavBar } from '../components/NavBar'
 import BlurText from '../components/BlurText'
@@ -11,11 +12,13 @@ import { Playlist } from '../models/Playlist'
 import { SiSpotify } from 'react-icons/si'
 import { HiMusicalNote, HiSparkles, HiLockClosed } from 'react-icons/hi2'
 import { handleLogin, handleLogout } from '@/lib/spotify'
+import { PlayBarContext } from '../providers/PlayBarProvider'
 
 export default function SpotifyPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const overlay = document.getElementById('transition-overlay')
@@ -237,15 +240,17 @@ export default function SpotifyPage() {
                       {playlists[0]?.public ? 'Public' : 'Private'} Playlist
                     </span>
                   </div>
-                  <a
-                    href={playlists[0]?.external_urls.spotify}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-green-500 px-6 py-3 font-semibold text-black transition-all hover:scale-105 hover:bg-green-400'
-                  >
-                    <SiSpotify size={20} />
-                    Open in Spotify
-                  </a>
+                  <div className='mt-4'>
+                    <button
+                      onClick={() =>
+                        router.push(`/spotify/playlist/${playlists[0]?.id}`)
+                      }
+                      className='inline-flex items-center gap-2 rounded-full bg-green-500 px-6 py-3 font-semibold text-black transition-all hover:scale-105 hover:bg-green-400'
+                    >
+                      <SiSpotify size={20} />
+                      View Playlist
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

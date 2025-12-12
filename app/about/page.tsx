@@ -19,6 +19,7 @@ import {
 } from 'react-icons/hi2'
 import profileImage from '../../public/profile.png'
 import { use, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getSpotifyTopArtists, getSpotifyTopTracks } from '../api'
 import { SpotifyTrack } from '../models/Track'
 
@@ -27,6 +28,7 @@ export default function AboutPage() {
   const [topArtists, setTopArtists] = useState<
     { name: string; images: { url: string }[] }[]
   >([])
+  const router = useRouter()
 
   useEffect(() => {
     getSpotifyTopTracks()
@@ -474,12 +476,12 @@ export default function AboutPage() {
                 with Next.js, AWS S3, serverless functions, and custom WebGL
                 shaders.
               </p>
-              <a
-                href='/tech'
+              <button
+                onClick={() => router.push('/tech')}
                 className='inline-flex items-center gap-2 rounded-full border border-cyan-500 bg-cyan-500/10 px-8 py-3 font-semibold text-cyan-400 transition-all hover:border-cyan-400 hover:bg-cyan-500/20'
               >
                 View Tech Stack →
-              </a>
+              </button>
             </div>
           </div>
         </section>
