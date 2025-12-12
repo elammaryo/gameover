@@ -2,7 +2,12 @@
 import NextImage from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { HiShieldExclamation, HiXMark, HiBars3 } from 'react-icons/hi2'
+import {
+  HiShieldExclamation,
+  HiXMark,
+  HiBars3,
+  HiCheckCircle
+} from 'react-icons/hi2'
 import { AnimatePresence, motion } from 'motion/react'
 import logo from '../../public/gameover-logo.png'
 
@@ -27,7 +32,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
           {
             method: 'HEAD',
             signal: controller.signal,
-            mode: 'no-cors' // Just check if request goes through
+            mode: 'no-cors'
           }
         )
 
@@ -68,7 +73,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
         const sdkScript = document.getElementById('spotify-player-sdk')
 
         if (sdkScript && window.Spotify) {
-          // SDK loaded, check if player can initialize
           setTimeout(() => {
             if (!window.spotifyPlayerInstance) {
               console.warn('🛡️ Spotify player failed to initialize')
@@ -87,8 +91,9 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
         setHasBlocker(true)
       }
       testImage.src =
-        'https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228' // Small Spotify image
+        'https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228'
       testImage.alt = 'Spotify Test'
+
       // Cleanup after 10 seconds
       setTimeout(() => {
         clearInterval(checkInterval)
@@ -109,7 +114,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
     const currentIsHome = pathname === '/'
     const nextIsMedia = tab === 'studio' || tab === 'spotify'
 
-    setIsMobileMenuOpen(false) // Close menu on navigation
+    setIsMobileMenuOpen(false)
 
     if (currentIsHome && nextIsMedia) {
       const overlay = document.getElementById('transition-overlay')
@@ -171,8 +176,8 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             })}
           </div>
 
-          {/* Status */}
-          {hasBlocker && (
+          {/* Status Warning - Desktop */}
+          {hasBlocker && !isChecking && (
             <button
               onClick={() => setShowAlert(!showAlert)}
               className='group relative ml-4 flex flex-shrink-0 items-center gap-2 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-3 py-2 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20'
@@ -183,16 +188,25 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 <span className='relative inline-flex h-3 w-3 rounded-full bg-amber-500'></span>
               </span>
 
-              <HiShieldExclamation
-                size={18}
-                className='h-5 w-5 text-amber-400'
-              />
-
+              <HiShieldExclamation size={18} className='text-amber-400' />
               <span className='text-xs font-medium text-amber-400'>Status</span>
             </button>
           )}
 
-          {isChecking && !hasBlocker && (
+          {/* Status Success - Desktop */}
+          {!hasBlocker && !isChecking && (
+            <button
+              onClick={() => setShowAlert(!showAlert)}
+              className='group relative ml-4 flex flex-shrink-0 items-center gap-2 rounded-lg border border-green-500/40 bg-gradient-to-br from-green-500/20 to-emerald-500/10 px-3 py-2 transition-all hover:border-green-500/60 hover:from-green-500/30 hover:to-emerald-500/20'
+              aria-label='All systems operational'
+            >
+              <HiCheckCircle size={18} className='text-green-400' />
+              <span className='text-xs font-medium text-green-400'>Status</span>
+            </button>
+          )}
+
+          {/* Checking Indicator - Desktop */}
+          {isChecking && (
             <div className='ml-4 flex flex-shrink-0 items-center gap-2 text-xs text-gray-500'>
               <div className='h-2 w-2 animate-pulse rounded-full bg-gray-500'></div>
               <span>Checking...</span>
@@ -202,11 +216,11 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
 
         {/* Mobile Right Section */}
         <div className='flex items-center gap-2 sm:hidden'>
-          {/* Status Indicator - Mobile */}
-          {hasBlocker && (
+          {/* Status Warning - Mobile */}
+          {hasBlocker && !isChecking && (
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className='group relative flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-2 py-1.5 transition-all hover:border-amber-500/60 hover:from-amber-500/30 hover:to-orange-500/20'
+              className='group relative flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-orange-500/10 px-2 py-1.5 transition-all hover:border-amber-500/60'
               aria-label='Content blocker detected'
             >
               <span className='absolute -top-1 -right-1 flex h-2.5 w-2.5'>
@@ -218,7 +232,19 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             </button>
           )}
 
-          {isChecking && !hasBlocker && (
+          {/* Status Success - Mobile */}
+          {!hasBlocker && !isChecking && (
+            <button
+              onClick={() => setShowAlert(!showAlert)}
+              className='group relative flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-green-500/40 bg-gradient-to-br from-green-500/20 to-emerald-500/10 px-2 py-1.5 transition-all hover:border-green-500/60'
+              aria-label='All systems operational'
+            >
+              <HiCheckCircle size={16} className='text-green-400' />
+            </button>
+          )}
+
+          {/* Checking Indicator - Mobile */}
+          {isChecking && (
             <div className='flex flex-shrink-0 items-center'>
               <div className='h-1.5 w-1.5 animate-pulse rounded-full bg-gray-500'></div>
             </div>
@@ -241,7 +267,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -251,7 +276,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
               onClick={() => setIsMobileMenuOpen(false)}
             />
 
-            {/* Menu Panel */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -263,7 +287,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
               }}
               className='fixed inset-y-0 right-0 z-[56] w-[75vw] max-w-[300px] border-l border-white/10 bg-[#05040A]/98 shadow-2xl sm:hidden'
             >
-              {/* Menu Header */}
               <div className='flex items-center justify-between border-b border-white/10 p-4'>
                 <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
                   Menu
@@ -277,7 +300,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 </button>
               </div>
 
-              {/* Navigation Links */}
               <div className='flex flex-col gap-1 p-4'>
                 {tabs.map(tab => {
                   const isActive = selectedTab === tab
@@ -300,7 +322,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
                 })}
               </div>
 
-              {/* Footer Info */}
               <div className='absolute right-0 bottom-0 left-0 border-t border-white/10 p-4'>
                 <div className='flex items-center gap-2'>
                   <NextImage
@@ -321,7 +342,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
       </AnimatePresence>
 
       {/* Alert Modal */}
-      {showAlert && hasBlocker && (
+      {showAlert && (
         <div
           className='fixed inset-0 z-[60] flex items-start justify-center bg-black/50 pt-24 backdrop-blur-sm'
           onClick={() => setShowAlert(false)}
@@ -330,89 +351,138 @@ export function NavBar({ selectedTab }: { selectedTab?: string }) {
             className='animate-in fade-in slide-in-from-top-4 relative mx-4 w-full max-w-md duration-300'
             onClick={e => e.stopPropagation()}
           >
-            <div className='rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-6 shadow-2xl backdrop-blur-xl'>
-              <button
-                onClick={() => setShowAlert(false)}
-                className='absolute top-4 right-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
-                aria-label='Close'
-              >
-                <HiXMark size={20} />
-              </button>
+            {hasBlocker ? (
+              // Blocker Detected Modal
+              <div className='rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-6 shadow-2xl backdrop-blur-xl'>
+                <button
+                  onClick={() => setShowAlert(false)}
+                  className='absolute top-4 right-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
+                  aria-label='Close'
+                >
+                  <HiXMark size={20} />
+                </button>
 
-              <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/25'>
-                <HiShieldExclamation size={28} className='text-white' />
-              </div>
-
-              <h3 className='mb-2 text-xl font-bold text-white'>
-                Content Blocker Detected
-              </h3>
-              <p className='mb-4 text-sm text-gray-300'>
-                A browser extension or privacy setting is blocking connections
-                to Spotify's servers. To enable in-browser playback, you'll need
-                to adjust your blocker settings.
-              </p>
-
-              <div className='mb-4 rounded-xl border border-white/10 bg-white/5 p-4'>
-                <p className='mb-3 text-xs font-semibold tracking-wider text-amber-400 uppercase'>
-                  How to Fix
-                </p>
-                <ul className='space-y-2 text-sm text-gray-300'>
-                  <li className='flex items-start gap-2'>
-                    <span className='mt-0.5 flex-shrink-0 text-amber-400'>
-                      1.
-                    </span>
-                    <span>
-                      Whitelist{' '}
-                      <strong className='text-white'>gameover.studio</strong> in
-                      your content blocker
-                    </span>
-                  </li>
-                  <li className='flex items-start gap-2'>
-                    <span className='mt-0.5 flex-shrink-0 text-amber-400'>
-                      2.
-                    </span>
-                    <span>
-                      Allow these Spotify domains:{' '}
-                      <strong className='text-white'>*.spotify.com</strong>,{' '}
-                      <strong className='text-white'>*.scdn.co</strong>
-                    </span>
-                  </li>
-                  <li className='flex items-start gap-2'>
-                    <span className='mt-0.5 flex-shrink-0 text-amber-400'>
-                      3.
-                    </span>
-                    <span>Refresh the page after updating settings</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className='mb-8 rounded-xl border border-white/10 bg-white/5 p-4'>
-                <p className='mb-2 text-xs font-semibold tracking-wider text-amber-400 uppercase'>
-                  Common Causes
-                </p>
-                <div className='flex flex-wrap gap-2 text-xs text-gray-400'>
-                  <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
-                    uBlock Origin
-                  </span>
-                  <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
-                    Privacy Badger
-                  </span>
-                  <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
-                    Firefox ETP
-                  </span>
-                  <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
-                    Brave Shields
-                  </span>
+                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/25'>
+                  <HiShieldExclamation size={28} className='text-white' />
                 </div>
-              </div>
 
-              <button
-                onClick={() => setShowAlert(false)}
-                className='w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02]'
-              >
-                Got it
-              </button>
-            </div>
+                <h3 className='mb-2 text-xl font-bold text-white'>
+                  Content Blocker Detected
+                </h3>
+                <p className='mb-4 text-sm text-gray-300'>
+                  A browser extension or privacy setting is blocking Spotify
+                  connections. Adjust your blocker settings to enable in-browser
+                  playback.
+                </p>
+
+                <div className='mb-4 rounded-xl border border-white/10 bg-white/5 p-4'>
+                  <p className='mb-3 text-xs font-semibold tracking-wider text-amber-400 uppercase'>
+                    How to Fix
+                  </p>
+                  <ul className='space-y-2 text-sm text-gray-300'>
+                    <li className='flex items-start gap-2'>
+                      <span className='mt-0.5 flex-shrink-0 text-amber-400'>
+                        1.
+                      </span>
+                      <span>
+                        Whitelist{' '}
+                        <strong className='text-white'>gameover.studio</strong>
+                      </span>
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <span className='mt-0.5 flex-shrink-0 text-amber-400'>
+                        2.
+                      </span>
+                      <span>
+                        Allow{' '}
+                        <strong className='text-white'>*.spotify.com</strong>{' '}
+                        and <strong className='text-white'>*.scdn.co</strong>
+                      </span>
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <span className='mt-0.5 flex-shrink-0 text-amber-400'>
+                        3.
+                      </span>
+                      <span>Refresh the page</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className='mb-4 rounded-xl border border-white/10 bg-white/5 p-4'>
+                  <p className='mb-2 text-xs font-semibold tracking-wider text-amber-400 uppercase'>
+                    Common Blockers
+                  </p>
+                  <div className='flex flex-wrap gap-2 text-xs text-gray-400'>
+                    <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
+                      uBlock Origin
+                    </span>
+                    <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
+                      Privacy Badger
+                    </span>
+                    <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
+                      Firefox ETP
+                    </span>
+                    <span className='rounded-full border border-white/10 bg-white/5 px-2 py-1'>
+                      Brave Shields
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowAlert(false)}
+                  className='w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02]'
+                >
+                  Got it
+                </button>
+              </div>
+            ) : (
+              // All Clear Modal
+              <div className='rounded-2xl border border-green-500/30 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent p-6 shadow-2xl backdrop-blur-xl'>
+                <button
+                  onClick={() => setShowAlert(false)}
+                  className='absolute top-4 right-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
+                  aria-label='Close'
+                >
+                  <HiXMark size={20} />
+                </button>
+
+                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/25'>
+                  <HiCheckCircle size={28} className='text-white' />
+                </div>
+
+                <h3 className='mb-2 text-xl font-bold text-white'>
+                  All Systems Operational
+                </h3>
+                <p className='mb-4 text-sm text-gray-300'>
+                  No content blockers detected. Spotify playback is fully
+                  functional and ready to use.
+                </p>
+
+                <div className='mb-4 rounded-xl border border-white/10 bg-white/5 p-4'>
+                  <ul className='space-y-2 text-sm text-gray-300'>
+                    <li className='flex items-center gap-2'>
+                      <span className='text-green-400'>✓</span>
+                      <span>Spotify API accessible</span>
+                    </li>
+                    <li className='flex items-center gap-2'>
+                      <span className='text-green-400'>✓</span>
+                      <span>Web Playback SDK loaded</span>
+                    </li>
+                    <li className='flex items-center gap-2'>
+                      <span className='text-green-400'>✓</span>
+                      <span>No blocking detected</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  onClick={() => setShowAlert(false)}
+                  className='w-full rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02]'
+                >
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
