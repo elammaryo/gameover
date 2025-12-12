@@ -41,7 +41,6 @@ export function NowPlayingOverlay({
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
     null
   )
-  const [dragY, setDragY] = useState(0)
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -66,69 +65,77 @@ export function NowPlayingOverlay({
 
   // Handle swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Only track touches on the main content area, not scrollable queue
+    const target = e.target as HTMLElement
+    if (target.closest('[data-scrollable]')) return
+
     setTouchStart({
       x: e.targetTouches[0].clientX,
       y: e.targetTouches[0].clientY
     })
-    setDragY(e.targetTouches[0].clientY)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart || !contentRef.current) return
+    if (!touchStart || !contentRef.current || !overlayRef.current) return
 
     const currentY = e.targetTouches[0].clientY
-    const diff = currentY - dragY
+    const currentX = e.targetTouches[0].clientX
+    const diffY = currentY - touchStart.y
+    const diffX = Math.abs(currentX - touchStart.x)
 
-    // Only allow dragging down when at the top of scroll
-    if (contentRef.current.scrollTop === 0 && diff > 0 && isMobile) {
+    const isAtTop = contentRef.current.scrollTop === 0
+    const isDraggingDown = diffY > 0
+    const isVerticalDrag = Math.abs(diffY) > diffX
+
+    if (isAtTop && isDraggingDown && isVerticalDrag) {
       e.preventDefault() // Prevent scrolling while dragging
-      setDragY(currentY)
-      if (overlayRef.current) {
-        overlayRef.current.style.transform = `translateY(${diff}px)`
-      }
+      overlayRef.current.style.transform = `translateY(${diffY * 0.6}px)`
+      overlayRef.current.style.transition = 'none'
     }
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStart || !overlayRef.current) return
 
-    const transformMatch = overlayRef.current.style.transform.match(
-      /translateY\(([^)]+)px\)/
-    )
-    const currentY = transformMatch ? parseFloat(transformMatch[1]) : 0
-
-    // Reset transform
-    overlayRef.current.style.transform = 'translateY(0)'
-
     const touchEnd = {
       x: e.changedTouches[0].clientX,
       y: e.changedTouches[0].clientY
     }
 
-    // Swipe down to close (threshold 100px)
-    if (currentY > 100) {
-      onClose()
-      setTouchStart(null)
-      setDragY(0)
-      return
-    }
+    const diffY = touchEnd.y - touchStart.y
+    const diffX = touchEnd.x - touchStart.x
+    const isVerticalDrag = Math.abs(diffY) > Math.abs(diffX)
 
-    // Calculate swipe distances
-    const swipeDistanceX = touchStart.x - touchEnd.x
-    const swipeDistanceY = Math.abs(touchStart.y - touchEnd.y)
-    const minSwipeDistance = 50
+    // Reset transition
+    overlayRef.current.style.transition = ''
 
-    // Only trigger horizontal swipes if movement is primarily horizontal
-    if (Math.abs(swipeDistanceX) > minSwipeDistance && swipeDistanceY < 30) {
-      if (swipeDistanceX > 0) {
-        onNext() // Swipe left - next track
-      } else {
-        onPrev() // Swipe right - previous track
+    // Swipe down to close
+    if (diffY > 150 && isVerticalDrag) {
+      overlayRef.current.style.transform = 'translateY(100%)'
+      setTimeout(() => {
+        onClose()
+        if (overlayRef.current) {
+          overlayRef.current.style.transform = ''
+        }
+      }, 300)
+    } else if (isVerticalDrag) {
+      // Snap back if didn't meet threshold
+      overlayRef.current.style.transform = 'translateY(0)'
+    } else {
+      const minSwipeDistance = 50
+
+      overlayRef.current.style.transform = 'translateY(0)'
+
+      if (Math.abs(diffX) > minSwipeDistance) {
+        if (diffX < 0) {
+          onNext()
+        } else {
+          onPrev()
+        }
       }
     }
 
     setTouchStart(null)
-    setDragY(0)
   }
 
   const handlePlayPause = () => {
@@ -158,6 +165,34 @@ export function NowPlayingOverlay({
     const newTime = percent * duration
     onSeek(newTime)
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const updateScrollLock = () => {
+      const isMobile = window.innerWidth < 768
+
+      if (isOpen && isMobile) {
+        const scrollbarWidth =
+          window.innerWidth - document.documentElement.clientWidth
+        document.body.style.overflow = 'hidden'
+        document.body.style.paddingRight = `${scrollbarWidth}px`
+      } else {
+        document.body.style.overflow = ''
+        document.body.style.paddingRight = ''
+      }
+    }
+
+    updateScrollLock()
+
+    window.addEventListener('resize', updateScrollLock)
+
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
+      window.removeEventListener('resize', updateScrollLock)
+    }
+  }, [isOpen])
 
   if (!isOpen || !selectedTrack) return null
 
