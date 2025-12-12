@@ -411,35 +411,35 @@ function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
           <div className='grid gap-4 sm:grid-cols-2'>
             {[
               {
-                title: 'Environment Variable Management',
+                title: 'Token & Session Security',
                 points: [
-                  'All secrets in .env with .gitignore protection',
-                  'Separate client and server environment variables',
-                  'Vercel environment variable configuration'
+                  'Spotify tokens stored in HttpOnly, Secure cookies and cleared on logout',
+                  'Refresh flow runs server-side only; client never sees secrets',
+                  'Short-lived access tokens; refresh token retained for 30 days'
                 ]
               },
               {
-                title: 'Cookie Security',
+                title: 'Signed URL Access Control',
                 points: [
-                  'HttpOnly cookies for sensitive tokens',
-                  'Secure flag in production',
-                  'SameSite attribute for CSRF protection'
+                  'S3 pre-signed URLs generated per request with 55-minute expiry',
+                  'Bucket kept private; audio is never publicly exposed',
+                  'URLs cached with TTL to avoid stale or reused links'
                 ]
               },
               {
-                title: 'API Route Protection',
+                title: 'API Design & Validation',
                 points: [
-                  'Server-side only secret access',
-                  'Token refresh logic in API routes',
-                  'Error handling without exposing internals'
+                  'Beat/playlist IDs and required fields are validated before calling Spotify/S3',
+                  'All secrets stay server-side; Spotify client secret never ships to the client',
+                  'API routes handle OAuth exchanges and signing; UI consumes safe endpoints'
                 ]
               },
               {
-                title: 'Type Safety',
+                title: 'Resilience & Error Handling',
                 points: [
-                  'Strict TypeScript configuration',
-                  'No any types in production code',
-                  'Discriminated unions for track types'
+                  'Graceful fallbacks between Spotify SDK and HTML5 Audio playback',
+                  'Ad-block detection with user-facing guidance instead of silent failure',
+                  'Consistent try/catch with user-friendly error states in the UI'
                 ]
               }
             ].map((item, idx) => (
