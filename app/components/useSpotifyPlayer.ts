@@ -49,9 +49,15 @@ export function useSpotifyPlayer({
 }) {
   const currentTrackIdRef = useRef<string | null>(null)
   const isUpdatingRef = useRef(false)
+  const isSpotifyAudioSource = useRef(false)
 
   useEffect(() => {
     currentTrackIdRef.current = selectedTrack?.id || null
+    if (selectedTrack?.source === 'beat') {
+      isSpotifyAudioSource.current = false
+    } else if (selectedTrack?.source === 'spotify') {
+      isSpotifyAudioSource.current = true
+    }
   }, [selectedTrack])
 
   useEffect(() => {
@@ -123,6 +129,7 @@ export function useSpotifyPlayer({
       })
 
       player.addListener('player_state_changed', async state => {
+        if (!isSpotifyAudioSource) return
         if (!state || isUpdatingRef.current) return
         console.log('🔄 Spotify player state changed event received')
 
