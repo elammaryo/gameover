@@ -373,7 +373,7 @@ export default function PlaylistDetailPage() {
                         <div className='h-full w-full bg-white/5' />
                       )}
                     </div>
-                    <div className='min-w-0 flex-1'>
+                    <div className='min-w-0 flex-1 max-md:min-w-[calc(45vw)]'>
                       <div
                         className={`truncate font-semibold ${
                           isCurrentTrack ? 'text-green-400' : 'text-white'
