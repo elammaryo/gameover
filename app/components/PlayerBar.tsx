@@ -61,7 +61,13 @@ export function PlayerBar() {
   // ✅ Update audio element when track changes
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio || !track?.audioUrl || track?.source !== 'beat') return
+    if (!audio) return
+    if (!track?.audioUrl || track?.source !== 'beat') {
+      audio.pause()
+      audio.src = ''
+      isLoadingRef.current = false
+      return
+    }
 
     // Prevent loading if already loading
     if (isLoadingRef.current) return
@@ -105,13 +111,10 @@ export function PlayerBar() {
     if (!audio || selectedTrack?.source !== 'beat') return
 
     if (isPlaying) {
-      const playPromise = audio.play()
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          console.error('Play error:', err)
-          setPlayPause(false)
-        })
-      }
+      audio.play().catch(err => {
+        console.error('Play error:', err)
+        setPlayPause(false)
+      })
     } else {
       audio.pause()
     }
@@ -126,18 +129,6 @@ export function PlayerBar() {
       window.spotifyPlayerInstance.setVolume(volume / 100)
     }
   }, [volume])
-
-  function onPlayPause() {
-    setPlayPause(!isPlaying)
-    if (selectedTrack?.source === 'spotify') {
-      const player = window.spotifyPlayerInstance
-      if (!isPlaying) {
-        player?.resume()
-      } else {
-        player?.pause()
-      }
-    }
-  }
 
   function handleTimeUpdate() {
     if (audioRef.current && selectedTrack?.source === 'beat') {
@@ -294,7 +285,7 @@ export function PlayerBar() {
                     <button
                       onClick={e => {
                         e.stopPropagation()
-                        onPlayPause()
+                        setPlayPause(!isPlaying)
                       }}
                       disabled={!track?.id}
                       className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
@@ -352,7 +343,7 @@ export function PlayerBar() {
                 <button
                   onClick={e => {
                     e.stopPropagation()
-                    onPlayPause()
+                    setPlayPause(!isPlaying)
                   }}
                   disabled={!track?.id}
                   className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
