@@ -11,12 +11,14 @@ import {
   HiPause,
   HiArrowLeft,
   HiClock,
-  HiMusicalNote
+  HiMusicalNote,
+  HiLockClosed
 } from 'react-icons/hi2'
 import { getPlaylistTracks, playSpotifyTrack } from '@/app/api'
 import { Playlist } from '@/app/models/Playlist'
 import { PlayBarContext } from '@/app/providers/PlayBarProvider'
 import { SpotifyTrack } from '@/app/models/Track'
+import { handleLogin } from '@/lib/spotify'
 
 export default function PlaylistDetailPage() {
   const searchParams = useParams()
@@ -26,6 +28,20 @@ export default function PlaylistDetailPage() {
     useContext(PlayBarContext)
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = document.cookie
+        .split(';')
+        .find(c => c.trim().startsWith('spotify_logged_in='))
+        ?.split('=')[1]
+
+      setIsLoggedIn(loggedIn === 'true')
+    }
+
+    checkAuth()
+  }, [])
 
   useEffect(() => {
     const playlistId = searchParams.id as string
@@ -39,15 +55,20 @@ export default function PlaylistDetailPage() {
         console.error('Error fetching playlist:', error)
         setLoading(false)
       })
-  }, [])
+  }, [searchParams.id])
 
-  const playlistTracks = playlist?.tracks.items || []
+  const playlistTracks = playlist?.tracks?.items || []
 
   const isPlaylistPlaying =
     playlistTracks.some(item => item.track.id === selectedTrack?.id) &&
     isPlaying
 
   const handlePlayPlaylist = async () => {
+    if (!isLoggedIn) {
+      handleLogin()
+      return
+    }
+
     if (isPlaylistPlaying) {
       setPlayPause(false)
     } else {
@@ -70,6 +91,11 @@ export default function PlaylistDetailPage() {
   }
 
   const handlePlayTrack = async (track: SpotifyTrack, index: number) => {
+    if (!isLoggedIn) {
+      handleLogin()
+      return
+    }
+
     if (isPlaying && selectedTrack?.id === track.id) {
       setPlayPause(false)
     } else if (selectedTrack?.id === track.id) {
@@ -135,7 +161,7 @@ export default function PlaylistDetailPage() {
     )
   }
 
-  const totalDuration = (playlist.tracks.items ?? []).reduce(
+  const totalDuration = (playlist.tracks?.items ?? []).reduce(
     (acc, item) => acc + (item.track.duration_ms || 0),
     0
   )
@@ -192,9 +218,10 @@ export default function PlaylistDetailPage() {
                 {playlist.name}
               </h1>
               {playlist.description && (
-                <p className='max-w-2xl text-gray-300'>
-                  {playlist.description}
-                </p>
+                <p
+                  className='max-w-2xl text-gray-300'
+                  dangerouslySetInnerHTML={{ __html: playlist.description }}
+                />
               )}
               <div className='flex flex-wrap items-center gap-2 text-sm text-gray-400'>
                 <span className='font-semibold text-white'>
@@ -208,12 +235,21 @@ export default function PlaylistDetailPage() {
 
               {/* Actions */}
               <div className='mt-4 flex flex-wrap items-center gap-4'>
-                {/* ✅ Play/Pause Playlist Button */}
+                {/* Play/Pause or Login Button */}
                 <button
                   onClick={handlePlayPlaylist}
                   className='group flex h-14 w-14 items-center justify-center rounded-full bg-green-500 shadow-lg shadow-green-500/25 transition-all hover:scale-105 hover:bg-green-400'
+                  title={
+                    !isLoggedIn
+                      ? 'Login to play'
+                      : isPlaylistPlaying
+                        ? 'Pause'
+                        : 'Play'
+                  }
                 >
-                  {isPlaylistPlaying ? (
+                  {!isLoggedIn ? (
+                    <HiLockClosed size={24} className='text-black' />
+                  ) : isPlaylistPlaying ? (
                     <HiPause size={24} className='text-black' />
                   ) : (
                     <HiPlay size={24} className='ml-1 text-black' />
@@ -233,6 +269,33 @@ export default function PlaylistDetailPage() {
             </div>
           </div>
         </section>
+
+        {/* Login Prompt */}
+        {!isLoggedIn && (
+          <section className='mb-8'>
+            <div className='rounded-2xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-transparent p-8 backdrop-blur-sm'>
+              <div className='flex flex-col items-center gap-4 text-center'>
+                <div className='flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20'>
+                  <HiLockClosed size={32} className='text-green-400' />
+                </div>
+                <h3 className='text-2xl font-bold text-white'>
+                  Connect to Spotify to Play
+                </h3>
+                <p className='max-w-md text-gray-300'>
+                  Log in with your Spotify account to play tracks directly in
+                  your browser and access full playlist features.
+                </p>
+                <button
+                  onClick={handleLogin}
+                  className='flex items-center gap-2 rounded-full bg-green-500 px-8 py-3 font-semibold text-black transition-transform hover:scale-105 hover:bg-green-400'
+                >
+                  <SiSpotify size={20} />
+                  Connect Spotify
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Tracks List */}
         <section className='mb-30'>
@@ -258,7 +321,7 @@ export default function PlaylistDetailPage() {
                   onClick={() => handlePlayTrack(track, index)}
                   className={`group grid cursor-pointer grid-cols-[auto_1fr_1fr_auto] items-center gap-4 rounded-lg px-4 py-3 transition-all hover:bg-white/5 ${
                     isCurrentTrack ? 'bg-white/10' : ''
-                  }`}
+                  } ${!isLoggedIn ? 'opacity-60' : ''}`}
                 >
                   {/* Track Number / Play Button */}
                   <div className='relative flex h-10 w-10 items-center justify-center'>
@@ -267,16 +330,22 @@ export default function PlaylistDetailPage() {
                         isCurrentTrack
                           ? 'text-green-400'
                           : 'text-gray-400 group-hover:hidden'
-                      } ${trackIsPlaying ? 'hidden' : ''}`}
+                      } ${trackIsPlaying || !isLoggedIn ? 'hidden' : ''}`}
                     >
                       {index + 1}
                     </span>
                     <div
                       className={`${
-                        trackIsPlaying ? 'flex' : 'hidden'
+                        trackIsPlaying
+                          ? 'flex'
+                          : !isLoggedIn
+                            ? 'flex'
+                            : 'hidden'
                       } items-center justify-center group-hover:flex`}
                     >
-                      {trackIsPlaying ? (
+                      {!isLoggedIn ? (
+                        <HiLockClosed size={16} className='text-gray-400' />
+                      ) : trackIsPlaying ? (
                         <HiPause size={20} className='text-green-400' />
                       ) : (
                         <HiPlay
