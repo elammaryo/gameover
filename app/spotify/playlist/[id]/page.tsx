@@ -54,7 +54,7 @@ export default function PlaylistDetailPage() {
       const firstTrack = playlistTracks[0]?.track
       if (!firstTrack || !playlist) return
 
-      await playSpotifyTrack({
+      playSpotifyTrack({
         contextUri: playlist.uri,
         offset: 0
       })
@@ -75,7 +75,7 @@ export default function PlaylistDetailPage() {
     } else if (selectedTrack?.id === track.id) {
       setPlayPause(true)
     } else {
-      await playSpotifyTrack({
+      playSpotifyTrack({
         contextUri: playlist?.uri,
         offset: index
       })

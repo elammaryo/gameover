@@ -70,7 +70,7 @@ export function PlaylistsSection({
                       data.items.forEach((item: { track: { uri: string } }) => {
                         trackUris.push(item.track.uri)
                       })
-                      await playSpotifyTrack({ uris: trackUris, offset: 0 })
+                      playSpotifyTrack({ uris: trackUris, offset: 0 })
                     })
                     .catch(error =>
                       console.error('Error getting tracks', error)
