@@ -4,7 +4,7 @@ A modern full-stack portfolio showcasing premium beats, Spotify integration, and
 custom audio playback.
 
 
-### Visit Live Studio:  [gameover.studio](https://gameover.studio)
+### Visit Live Studio:  [GameOver Studio](https://gameover.studio)
 
 
 ## 🚀 Features
