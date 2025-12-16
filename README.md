@@ -40,35 +40,6 @@ custom audio playback.
 - Queue management
 - Progress tracking
 
-## 📦 Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/elammaryo/gameover.git
-cd gameover
-
-# Install dependencies
-npm install
-
-# Copy environment variables
-cp .env.example .env
-# Fill in your API keys and secrets
-
-# Run development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-## 🔐 Environment Variables
-
-See `.env.example` for required variables:
-
-- **Spotify API**: Get credentials from
-  [Spotify Developer Dashboard](https://developer.spotify.com)
-- **AWS S3**: Configure bucket and IAM credentials
-- **Redirect URI**: Set to `http://localhost:3000/api/spotify/callback` for dev
-
 ## 🏗️ Architecture
 
 ```
