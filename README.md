@@ -95,20 +95,11 @@ Custom-built with:
 - Motion for smooth animations
 - Elastic interactions for slider components
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE)
-
-## 🤝 Contributing
-
-This is a personal portfolio project, but feel free to fork and customize for
-your own use!
-
 ## 👤 Author
 
 **Omer Elammary**
 
-- Website: [gameover.studio](https://gameover.studio)
+- Website: [omerelammary.com](https://omerelammary.com)
 - LinkedIn: [@omerelammary](https://linkedin.com/in/omerelammary)
 - GitHub: [@elammaryo](https://github.com/elammaryo)
 
