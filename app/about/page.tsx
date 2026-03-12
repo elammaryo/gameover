@@ -414,7 +414,7 @@ export default function AboutPage() {
                   </div>
                   <div className='flex items-center gap-2'>
                     <div className='h-1.5 w-1.5 rounded-full bg-indigo-400' />
-                    <span>Technical Lead at SuperOver</span>
+                    <span>Founding engineer at SuperOver</span>
                   </div>
                 </div>
               </div>
