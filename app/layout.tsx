@@ -17,7 +17,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'GameOver - Next Level Beats',
-  description: 'Explore and vibe with original beats and playlists.'
+  description: 'Explore and vibe with original beats and playlists.',
+  icons: {
+    icon: '/gameover-icon.svg',
+    apple: '/gameover-icon.svg'
+  }
 }
 
 export default function RootLayout({

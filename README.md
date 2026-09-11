@@ -86,6 +86,22 @@ public/               # Static assets
 - `GET /api/spotify/stats/topTracks` - User's top tracks
 - `GET /api/spotify/stats/topArtists` - User's top artists
 
+### Renewing the public Spotify stats token
+
+The public About page uses the server-side `SPOTIFY_REFRESH_TOKEN`. Spotify
+refresh tokens expire after six months, so renew it locally when the stats stop
+appearing:
+
+1. In the Spotify developer dashboard, add `http://127.0.0.1:8888/callback` to
+   the app's Redirect URIs.
+2. From this project, run `npm run spotify:renew-token` and approve Spotify
+   access in the browser.
+3. Copy the token printed in the terminal to Vercel as
+   `SPOTIFY_REFRESH_TOKEN`, then redeploy.
+
+Never commit or expose the printed token; it grants access to the authorized
+Spotify account.
+
 ## 🎨 Design
 
 Custom-built with:

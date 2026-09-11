@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="gameover-gradient" x1="84" y1="92" x2="426" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="0.52" stop-color="#5B8CFF"/>
+      <stop offset="1" stop-color="#C026D3"/>
+    </linearGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="132" fill="#090713"/>
+  <path d="M374 153C337 119 293 102 243 106C151 113 85 180 91 272C98 364 178 430 270 418C312 413 350 391 374 352" stroke="url(#gameover-gradient)" stroke-width="64" stroke-linecap="butt" filter="url(#glow)"/>
+  <path d="M250 272H374V352" stroke="url(#gameover-gradient)" stroke-width="64" stroke-linecap="butt" stroke-linejoin="miter" filter="url(#glow)"/>
+</svg>
