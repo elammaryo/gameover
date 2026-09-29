@@ -14,6 +14,7 @@ import { BeatTrack, SpotifyTrack, Track } from '../models/Track'
 import ElasticSlider from './ElasticSlider'
 import { motion, AnimatePresence } from 'motion/react'
 import { TrackArt } from './Covers'
+import { useFocusTrap } from './useFocusTrap'
 import { Scrubber } from './Scrubber'
 import { EqBars, PlayButton, Tag } from './ui'
 import { accentFor, beatSubtitle } from '@/lib/beats'
@@ -70,6 +71,9 @@ export function NowPlayingOverlay({
     mq.addEventListener('change', update)
     return () => mq.removeEventListener('change', update)
   }, [])
+
+  // the phone sheet is modal: keep keyboard focus inside it
+  useFocusTrap(overlayRef, isOpen && isMobile)
 
   // Get upcoming tracks (tracks after the currently playing one)
   const currentTrackIndex = queue.findIndex(t => t.id === selectedTrack?.id)
@@ -287,7 +291,7 @@ export function NowPlayingOverlay({
         onClick={onPrev}
         disabled={big ? !prevTrack : !selectedTrack}
         aria-label='Previous track'
-        className='flex size-12 items-center justify-center rounded-full text-bone transition-[transform,background-color] hover:bg-white/[0.06] active:scale-95 disabled:opacity-30'
+        className='flex size-12 items-center justify-center rounded-full text-bone transition-[translate,scale,background-color] hover:bg-white/[0.06] active:scale-95 disabled:opacity-30'
       >
         <SkipBack className='size-5' fill='currentColor' />
       </button>
@@ -304,7 +308,7 @@ export function NowPlayingOverlay({
         onClick={onNext}
         disabled={big ? !nextTrack : !selectedTrack}
         aria-label='Next track'
-        className='flex size-12 items-center justify-center rounded-full text-bone transition-[transform,background-color] hover:bg-white/[0.06] active:scale-95 disabled:opacity-30'
+        className='flex size-12 items-center justify-center rounded-full text-bone transition-[translate,scale,background-color] hover:bg-white/[0.06] active:scale-95 disabled:opacity-30'
       >
         <SkipForward className='size-5' fill='currentColor' />
       </button>

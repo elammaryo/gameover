@@ -65,7 +65,7 @@ export function SiteFooter() {
                   {name}
                   <ArrowUpRight
                     aria-hidden
-                    className='size-3.5 -translate-x-1 opacity-0 transition-[opacity,transform] duration-200 group-hover/social:translate-x-0 group-hover/social:opacity-100'
+                    className='size-3.5 -translate-x-1 opacity-0 transition-[opacity,translate,scale] duration-200 group-hover/social:translate-x-0 group-hover/social:opacity-100'
                   />
                 </a>
               </li>

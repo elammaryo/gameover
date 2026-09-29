@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { ArrowRight, ArrowUpRight, Pause, Play } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import sentinelImage from '../public/sentinel.png'
@@ -181,7 +182,7 @@ export default function Home() {
                   mode.href,
                   'transition' in mode ? mode.transition : undefined
                 )}
-                className='group surface relative isolate flex h-full min-h-[190px] flex-col justify-between gap-8 overflow-hidden rounded-3xl p-6 transition-[border-color,transform] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:min-h-[240px] sm:p-8'
+                className='group surface relative isolate flex h-full min-h-[190px] flex-col justify-between gap-8 overflow-hidden rounded-3xl p-6 transition-[border-color,translate,scale] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:min-h-[240px] sm:p-8'
               >
                 <span
                   aria-hidden
@@ -259,6 +260,7 @@ function HeroArt() {
 }
 
 function Ticker({ items }: { items: string[] }) {
+  const [paused, setPaused] = useState(false)
   if (!items.length) return null
   const run = (hidden: boolean) => (
     <ul
@@ -281,12 +283,32 @@ function Ticker({ items }: { items: string[] }) {
   return (
     <section
       aria-label='Type beats in the catalogue'
-      className='relative border-y border-line bg-ink-950/60 py-4 backdrop-blur-sm [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]'
+      className='relative border-y border-line bg-ink-950/60 backdrop-blur-sm'
     >
-      <div className='flex w-max animate-marquee hover:[animation-play-state:paused]'>
-        {run(false)}
-        {run(true)}
+      <div className='overflow-hidden py-4 [mask-image:linear-gradient(to_right,transparent,black_8%,black_88%,transparent)]'>
+        <div
+          className={cn(
+            'flex w-max animate-marquee hover:[animation-play-state:paused]',
+            paused && '[animation-play-state:paused]'
+          )}
+        >
+          {run(false)}
+          {run(true)}
+        </div>
       </div>
+      <button
+        type='button'
+        onClick={() => setPaused(p => !p)}
+        aria-pressed={paused}
+        aria-label={paused ? 'Play the ticker' : 'Pause the ticker'}
+        className='absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg border border-line bg-ink-900/90 text-bone-dim transition-colors hover:border-line-strong hover:text-bone motion-reduce:hidden sm:right-5'
+      >
+        {paused ? (
+          <Play className='size-3.5' fill='currentColor' strokeWidth={0} />
+        ) : (
+          <Pause className='size-3.5' fill='currentColor' strokeWidth={0} />
+        )}
+      </button>
     </section>
   )
 }
@@ -301,7 +323,7 @@ function QuickPlay({ beats }: { beats: BeatTrack[] }) {
           <li
             key={beat.id}
             className={cn(
-              'group surface relative isolate flex w-[46%] shrink-0 snap-start flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,transform] duration-300 ease-snap has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live hover:-translate-y-0.5 hover:border-white/15 sm:w-auto',
+              'group surface relative isolate flex w-[46%] shrink-0 snap-start flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,translate,scale] duration-300 ease-snap has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live hover:-translate-y-0.5 hover:border-white/15 sm:w-auto',
               current && 'border-live/30'
             )}
           >
@@ -316,7 +338,7 @@ function QuickPlay({ beats }: { beats: BeatTrack[] }) {
               <span
                 aria-hidden
                 className={cn(
-                  'absolute right-2 bottom-2 flex size-10 items-center justify-center rounded-full shadow-[0_8px_24px_-6px_rgb(0_0_0/0.8)] transition-[transform,background-color] duration-200 ease-snap group-hover:scale-105',
+                  'absolute right-2 bottom-2 flex size-10 items-center justify-center rounded-full shadow-[0_8px_24px_-6px_rgb(0_0_0/0.8)] transition-[translate,scale,background-color] duration-200 ease-snap group-hover:scale-105',
                   current
                     ? 'bg-signal text-ink-950'
                     : 'bg-bone text-ink-950 group-hover:bg-white'

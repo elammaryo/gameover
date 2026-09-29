@@ -430,7 +430,7 @@ export default function AboutPage() {
                 href={href}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='group surface flex items-center gap-4 rounded-2xl p-4 transition-[border-color,transform] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:p-5'
+                className='group surface flex items-center gap-4 rounded-2xl p-4 transition-[border-color,translate,scale] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:p-5'
               >
                 <span className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-bone-muted transition-colors group-hover:text-bone'>
                   <Icon className='size-5' />
@@ -439,7 +439,7 @@ export default function AboutPage() {
                   <span className='font-semibold text-bone'>{name}</span>
                   <span className='truncate font-mono text-xs text-bone-dim'>{handle}</span>
                 </span>
-                <ArrowUpRight className='ml-auto size-4 text-bone-dim transition-[color,transform] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-bone' />
+                <ArrowUpRight className='ml-auto size-4 text-bone-dim transition-[color,translate,scale] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-bone' />
               </a>
             </li>
           ))}

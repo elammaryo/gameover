@@ -140,8 +140,9 @@ export function BeatList({
                 playing={playing}
                 label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
                 onClick={() => toggle(beat, queue)}
+                stretched
                 className={cn(
-                  'static justify-self-end after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none md:size-9',
+                  'justify-self-end after:rounded-xl focus-visible:outline-none md:size-9',
                   !current && 'group-hover/row:bg-white/[0.12]'
                 )}
               />

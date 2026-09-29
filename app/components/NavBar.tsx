@@ -9,6 +9,7 @@ import { navigateWithTransition } from '@/lib/transition'
 import { NAV_LINKS, SOCIAL_LINKS } from '@/lib/site'
 import { cn } from '@/lib/utils'
 import { Mark } from './brand/Mark'
+import { useFocusTrap } from './useFocusTrap'
 import { Wordmark } from './brand/Wordmark'
 
 const TRANSITION_LABELS: Record<string, string> = {
@@ -27,13 +28,26 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
   const pathname = usePathname()
   const active =
     selectedTab ?? NAV_LINKS.find(l => pathname.startsWith(l.href))?.id
-  const [showAlert, setShowAlert] = useState(false)
+  // Open state remembers the path it was opened on, so any navigation
+  // closes the menu / dialog without an effect.
+  const [alertOpenOn, setAlertOpenOn] = useState<string | null>(null)
+  const showAlert = alertOpenOn === pathname
+  const setShowAlert = (open: boolean) => setAlertOpenOn(open ? pathname : null)
   const [hasBlocker, setHasBlocker] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null)
+  const isMobileMenuOpen = menuOpenOn === pathname
+  const setIsMobileMenuOpen = (open: boolean) =>
+    setMenuOpenOn(open ? pathname : null)
   const [scrolled, setScrolled] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
+  const menuPanel = useRef<HTMLDivElement>(null)
+  const alertTrigger = useRef<HTMLButtonElement>(null)
+  const alertClose = useRef<HTMLButtonElement>(null)
+  const alertPanel = useRef<HTMLDivElement>(null)
+  useFocusTrap(menuPanel, isMobileMenuOpen)
+  useFocusTrap(alertPanel, showAlert)
 
   useEffect(() => {
     const detectBlocker = async () => {
@@ -125,12 +139,6 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // close the menu whenever the route changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false)
-    setShowAlert(false)
-  }, [pathname])
-
   // mobile menu: lock scroll, move focus in, Escape to close, restore focus
   useEffect(() => {
     if (!isMobileMenuOpen) return
@@ -138,7 +146,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
     document.body.style.overflow = 'hidden'
     closeButton.current?.focus()
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsMobileMenuOpen(false)
+      if (e.key === 'Escape') setMenuOpenOn(null)
     }
     window.addEventListener('keydown', onKey)
     const trigger = menuButton.current
@@ -149,13 +157,19 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
     }
   }, [isMobileMenuOpen])
 
+  // blocker dialog: move focus in, Escape to close, restore focus
   useEffect(() => {
     if (!showAlert) return
+    const trigger = alertTrigger.current
+    alertClose.current?.focus()
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowAlert(false)
+      if (e.key === 'Escape') setAlertOpenOn(null)
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      trigger?.focus()
+    }
   }, [showAlert])
 
   const handleNavigation = (
@@ -180,7 +194,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
           'fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-300',
           scrolled
             ? 'border-line bg-ink-950/80 backdrop-blur-xl backdrop-saturate-150'
-            : 'border-transparent bg-gradient-to-b from-ink-950/70 to-transparent'
+            : 'border-transparent bg-gradient-to-b from-ink-950/85 via-ink-950/45 to-transparent'
         )}
       >
         <nav
@@ -221,7 +235,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
                         'transition-colors duration-200',
                         isActive
                           ? 'text-bone'
-                          : 'text-bone-dim group-hover/nav:text-bone'
+                          : 'text-bone-muted group-hover/nav:text-bone'
                       )}
                     >
                       {link.label}
@@ -236,6 +250,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
             {blocked && (
               <button
                 type='button'
+                ref={alertTrigger}
                 onClick={() => setShowAlert(true)}
                 className='relative flex h-9 items-center gap-2 rounded-lg border border-warn/40 bg-warn/10 px-2.5 text-xs font-medium text-warn transition-colors hover:border-warn/60 hover:bg-warn/15 sm:px-3'
                 aria-label='Spotify playback is blocked. Show how to fix it.'
@@ -283,6 +298,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            ref={menuPanel}
             id='mobile-menu'
             role='dialog'
             aria-modal='true'
@@ -389,6 +405,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
             onClick={() => setShowAlert(false)}
           >
             <motion.div
+              ref={alertPanel}
               role='dialog'
               aria-modal='true'
               aria-labelledby='blocker-title'
@@ -400,6 +417,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
               onClick={e => e.stopPropagation()}
             >
               <button
+                ref={alertClose}
                 type='button'
                 onClick={() => setShowAlert(false)}
                 className='absolute top-4 right-4 flex size-8 items-center justify-center rounded-lg text-bone-dim transition-colors hover:bg-white/[0.06] hover:text-bone'

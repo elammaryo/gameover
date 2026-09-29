@@ -10,7 +10,8 @@ import { Button, buttonClasses } from '../components/Button'
 import {
   PlaylistArt,
   SpotifyPlaylistGrid,
-  useSpotifyPlaylistPlayback
+  useSpotifyPlaylistPlayback,
+  type SpotifyPlaylistPlayback
 } from '../components/SpotifyPlaylists'
 import {
   CtaBand,
@@ -33,6 +34,7 @@ export default function SpotifyPage() {
   const [loading, setLoading] = useState(true)
   const session = useSpotifySession()
   const connected = session === 'connected'
+  const playback = useSpotifyPlaylistPlayback()
 
   useEffect(() => {
     getSpotifyPlaylists()
@@ -127,7 +129,11 @@ export default function SpotifyPage() {
           {loading ? (
             <Skeleton className='h-[420px] rounded-3xl md:h-[340px]' />
           ) : (
-            <FeaturedPlaylist playlist={featured} connected={connected} />
+            <FeaturedPlaylist
+              playlist={featured}
+              connected={connected}
+              playback={playback}
+            />
           )}
         </section>
       )}
@@ -153,7 +159,11 @@ export default function SpotifyPage() {
             ))}
           </div>
         ) : playlists.length ? (
-          <SpotifyPlaylistGrid playlists={playlists} isLoggedIn={connected} />
+          <SpotifyPlaylistGrid
+            playlists={playlists}
+            isLoggedIn={connected}
+            playback={playback}
+          />
         ) : (
           <EmptyState title='No playlists to show'>
             Spotify didn’t answer this time. Refresh to try again, or check
@@ -199,12 +209,14 @@ function SessionControl({ session }: { session: SpotifySession }) {
 
 function FeaturedPlaylist({
   playlist,
-  connected
+  connected,
+  playback
 }: {
   playlist: Playlist
   connected: boolean
+  playback: SpotifyPlaylistPlayback
 }) {
-  const { play, stateOf } = useSpotifyPlaylistPlayback()
+  const { play, stateOf } = playback
   const { current, playing } = stateOf(playlist)
   const description = htmlToText(playlist.description)
 

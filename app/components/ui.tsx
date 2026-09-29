@@ -302,7 +302,9 @@ export function Eyebrow({
   as?: 'p' | 'h1' | 'h2' | 'h3' | 'span'
 }) {
   return (
-    <Tag className={cn('hud-label flex items-center gap-2.5', className)}>
+    <Tag
+      className={cn('hud-label flex items-center gap-2.5 text-bone-muted', className)}
+    >
       <span
         aria-hidden
         className='size-[7px] shrink-0 rounded-[2px]'
@@ -340,7 +342,7 @@ export function PageHeader({
           {eyebrowIcon}
           <Eyebrow as='p'>{eyebrow}</Eyebrow>
         </div>
-        <h1 className='font-display-wide text-[clamp(2.6rem,7vw,5.25rem)] text-balance text-bone'>
+        <h1 className='font-display-wide text-[clamp(2.4rem,10.5vw,5.25rem)] text-balance break-words text-bone'>
           {title}
         </h1>
         {children && (
@@ -503,6 +505,12 @@ type PlayButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   tone?: 'signal' | 'bone' | 'ghost'
   label: string
+  /**
+   * The button's ::after stretches over its row/card (pass the `after:`
+   * classes). Stretched buttons skip the hover/press scale: any transform
+   * would make the button the containing block and shrink the hit area.
+   */
+  stretched?: boolean
 }
 
 const playSizes = {
@@ -525,6 +533,7 @@ export function PlayButton({
   size = 'md',
   tone = 'signal',
   label,
+  stretched = false,
   className,
   ...props
 }: PlayButtonProps) {
@@ -533,7 +542,10 @@ export function PlayButton({
       type='button'
       aria-label={label}
       className={cn(
-        'relative inline-flex shrink-0 items-center justify-center rounded-full transition-[transform,background-color] duration-200 ease-snap hover:scale-[1.06] active:scale-95 disabled:opacity-40',
+        'inline-flex shrink-0 items-center justify-center rounded-full transition-[scale,background-color,color] duration-200 ease-snap disabled:opacity-40',
+        stretched
+          ? 'static after:absolute after:inset-0'
+          : 'relative hover:scale-[1.06] active:scale-95',
         playSizes[size],
         playTones[tone],
         className

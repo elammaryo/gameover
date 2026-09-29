@@ -93,16 +93,22 @@ export function PlaylistArt({
   )
 }
 
+export type SpotifyPlaylistPlayback = ReturnType<typeof useSpotifyPlaylistPlayback>
+
+/** Pass the page's single `useSpotifyPlaylistPlayback()` so every card on
+    the page agrees on which playlist is playing. */
 export function SpotifyPlaylistGrid({
   playlists,
   isLoggedIn,
+  playback,
   className
 }: {
   playlists: Playlist[]
   isLoggedIn: boolean
+  playback: SpotifyPlaylistPlayback
   className?: string
 }) {
-  const { play, stateOf } = useSpotifyPlaylistPlayback()
+  const { play, stateOf } = playback
 
   return (
     <div
@@ -117,7 +123,7 @@ export function SpotifyPlaylistGrid({
           <article
             key={playlist.id}
             className={cn(
-              'group surface relative isolate flex flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,transform] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:p-3',
+              'group surface relative isolate flex flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,translate,scale] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:p-3',
               current && 'border-spotify/30'
             )}
           >
@@ -135,9 +141,10 @@ export function SpotifyPlaylistGrid({
                   label={`${playing ? 'Pause' : 'Play'} ${playlist.name}`}
                   onClick={() => play(playlist)}
                   className={cn(
-                    'absolute right-2.5 bottom-2.5 z-10 shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] transition-[opacity,transform,background-color] duration-200 sm:right-3 sm:bottom-3',
+                    'absolute right-2.5 bottom-2.5 z-10 shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] transition-[opacity,translate,scale,background-color] duration-200 sm:right-3 sm:bottom-3',
+                    // reveal-on-hover only where hover exists (not touch tablets)
                     !current &&
-                      'sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:focus-visible:translate-y-0 sm:focus-visible:opacity-100'
+                      'sm:[@media(hover:hover)]:translate-y-1 sm:[@media(hover:hover)]:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:focus-visible:translate-y-0 sm:focus-visible:opacity-100'
                   )}
                 />
               )}

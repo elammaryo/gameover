@@ -72,7 +72,7 @@ export default function BeatPackPage() {
 
         <div className='flex min-w-0 flex-col gap-5'>
           <Eyebrow color={accent}>Beat pack</Eyebrow>
-          <h1 className='font-display-wide text-[clamp(3rem,9vw,6.5rem)] break-words text-bone'>
+          <h1 className='font-display-wide text-[clamp(2.6rem,11vw,6.5rem)] break-words text-bone'>
             {pack.name}
           </h1>
           {pack.description && (

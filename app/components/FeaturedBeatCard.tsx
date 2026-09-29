@@ -72,7 +72,7 @@ type CardProps = {
 
 function NowPlayingBadge({ playing }: { playing: boolean }) {
   return (
-    <span className='inline-flex h-7 items-center gap-2 rounded-full border border-live/30 bg-live/10 px-3 font-mono text-[10.5px] tracking-[0.16em] text-live uppercase'>
+    <span className='inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-live/30 bg-live/10 px-3 font-mono text-[10.5px] tracking-[0.16em] whitespace-nowrap text-live uppercase'>
       <EqBars playing={playing} className='h-3' />
       {playing ? 'Now playing' : 'Paused'}
     </span>
@@ -92,7 +92,9 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
         backgroundImage: `radial-gradient(70% 90% at 85% 40%, ${accent}24, transparent 65%)`
       }}
     >
-      <div className='relative z-10 flex items-start justify-between gap-3'>
+      {/* z-10 without `relative`: flex items can stack, and the play
+          button's stretched ::after must resolve against the article */}
+      <div className='z-10 flex items-start justify-between gap-3'>
         <div className='flex flex-col gap-3'>
           <Eyebrow color={accent}>Featured beat</Eyebrow>
           <div className='flex flex-wrap gap-1.5'>
@@ -110,7 +112,7 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
         className='pointer-events-none absolute top-1/2 right-[-10%] w-[62%] max-w-[380px] -translate-y-[46%] rotate-[-6deg] rounded-[28px] opacity-90 transition-transform duration-500 ease-snap group-hover:rotate-[-3deg] sm:right-[-4%] sm:w-[48%]'
       />
 
-      <div className='relative z-10 max-w-[62%] sm:max-w-[58%]'>
+      <div className='z-10 max-w-[62%] sm:max-w-[58%]'>
         <h3 className='font-display-wide text-[clamp(2.2rem,5.2vw,4.25rem)] text-balance text-bone'>
           {beat.title}
         </h3>
@@ -130,7 +132,8 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
             playing={playing}
             label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
             onClick={onPlay}
-            className='static after:absolute after:inset-0 after:rounded-3xl'
+            stretched
+            className='after:rounded-3xl'
           />
           <span className='text-sm font-semibold text-bone'>
             {playing ? 'Pause' : current ? 'Resume' : 'Play now'}
@@ -147,7 +150,7 @@ function MiniCard({ beat, current, playing, onPlay, className }: CardProps) {
   return (
     <article
       className={cn(
-        'group surface relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-3 pr-4 transition-[border-color,transform] duration-300 hover:border-white/15 sm:p-4 lg:flex-col lg:items-stretch lg:justify-between lg:gap-5 lg:p-5',
+        'group surface relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-3 pr-4 transition-[border-color,translate,scale] duration-300 hover:border-white/15 sm:p-4 lg:flex-col lg:items-stretch lg:justify-between lg:gap-5 lg:p-5',
         current && 'border-live/30',
         className
       )}
@@ -198,7 +201,8 @@ function MiniCard({ beat, current, playing, onPlay, className }: CardProps) {
           playing={playing}
           label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
           onClick={onPlay}
-          className='static after:absolute after:inset-0 after:rounded-2xl group-hover:bg-signal group-hover:text-ink-950 group-hover:ring-0'
+          stretched
+          className='after:rounded-2xl group-hover:bg-signal group-hover:text-ink-950 group-hover:ring-0'
         />
       </div>
     </article>

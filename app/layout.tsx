@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Archivo, Geist, Geist_Mono, Silkscreen } from 'next/font/google'
 import './globals.css'
 import PlayBarProvider from './providers/PlayBarProvider'
+import MotionProvider from './providers/MotionProvider'
 import { Analytics } from '@vercel/analytics/next'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
 import { Backdrop } from './components/Backdrop'
@@ -81,19 +82,21 @@ export default function RootLayout({
           Skip to content
         </a>
         <TransitionOverlay />
-        <PlayBarProvider>
-          <Backdrop />
-          <NavBar />
-          <PlayerBar />
-          {/* positioned (no z-index) so it paints above the backdrop without
-              trapping the nav / modals in a lower stacking context */}
-          <div id='content' className='relative'>
-            {children}
-          </div>
-          <SiteFooter />
-          <PlayerSpacer />
-          <Analytics />
-        </PlayBarProvider>
+        <MotionProvider>
+          <PlayBarProvider>
+            <Backdrop />
+            <NavBar />
+            <PlayerBar />
+            {/* positioned (no z-index) so it paints above the backdrop without
+                trapping the nav / modals in a lower stacking context */}
+            <div id='content' className='relative'>
+              {children}
+            </div>
+            <SiteFooter />
+            <PlayerSpacer />
+            <Analytics />
+          </PlayBarProvider>
+        </MotionProvider>
       </body>
     </html>
   )

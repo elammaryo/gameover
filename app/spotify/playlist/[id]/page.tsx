@@ -46,32 +46,43 @@ export default function SpotifyPlaylistPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  const tracks = useMemo(
+  // Rows skip unplayable items (local files have no id), but keep each
+  // track's original position: that's the offset Spotify's context expects.
+  const rows = useMemo(
     () =>
-      (playlist?.tracks?.items ?? [])
-        .filter(item => item?.track?.id)
-        .map(item => new SpotifyTrack({ ...item.track, title: item.track.name })),
+      (playlist?.tracks?.items ?? []).flatMap((item, position) =>
+        item?.track?.id
+          ? [
+              {
+                position,
+                track: new SpotifyTrack({ ...item.track, title: item.track.name })
+              }
+            ]
+          : []
+      ),
     [playlist]
   )
+  const tracks = useMemo(() => rows.map(r => r.track), [rows])
 
   const onList = tracks.some(t => t.id === selectedTrack?.id)
   const listPlaying = onList && isPlaying
   const totalMs = tracks.reduce((sum, t) => sum + (t.duration_ms ?? 0), 0)
 
   const playFrom = (index: number) => {
+    if (session === 'checking') return
     if (!connected) {
       handleLogin()
       return
     }
-    const track = tracks[index]
-    if (!track || !playlist) return
-    if (selectedTrack?.id === track.id) {
+    const row = rows[index]
+    if (!row || !playlist) return
+    if (selectedTrack?.id === row.track.id) {
       setPlayPause(!isPlaying)
       return
     }
-    playSpotifyTrack({ contextUri: playlist.uri, offset: index })
-    setTrack(track)
-    setQueue(track, tracks)
+    playSpotifyTrack({ contextUri: playlist.uri, offset: row.position })
+    setTrack(row.track)
+    setQueue(row.track, tracks)
   }
 
   const playAll = () => {

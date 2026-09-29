@@ -11,7 +11,7 @@ type ButtonSize = 'sm' | 'md' | 'lg'
 type ButtonShape = 'pad' | 'pill' | 'rounded'
 
 const base =
-  'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-semibold tracking-[-0.01em] transition-[transform,background-color,border-color,color,box-shadow] duration-200 ease-snap focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-live disabled:pointer-events-none disabled:opacity-40 active:translate-y-px active:scale-[0.985]'
+  'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-semibold tracking-[-0.01em] transition-[translate,scale,background-color,border-color,color,box-shadow] duration-200 ease-snap focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-live disabled:pointer-events-none disabled:opacity-40 active:translate-y-px active:scale-[0.985]'
 
 const sizes: Record<ButtonSize, string> = {
   sm: 'h-9 px-3.5 text-[13px]',

@@ -41,7 +41,7 @@ export function PackCard({
   return (
     <article
       className={cn(
-        'group surface relative isolate flex items-center gap-4 rounded-2xl p-2.5 transition-[border-color,transform] duration-300 ease-snap hover:border-white/15',
+        'group surface relative isolate flex items-center gap-4 rounded-2xl p-2.5 transition-[border-color,translate,scale] duration-300 ease-snap hover:border-white/15',
         tile && 'sm:flex-col sm:items-stretch sm:p-3 sm:hover:-translate-y-0.5',
         current && 'border-live/30',
         className

@@ -57,10 +57,11 @@ export function Mark({
               className={cn(
                 lit &&
                   motion === 'hover' &&
-                  'group-hover/mark:animate-[pad-hit_460ms_var(--ease-snap)_both]',
+                  'group-hover/mark:animate-[pad-hit_460ms_var(--ease-snap)_both] motion-reduce:animate-none',
+                // reduced motion: no loop at all, so every pad stays lit
                 lit &&
                   motion === 'loop' &&
-                  'animate-[pad-snake_1400ms_var(--ease-snap)_infinite_both]'
+                  'animate-[pad-snake_1400ms_var(--ease-snap)_infinite_both] motion-reduce:animate-none'
               )}
               style={
                 lit && motion !== 'none'
