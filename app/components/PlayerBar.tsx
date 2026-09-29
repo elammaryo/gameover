@@ -1,16 +1,61 @@
 'use client'
 import React, { useContext, useEffect, useRef, useState } from 'react'
+import {
+  Maximize2,
+  SkipBack,
+  SkipForward,
+  Volume1,
+  Volume2,
+  VolumeX
+} from 'lucide-react'
 import ElasticSlider from './ElasticSlider'
-import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
-import { HiVolumeUp } from 'react-icons/hi'
 import { PlayBarContext } from '../providers/PlayBarProvider'
-import Image from 'next/image'
 import { NowPlayingOverlay } from './NowPlayingOverlay'
+import { TrackArt } from './Covers'
+import { Scrubber } from './Scrubber'
+import { EqBars, PlayButton } from './ui'
+import { prettySubtitle } from '@/lib/beats'
+import type { BeatTrack, Track } from '../models/Track'
+import { cn } from '@/lib/utils'
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  return isMobile
+}
+
+export function trackSubline(track: Track | null) {
+  if (!track) return ''
+  if (track.source === 'beat') {
+    const beat = track as BeatTrack
+    const lead = prettySubtitle(beat.subtitle) ?? beat.genre
+    return [lead, beat.bpm ? `${beat.bpm} BPM` : null]
+      .filter(Boolean)
+      .join(' · ')
+  }
+  return track.artist ?? ''
+}
+
+function isTypingTarget(el: EventTarget | null) {
+  if (!(el instanceof HTMLElement)) return false
+  return (
+    el.isContentEditable ||
+    ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(el.tagName) ||
+    el.getAttribute('role') === 'slider'
+  )
+}
 
 export function PlayerBar() {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(100)
+  const [muted, setMuted] = useState(false)
   const [isOverlayOpen, setIsOverlayOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const spotifyProgressInterval = useRef<NodeJS.Timeout | null>(null)
@@ -20,9 +65,8 @@ export function PlayerBar() {
     useContext(PlayBarContext)
   const track = selectedTrack
   const shouldShowPlayer = !!selectedTrack
-
-  const isMobile =
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  const isMobile = useIsMobile()
+  const effectiveVolume = muted ? 0 : volume
 
   // playback state updates
   useEffect(() => {
@@ -62,7 +106,7 @@ export function PlayerBar() {
         album: 'GameOver Studio',
         artwork: [
           {
-            src: track.artworkUrl || '',
+            src: track.artworkUrl || '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png'
           }
@@ -222,13 +266,26 @@ export function PlayerBar() {
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100
+      audioRef.current.volume = effectiveVolume / 100
     }
 
     if (window.spotifyPlayerInstance) {
-      window.spotifyPlayerInstance.setVolume(volume / 100)
+      window.spotifyPlayerInstance.setVolume(effectiveVolume / 100)
     }
-  }, [volume])
+  }, [effectiveVolume, track?.id])
+
+  // Space toggles playback anywhere on the site (unless you're typing)
+  useEffect(() => {
+    if (!selectedTrack) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || e.repeat || isTypingTarget(e.target)) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      e.preventDefault()
+      setPlayPause(!isPlaying)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedTrack, isPlaying, setPlayPause])
 
   function handleTimeUpdate() {
     if (audioRef.current && selectedTrack?.source === 'beat') {
@@ -246,23 +303,7 @@ export function PlayerBar() {
     onNext()
   }
 
-  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    const newTime = percent * duration
-
-    if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
-      window.spotifyPlayerInstance.seek(newTime * 1000) // Convert to ms
-      setCurrentTime(newTime)
-      return
-    }
-
-    if (!audioRef.current) return
-    audioRef.current.currentTime = newTime
-    setCurrentTime(newTime)
-  }
-
-  function handleSeekFromOverlay(time: number) {
+  function seekTo(time: number) {
     if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
       window.spotifyPlayerInstance.seek(time * 1000) // Convert to ms
       setCurrentTime(time)
@@ -274,12 +315,18 @@ export function PlayerBar() {
     setCurrentTime(time)
   }
 
-  // Handle PlayerBar click on mobile
+  function changeVolume(value: number) {
+    setVolume(value)
+    if (muted && value > 0) setMuted(false)
+  }
+
+  // Tapping the dock (outside its buttons) opens Now Playing on mobile
   const handlePlayerBarClick = (e: React.MouseEvent) => {
-    // Don't open on button clicks
+    const target = e.target as HTMLElement
     if (
-      (e.target as HTMLElement).closest('button') ||
-      (e.target as HTMLElement).closest('[data-volume-slider]')
+      target.closest('button') ||
+      target.closest('[role="slider"]') ||
+      target.closest('[data-volume-slider]')
     ) {
       return
     }
@@ -289,198 +336,204 @@ export function PlayerBar() {
     }
   }
 
-  function formatTime(seconds: number) {
-    if (isNaN(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
+  const VolumeIcon =
+    effectiveVolume === 0 ? VolumeX : effectiveVolume < 50 ? Volume1 : Volume2
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-  if (shouldShowPlayer) {
-    return (
-      <>
-        <NowPlayingOverlay
-          isOpen={isOverlayOpen}
-          onClose={() => setIsOverlayOpen(false)}
-          currentTime={currentTime}
-          duration={duration}
-          volume={volume}
-          onVolumeChange={setVolume}
-          onSeek={handleSeekFromOverlay}
-          queue={queue}
+
+  if (!shouldShowPlayer) return null
+
+  return (
+    <>
+      <NowPlayingOverlay
+        isOpen={isOverlayOpen}
+        onClose={() => setIsOverlayOpen(false)}
+        currentTime={currentTime}
+        duration={duration}
+        volume={effectiveVolume}
+        onVolumeChange={changeVolume}
+        onSeek={seekTo}
+        queue={queue}
+      />
+
+      {track?.source === 'beat' && track?.audioUrl && (
+        <audio
+          ref={audioRef}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={handleEnded}
+          src={track.audioUrl}
         />
+      )}
 
-        <div className='fixed inset-x-0 bottom-0 z-40'>
-          {track?.source === 'beat' && track?.audioUrl && (
-            <audio
-              ref={audioRef}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onEnded={handleEnded}
-              src={track.audioUrl}
-            />
-          )}
-          <div className='pb-safe mb-safe px-0'>
+      <div className='pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+var(--safe-area-inset-bottom))] sm:px-4 sm:pb-4'>
+        <section
+          aria-label='Player'
+          onClick={handlePlayerBarClick}
+          className='surface-raised pointer-events-auto relative mx-auto max-w-[1240px] overflow-hidden rounded-2xl bg-ink-900/85! backdrop-blur-2xl backdrop-saturate-150'
+        >
+          {/* mobile: progress along the bottom edge */}
+          <div className='absolute inset-x-3 bottom-0 h-[2px] overflow-hidden rounded-full bg-white/8 sm:hidden'>
             <div
-              onClick={handlePlayerBarClick}
-              className={`relative flex w-full items-center justify-between gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] transition-colors max-sm:pb-8 sm:py-8 md:cursor-default`}
+              className='h-full bg-live shadow-[0_0_8px_rgb(59_231_255/0.8)]'
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <div className='grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 sm:h-[78px] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1fr)] sm:gap-6 sm:px-3'>
+            {/* LEFT: artwork + titles, opens Now Playing */}
+            <button
+              type='button'
+              data-shot='open-now-playing'
+              onClick={e => {
+                e.stopPropagation()
+                if (track) setIsOverlayOpen(true)
+              }}
+              className='group/np flex min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-white/[0.04]'
+              aria-label={`Now playing: ${track?.title}. Open player`}
             >
-              {/* LEFT: cover + titles */}
-              <div
-                className={`flex min-w-0 flex-1 items-center gap-3 sm:w-[30%] sm:flex-none ${
-                  !isMobile && track ? 'md:cursor-pointer' : ''
-                }`}
-                onClick={
-                  !isMobile
-                    ? e => {
-                        e.stopPropagation()
-                        if (track) setIsOverlayOpen(true)
-                      }
-                    : undefined
-                }
-              >
-                {track?.artworkUrl ? (
-                  <Image
-                    width={100}
-                    height={100}
-                    src={track.artworkUrl}
-                    alt={track.title ?? 'Track Artwork'}
-                    className='h-10 w-10 flex-shrink-0 rounded-xl'
-                  />
-                ) : (
-                  <div className='h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
-                )}
-                <div className='flex min-w-0 flex-col'>
-                  <span className='truncate text-sm font-semibold'>
-                    {track?.title || 'No track selected'}
+              {track && (
+                <TrackArt
+                  track={track as BeatTrack}
+                  className='size-11 rounded-lg sm:size-12'
+                />
+              )}
+              <span className='flex min-w-0 flex-col gap-0.5'>
+                <span className='flex min-w-0 items-center gap-2'>
+                  <span className='truncate text-sm font-semibold text-bone'>
+                    {track?.title}
                   </span>
-                  <span className='truncate text-xs text-gray-400'>
-                    {track?.artist || 'Select a beat to start'}
-                  </span>
-                </div>
-                {isPlaying && (
-                  <div className='ml-1 hidden h-4 flex-shrink-0 items-end gap-[2px] text-cyan-300 sm:flex'>
-                    <span className='eq-bar-1 w-[2px] bg-cyan-300' />
-                    <span className='eq-bar-2 w-[2px] bg-cyan-300' />
-                    <span className='eq-bar-3 w-[2px] bg-cyan-300' />
-                  </div>
-                )}
-              </div>
+                  {isPlaying && <EqBars className='hidden sm:inline-flex' />}
+                </span>
+                <span className='truncate text-xs text-bone-dim'>
+                  {trackSubline(track)}
+                </span>
+              </span>
+            </button>
 
-              {/* CENTER: time + progress + controls - DESKTOP ONLY */}
-              <div className='pointer-events-none absolute left-1/2 hidden -translate-x-1/2 sm:block'>
-                <div className='pointer-events-auto flex flex-col items-center gap-2'>
-                  <div className='flex items-center justify-center gap-2'>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onPrev()
-                      }}
-                      disabled={!track}
-                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                    >
-                      <HiBackward size={14} />
-                    </button>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        setPlayPause(!isPlaying)
-                      }}
-                      disabled={!track?.id}
-                      className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
-                    >
-                      {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
-                    </button>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onNext()
-                      }}
-                      disabled={!track}
-                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                    >
-                      <HiForward size={14} />
-                    </button>
-                  </div>
-
-                  <div className='flex w-[30vw] items-center gap-2'>
-                    <span className='text-[10px] text-gray-500'>
-                      {formatTime(currentTime)}
-                    </span>
-                    <div
-                      data-progress-bar
-                      className='relative h-[5px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
-                      onClick={e => {
-                        e.stopPropagation()
-                        handleSeek(e)
-                      }}
-                    >
-                      <div
-                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400 transition-all'
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <span className='text-[10px] text-gray-500'>
-                      {formatTime(duration)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mobile controls */}
-              <div className='flex flex-1 items-center justify-end gap-2 sm:hidden'>
+            {/* CENTER: transport + seek (desktop) */}
+            <div className='hidden min-w-0 flex-col items-center gap-1.5 sm:flex'>
+              <div className='flex items-center gap-3'>
                 <button
+                  type='button'
                   onClick={e => {
                     e.stopPropagation()
                     onPrev()
                   }}
                   disabled={!track}
-                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                  aria-label='Previous track'
+                  className='flex size-9 items-center justify-center rounded-full text-bone-muted transition-colors hover:bg-white/[0.06] hover:text-bone disabled:opacity-40'
                 >
-                  <HiBackward size={14} />
+                  <SkipBack className='size-4' fill='currentColor' />
                 </button>
-                <button
+                <PlayButton
+                  tone='bone'
+                  size='md'
+                  playing={isPlaying}
+                  label={isPlaying ? 'Pause' : 'Play'}
+                  disabled={!track?.id}
                   onClick={e => {
                     e.stopPropagation()
                     setPlayPause(!isPlaying)
                   }}
-                  disabled={!track?.id}
-                  className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
-                >
-                  {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
-                </button>
+                />
                 <button
+                  type='button'
                   onClick={e => {
                     e.stopPropagation()
                     onNext()
                   }}
                   disabled={!track}
-                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
+                  aria-label='Next track'
+                  className='flex size-9 items-center justify-center rounded-full text-bone-muted transition-colors hover:bg-white/[0.06] hover:text-bone disabled:opacity-40'
                 >
-                  <HiForward size={14} />
+                  <SkipForward className='size-4' fill='currentColor' />
                 </button>
               </div>
+              <Scrubber
+                current={currentTime}
+                duration={duration}
+                onSeek={seekTo}
+                size='sm'
+                className='max-w-[520px]'
+              />
+            </div>
 
-              {/* RIGHT: volume - DESKTOP ONLY */}
-              <div
-                data-volume-slider
-                className='mr-10 hidden w-[30%] items-center justify-end gap-2 sm:flex'
-                onClick={e => e.stopPropagation()}
+            {/* RIGHT: volume + expand (desktop) */}
+            <div
+              className='hidden items-center justify-end gap-1 sm:flex'
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                type='button'
+                onClick={() => setMuted(m => !m)}
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                aria-pressed={muted}
+                className='flex size-9 items-center justify-center rounded-full text-bone-muted transition-colors hover:bg-white/[0.06] hover:text-bone'
               >
-                <HiVolumeUp size={20} className='mr-6 text-gray-400' />
+                <VolumeIcon className='size-[18px]' />
+              </button>
+              <div data-volume-slider className='hidden lg:block'>
                 <ElasticSlider
-                  value={volume}
-                  onChange={val => setVolume(val)}
+                  value={effectiveVolume}
+                  onChange={changeVolume}
                   maxValue={100}
                   startingValue={0}
+                  className='w-32'
                 />
               </div>
+              <button
+                type='button'
+                onClick={() => setIsOverlayOpen(true)}
+                aria-label='Open Now Playing and queue'
+                className='ml-1 flex size-9 items-center justify-center rounded-full text-bone-muted transition-colors hover:bg-white/[0.06] hover:text-bone'
+              >
+                <Maximize2 className='size-4' />
+              </button>
+            </div>
+
+            {/* MOBILE: play + next */}
+            <div className='flex items-center gap-1 pr-1 sm:hidden'>
+              <PlayButton
+                tone='bone'
+                size='md'
+                playing={isPlaying}
+                label={isPlaying ? 'Pause' : 'Play'}
+                disabled={!track?.id}
+                onClick={e => {
+                  e.stopPropagation()
+                  setPlayPause(!isPlaying)
+                }}
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.stopPropagation()
+                  onNext()
+                }}
+                disabled={!track}
+                aria-label='Next track'
+                className='flex size-10 items-center justify-center rounded-full text-bone transition-colors active:bg-white/10 disabled:opacity-40'
+              >
+                <SkipForward className='size-[18px]' fill='currentColor' />
+              </button>
             </div>
           </div>
-        </div>
-      </>
-    )
-  }
-  return null
+        </section>
+      </div>
+    </>
+  )
+}
+
+/** Keeps page content from ending up underneath the player dock. */
+export function PlayerSpacer() {
+  const { selectedTrack } = useContext(PlayBarContext)
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        'transition-[height] duration-300',
+        selectedTrack ? 'h-24 sm:h-28' : 'h-0'
+      )}
+    />
+  )
 }

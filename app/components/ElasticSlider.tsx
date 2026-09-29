@@ -6,6 +6,7 @@ import {
   useMotionValueEvent,
   useTransform
 } from 'motion/react'
+import { cn } from '@/lib/utils'
 
 const MAX_OVERFLOW = 8
 
@@ -20,6 +21,7 @@ interface ElasticSliderProps {
   stepSize?: number
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
+  label?: string
 }
 
 const ElasticSlider: React.FC<ElasticSliderProps> = ({
@@ -31,12 +33,13 @@ const ElasticSlider: React.FC<ElasticSliderProps> = ({
   className = '',
   isStepped = false,
   stepSize = 1,
-  leftIcon = <>-</>,
-  rightIcon = <>+</>
+  leftIcon = null,
+  rightIcon = null,
+  label = 'Volume'
 }) => {
   return (
     <div
-      className={`flex w-48 flex-col items-center justify-center gap-4 ${className}`}
+      className={cn('flex w-40 items-center justify-center', className)}
     >
       <Slider
         value={controlledValue}
@@ -48,6 +51,7 @@ const ElasticSlider: React.FC<ElasticSliderProps> = ({
         stepSize={stepSize}
         leftIcon={leftIcon}
         rightIcon={rightIcon}
+        label={label}
       />
     </div>
   )
@@ -63,6 +67,7 @@ interface SliderProps {
   stepSize: number
   leftIcon: React.ReactNode
   rightIcon: React.ReactNode
+  label: string
 }
 
 const Slider: React.FC<SliderProps> = ({
@@ -74,7 +79,8 @@ const Slider: React.FC<SliderProps> = ({
   isStepped,
   stepSize,
   leftIcon,
-  rightIcon
+  rightIcon,
+  label
 }) => {
   const [internalValue, setInternalValue] = useState<number>(defaultValue)
   const value = controlledValue !== undefined ? controlledValue : internalValue
@@ -109,23 +115,26 @@ const Slider: React.FC<SliderProps> = ({
     }
   })
 
+  const commit = (next: number) => {
+    let newValue = next
+    if (isStepped) {
+      newValue = Math.round(newValue / stepSize) * stepSize
+    }
+    newValue = Math.min(Math.max(newValue, startingValue), maxValue)
+    if (onChange) {
+      onChange(newValue)
+    } else {
+      setInternalValue(newValue)
+    }
+  }
+
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.buttons > 0 && sliderRef.current) {
       const { left, width } = sliderRef.current.getBoundingClientRect()
-      let newValue =
+      commit(
         startingValue +
-        ((e.clientX - left) / width) * (maxValue - startingValue)
-      if (isStepped) {
-        newValue = Math.round(newValue / stepSize) * stepSize
-      }
-      newValue = Math.min(Math.max(newValue, startingValue), maxValue)
-
-      if (onChange) {
-        onChange(newValue)
-      } else {
-        setInternalValue(newValue)
-      }
-
+          ((e.clientX - left) / width) * (maxValue - startingValue)
+      )
       clientX.jump(e.clientX)
     }
   }
@@ -139,97 +148,118 @@ const Slider: React.FC<SliderProps> = ({
     animate(overflow, 0, { type: 'spring', bounce: 0.5 })
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = (maxValue - startingValue) / 20
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') commit(value + step)
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown')
+      commit(value - step)
+    else if (e.key === 'Home') commit(startingValue)
+    else if (e.key === 'End') commit(maxValue)
+    else return
+    e.preventDefault()
+  }
+
   const getRangePercentage = (): number => {
     const totalRange = maxValue - startingValue
     if (totalRange === 0) return 0
     return ((value - startingValue) / totalRange) * 100
   }
 
+  // motion values (hoisted so hook order never depends on which icons render)
+  const opacity = useTransform(scale, [1, 1.12], [0.8, 1])
+  const leftX = useTransform(() =>
+    region === 'left' ? -overflow.get() / scale.get() : 0
+  )
+  const rightX = useTransform(() =>
+    region === 'right' ? overflow.get() / scale.get() : 0
+  )
+  const trackScaleX = useTransform(() => {
+    if (sliderRef.current) {
+      const { width } = sliderRef.current.getBoundingClientRect()
+      return 1 + overflow.get() / width
+    }
+    return 1
+  })
+  const trackScaleY = useTransform(overflow, [0, MAX_OVERFLOW], [1, 0.8])
+  const trackOrigin = useTransform(() => {
+    if (sliderRef.current) {
+      const { left, width } = sliderRef.current.getBoundingClientRect()
+      return clientX.get() < left + width / 2 ? 'right' : 'left'
+    }
+    return 'center'
+  })
+  const trackHeight = useTransform(scale, [1, 1.12], [4, 7])
+  const trackMargin = useTransform(scale, [1, 1.12], [0, -1.5])
+
   return (
-    <>
-      <motion.div
-        onHoverStart={() => animate(scale, 1.2)}
-        onHoverEnd={() => animate(scale, 1)}
-        onTouchStart={() => animate(scale, 1.2)}
-        onTouchEnd={() => animate(scale, 1)}
-        style={{
-          scale,
-          opacity: useTransform(scale, [1, 1.2], [0.7, 1])
-        }}
-        className='flex w-full touch-none items-center justify-center gap-4 select-none'
-      >
+    <motion.div
+      onHoverStart={() => animate(scale, 1.12)}
+      onHoverEnd={() => animate(scale, 1)}
+      onTouchStart={() => animate(scale, 1.12)}
+      onTouchEnd={() => animate(scale, 1)}
+      style={{ scale, opacity }}
+      className='flex w-full touch-none items-center justify-center gap-3 select-none'
+    >
+      {leftIcon && (
         <motion.div
           animate={{
             scale: region === 'left' ? [1, 1.4, 1] : 1,
             transition: { duration: 0.25 }
           }}
-          style={{
-            x: useTransform(() =>
-              region === 'left' ? -overflow.get() / scale.get() : 0
-            )
-          }}
+          style={{ x: leftX }}
+          className='text-bone-dim'
         >
           {leftIcon}
         </motion.div>
+      )}
 
-        <div
-          ref={sliderRef}
-          className='relative flex w-full max-w-xs flex-grow cursor-grab touch-none items-center py-4 select-none'
-          onPointerMove={handlePointerMove}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
+      <div
+        ref={sliderRef}
+        role='slider'
+        tabIndex={0}
+        aria-label={label}
+        aria-valuemin={startingValue}
+        aria-valuemax={maxValue}
+        aria-valuenow={Math.round(value)}
+        className='relative flex w-full max-w-xs flex-grow cursor-grab touch-none items-center rounded-full py-3 select-none active:cursor-grabbing'
+        onPointerMove={handlePointerMove}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onKeyDown={handleKeyDown}
+      >
+        <motion.div
+          style={{
+            scaleX: trackScaleX,
+            scaleY: trackScaleY,
+            transformOrigin: trackOrigin,
+            height: trackHeight,
+            marginTop: trackMargin,
+            marginBottom: trackMargin
+          }}
+          className='flex flex-grow'
         >
-          <motion.div
-            style={{
-              scaleX: useTransform(() => {
-                if (sliderRef.current) {
-                  const { width } = sliderRef.current.getBoundingClientRect()
-                  return 1 + overflow.get() / width
-                }
-                return 1
-              }),
-              scaleY: useTransform(overflow, [0, MAX_OVERFLOW], [1, 0.8]),
-              transformOrigin: useTransform(() => {
-                if (sliderRef.current) {
-                  const { left, width } =
-                    sliderRef.current.getBoundingClientRect()
-                  return clientX.get() < left + width / 2 ? 'right' : 'left'
-                }
-                return 'center'
-              }),
-              height: useTransform(scale, [1, 1.2], [6, 12]),
-              marginTop: useTransform(scale, [1, 1.2], [0, -3]),
-              marginBottom: useTransform(scale, [1, 1.2], [0, -3])
-            }}
-            className='flex flex-grow'
-          >
-            <div className='relative h-full flex-grow overflow-hidden rounded-full bg-gray-400'>
-              <div
-                className='absolute h-full rounded-full bg-gray-500'
-                style={{ width: `${getRangePercentage()}%` }}
-              />
-            </div>
-          </motion.div>
-        </div>
+          <div className='relative h-full flex-grow overflow-hidden rounded-full bg-white/15'>
+            <div
+              className='absolute h-full rounded-full bg-bone'
+              style={{ width: `${getRangePercentage()}%` }}
+            />
+          </div>
+        </motion.div>
+      </div>
 
+      {rightIcon && (
         <motion.div
           animate={{
             scale: region === 'right' ? [1, 1.4, 1] : 1,
             transition: { duration: 0.25 }
           }}
-          style={{
-            x: useTransform(() =>
-              region === 'right' ? overflow.get() / scale.get() : 0
-            )
-          }}
+          style={{ x: rightX }}
+          className='text-bone-dim'
         >
           {rightIcon}
         </motion.div>
-      </motion.div>
-      <p className='absolute -translate-y-4 transform text-xs font-medium tracking-wide text-gray-400'>
-        {Math.round(value)}
-      </p>
-    </>
+      )}
+    </motion.div>
   )
 }
 

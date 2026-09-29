@@ -3,17 +3,21 @@ import { useContext, useState, useRef, useEffect } from 'react'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import Image from 'next/image'
 import {
-  HiPlay,
-  HiPause,
-  HiBackward,
-  HiForward,
-  HiXMark,
-  HiChevronDown
-} from 'react-icons/hi2'
-import { HiVolumeUp } from 'react-icons/hi'
+  ChevronDown,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  X
+} from 'lucide-react'
 import { BeatTrack, SpotifyTrack, Track } from '../models/Track'
 import ElasticSlider from './ElasticSlider'
 import { motion, AnimatePresence } from 'motion/react'
+import { TrackArt } from './Covers'
+import { Scrubber } from './Scrubber'
+import { EqBars, PlayButton, Tag } from './ui'
+import { accentFor, prettySubtitle } from '@/lib/beats'
+import { cn } from '@/lib/utils'
 
 interface NowPlayingOverlayProps {
   isOpen: boolean
@@ -36,22 +40,36 @@ export function NowPlayingOverlay({
   onSeek,
   queue = []
 }: NowPlayingOverlayProps) {
-  const { selectedTrack, isPlaying, setPlayPause, onNext, onPrev } =
-    useContext(PlayBarContext)
+  const {
+    selectedTrack,
+    isPlaying,
+    setPlayPause,
+    onNext,
+    onPrev,
+    setTrack,
+    setQueue
+  } = useContext(PlayBarContext)
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
     null
   )
   const [touchStartTime, setTouchStartTime] = useState<number>(0)
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
 
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(
     null
   )
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [, setIsTransitioning] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
-  const isMobile =
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   // Get upcoming tracks (tracks after the currently playing one)
   const currentTrackIndex = queue.findIndex(t => t.id === selectedTrack?.id)
@@ -76,10 +94,22 @@ export function NowPlayingOverlay({
     return () => window.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
+  // Move focus into the panel when it opens, and back when it closes
+  useEffect(() => {
+    if (!isOpen) return
+    const previous = document.activeElement as HTMLElement | null
+    const t = window.setTimeout(() => closeRef.current?.focus(), 50)
+    return () => {
+      window.clearTimeout(t)
+      previous?.focus?.()
+    }
+  }, [isOpen])
+
   // Handle swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
     const target = e.target as HTMLElement
-    if (target.closest('[data-scrollable]')) return
+    if (target.closest('[data-scrollable]') || target.closest('[role="slider"]'))
+      return
 
     setTouchStart({
       x: e.targetTouches[0].clientX,
@@ -183,20 +213,10 @@ export function NowPlayingOverlay({
     }
   }
 
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    const newTime = percent * duration
-    onSeek(newTime)
+  const playFromQueue = async (track: Track) => {
+    if (track.source !== 'beat') return
+    await setTrack(track)
+    setQueue(track, queue)
   }
 
   useEffect(() => {
@@ -232,12 +252,142 @@ export function NowPlayingOverlay({
   const isBeat = selectedTrack.source === 'beat'
   const beatTrack = isBeat ? (selectedTrack as BeatTrack) : null
   const spotifyTrack = !isBeat ? (selectedTrack as SpotifyTrack) : null
+  const accent = beatTrack ? accentFor(beatTrack) : '#1ED760'
+  const subtitle = beatTrack
+    ? (prettySubtitle(beatTrack.subtitle) ?? beatTrack.artist)
+    : selectedTrack.artist
+
+  const details = beatTrack
+    ? [
+        { label: 'Genre', value: beatTrack.genre },
+        { label: 'Tempo', value: `${beatTrack.bpm} BPM` },
+        { label: 'Key', value: beatTrack.key ?? '—' },
+        { label: 'Mood', value: beatTrack.mood ?? '—' }
+      ]
+    : spotifyTrack
+      ? [
+          { label: 'Album', value: spotifyTrack.album?.name ?? '—' },
+          {
+            label: 'Artists',
+            value: spotifyTrack.artists?.map(a => a.name).join(', ') ?? '—'
+          }
+        ]
+      : []
+
+  const sourceTag = (
+    <Tag dot={isBeat ? 'var(--color-signal)' : 'var(--color-spotify)'}>
+      {isBeat ? 'GameOver beat' : 'Spotify'}
+    </Tag>
+  )
+
+  const transport = (big: boolean) => (
+    <div className='flex items-center justify-center gap-5'>
+      <button
+        type='button'
+        onClick={onPrev}
+        disabled={big ? !prevTrack : !selectedTrack}
+        aria-label='Previous track'
+        className='flex size-12 items-center justify-center rounded-full text-bone transition-[transform,background-color] hover:bg-white/[0.06] active:scale-95 disabled:opacity-30'
+      >
+        <SkipBack className='size-5' fill='currentColor' />
+      </button>
+      <PlayButton
+        tone='bone'
+        size='xl'
+        playing={isPlaying}
+        label={isPlaying ? 'Pause' : 'Play'}
+        onClick={handlePlayPause}
+        disabled={!selectedTrack}
+      />
+      <button
+        type='button'
+        onClick={onNext}
+        disabled={big ? !nextTrack : !selectedTrack}
+        aria-label='Next track'
+        className='flex size-12 items-center justify-center rounded-full text-bone transition-[transform,background-color] hover:bg-white/[0.06] active:scale-95 disabled:opacity-30'
+      >
+        <SkipForward className='size-5' fill='currentColor' />
+      </button>
+    </div>
+  )
+
+  const queueList = upcomingTracks.length > 0 && (
+    <div data-scrollable className='w-full'>
+      <div className='mb-3 flex items-baseline justify-between'>
+        <h3 className='hud-label'>Up next</h3>
+        <span className='tabular font-mono text-[11px] text-bone-dim'>
+          {upcomingTracks.length}
+        </span>
+      </div>
+      <ol className='space-y-1'>
+        {upcomingTracks.slice(0, 10).map((track, index) => {
+          const clickable = track.source === 'beat'
+          const rowClass = cn(
+            'flex w-full items-center gap-3 rounded-xl p-2 text-left',
+            clickable && 'transition-colors hover:bg-white/[0.05]'
+          )
+          const inner = (
+            <>
+              <span className='tabular w-5 text-center font-mono text-[11px] text-bone-dim'>
+                {index + 1}
+              </span>
+              <TrackArt
+                track={track as BeatTrack}
+                className='size-10 rounded-lg'
+                sizes='40px'
+              />
+              <span className='min-w-0 flex-1'>
+                <span className='block truncate text-sm font-medium text-bone'>
+                  {track.title}
+                </span>
+                <span className='block truncate text-xs text-bone-dim'>
+                  {track.source === 'beat'
+                    ? (prettySubtitle((track as BeatTrack).subtitle) ??
+                      (track as BeatTrack).genre)
+                    : track.artist}
+                </span>
+              </span>
+              {track.source === 'beat' && (
+                <span className='tabular font-mono text-[11px] text-bone-dim'>
+                  {(track as BeatTrack).bpm}
+                </span>
+              )}
+            </>
+          )
+          return (
+            <li key={track.id}>
+              {clickable ? (
+                <button
+                  type='button'
+                  onClick={() => playFromQueue(track)}
+                  aria-label={`Play ${track.title}`}
+                  className={rowClass}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div className={rowClass}>{inner}</div>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+      {upcomingTracks.length > 10 && (
+        <p className='py-3 text-center font-mono text-[11px] text-bone-dim'>
+          +{upcomingTracks.length - 10} more
+        </p>
+      )}
+    </div>
+  )
 
   if (isMobile) {
     return (
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            role='dialog'
+            aria-modal='true'
+            aria-label='Now playing'
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -246,43 +396,42 @@ export function NowPlayingOverlay({
               damping: 30,
               stiffness: 300
             }}
-            className='fixed inset-0 z-[61] flex flex-col bg-gradient-to-b from-[#0a0810] via-[#05040A] to-black'
+            className='fixed inset-0 z-[61] flex flex-col bg-ink-950'
+            style={{
+              backgroundImage: `radial-gradient(120% 60% at 50% 0%, ${accent}26, transparent 60%)`
+            }}
             ref={overlayRef}
           >
             {/* Swipe indicator */}
-            <div className='pt-safe flex flex-shrink-0 justify-center pt-2 pb-3'>
-              <div className='h-1 w-12 rounded-full bg-white/30' />
+            <div className='flex flex-shrink-0 justify-center pt-[calc(0.5rem+var(--safe-area-inset-top))] pb-2'>
+              <div className='h-1 w-10 rounded-full bg-white/25' />
             </div>
 
             {/* Header */}
-            <div className='flex flex-shrink-0 items-center justify-between px-4 pb-3'>
+            <div className='flex flex-shrink-0 items-center justify-between px-3 pb-2'>
               <button
+                ref={closeRef}
+                type='button'
                 onClick={onClose}
-                className='rounded-full p-2 text-gray-400 transition-colors active:bg-white/10 active:text-white'
+                aria-label='Close player'
+                className='flex size-10 items-center justify-center rounded-full text-bone-muted transition-colors active:bg-white/10'
               >
-                <HiChevronDown size={24} />
+                <ChevronDown className='size-6' />
               </button>
-              <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                Now Playing
-              </span>
-              <button
-                onClick={onClose}
-                className='rounded-full p-2 text-gray-400 transition-colors active:bg-white/10 active:text-white'
-              >
-                <HiXMark size={24} />
-              </button>
+              <span className='hud-label'>Now playing</span>
+              <span className='size-10' aria-hidden />
             </div>
 
             <div
               ref={contentRef}
-              className='flex-1 overflow-x-hidden overflow-y-auto px-6 pb-6'
+              className='flex-1 overflow-x-hidden overflow-y-auto px-6 pb-[calc(1.5rem+var(--safe-area-inset-bottom))]'
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <div className='flex min-h-full flex-col items-center justify-center gap-6'>
-                {/* Album Art Swipe Animation */}
-                <div className='relative w-full max-w-[min(85vw,400px)]'>
+              <div className='mx-auto flex min-h-full w-full max-w-[400px] flex-col items-center justify-center gap-7 py-2'>
+                {/* Artwork with swipe animation */}
+                <div className='relative w-full'>
                   <AnimatePresence mode='popLayout' initial={false}>
                     <motion.div
                       key={selectedTrack.id}
@@ -307,43 +456,39 @@ export function NowPlayingOverlay({
                         damping: 30,
                         opacity: { duration: 0.2 }
                       }}
-                      className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'
+                      className='relative w-full'
                     >
-                      {selectedTrack.artworkUrl ? (
-                        <Image
-                          src={selectedTrack.artworkUrl}
-                          alt={selectedTrack.title}
-                          fill
-                          className='object-cover'
-                          priority
-                        />
-                      ) : (
-                        <div className='h-full w-full bg-gradient-to-br from-cyan-500 via-blue-500 to-fuchsia-500' />
-                      )}
+                      <TrackArt
+                        track={selectedTrack as BeatTrack}
+                        className='w-full rounded-3xl shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9)]'
+                        sizes='(max-width: 768px) 85vw, 400px'
+                        glow
+                        detail
+                        priority
+                      />
                     </motion.div>
                   </AnimatePresence>
 
                   {touchStart && (
                     <>
-                      {/* Next track preview */}
                       {nextTrack && nextTrack.artworkUrl && (
                         <div className='pointer-events-none absolute top-0 -right-16 h-full w-16 opacity-40'>
                           <Image
                             src={nextTrack.artworkUrl}
-                            alt='Next'
+                            alt=''
                             fill
+                            sizes='64px'
                             className='rounded-l-2xl object-cover'
                           />
                         </div>
                       )}
-
-                      {/* Previous track preview */}
                       {prevTrack && prevTrack.artworkUrl && (
                         <div className='pointer-events-none absolute top-0 -left-16 h-full w-16 opacity-40'>
                           <Image
                             src={prevTrack.artworkUrl}
-                            alt='Previous'
+                            alt=''
                             fill
+                            sizes='64px'
                             className='rounded-r-2xl object-cover'
                           />
                         </div>
@@ -352,7 +497,7 @@ export function NowPlayingOverlay({
                   )}
                 </div>
 
-                {/* Track Info with Slide Animation */}
+                {/* Track info */}
                 <AnimatePresence mode='wait'>
                   <motion.div
                     key={selectedTrack.id}
@@ -374,150 +519,44 @@ export function NowPlayingOverlay({
                         : { opacity: 0 }
                     }
                     transition={{ duration: 0.3 }}
-                    className='w-full max-w-[min(85vw,400px)]'
+                    className='w-full'
                   >
-                    <h1 className='text-xl font-bold text-white sm:text-2xl'>
+                    <div className='mb-3 flex items-center gap-2'>
+                      {sourceTag}
+                      {isPlaying && <EqBars />}
+                    </div>
+                    <h2 className='font-display-tight text-[1.75rem] text-bone'>
                       {selectedTrack.title}
-                    </h1>
-                    <p className='mt-1 text-sm text-gray-400 sm:text-base'>
-                      {selectedTrack.artist}
-                    </p>
+                    </h2>
+                    <p className='mt-1.5 text-sm text-bone-muted'>{subtitle}</p>
 
-                    {/* Metadata */}
                     {beatTrack && (
-                      <div className='mt-3 flex flex-wrap gap-2'>
-                        <span className='rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300'>
-                          {beatTrack.genre}
-                        </span>
-                        <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
-                          {beatTrack.bpm} BPM
-                        </span>
-                        {beatTrack.key && (
-                          <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
-                            {beatTrack.key}
-                          </span>
-                        )}
+                      <div className='mt-4 flex flex-wrap gap-1.5'>
+                        <Tag>{beatTrack.genre}</Tag>
+                        <Tag>{beatTrack.bpm} BPM</Tag>
+                        {beatTrack.key && <Tag>{beatTrack.key}</Tag>}
                         {beatTrack.mood && (
-                          <span className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-400'>
-                            {beatTrack.mood}
-                          </span>
+                          <Tag dot={accentFor(beatTrack)}>{beatTrack.mood}</Tag>
                         )}
                       </div>
                     )}
-
                     {spotifyTrack && (
-                      <div className='mt-3 flex flex-wrap gap-2'>
-                        <span className='rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-semibold text-green-300'>
-                          {spotifyTrack.album.name}
-                        </span>
+                      <div className='mt-4 flex flex-wrap gap-1.5'>
+                        <Tag>{spotifyTrack.album.name}</Tag>
                       </div>
                     )}
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Progress Bar with Reset Animation */}
-                <AnimatePresence mode='wait'>
-                  <motion.div
-                    key={selectedTrack.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className='w-full max-w-[min(85vw,400px)]'
-                  >
-                    <div
-                      className='relative h-1 cursor-pointer overflow-hidden rounded-full bg-white/20'
-                      onClick={handleProgressClick}
-                    >
-                      <motion.div
-                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400'
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ duration: 0.1 }}
-                      />
-                    </div>
-                    <div className='mt-2 flex justify-between text-xs text-gray-500'>
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{formatTime(duration)}</span>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                <Scrubber
+                  current={currentTime}
+                  duration={duration}
+                  onSeek={onSeek}
+                />
 
-                {/* Controls */}
-                <div className='flex w-full max-w-[min(85vw,400px)] items-center justify-center gap-4 sm:gap-6'>
-                  <button
-                    onClick={onPrev}
-                    disabled={!prevTrack}
-                    className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-30 sm:p-3'
-                  >
-                    <HiBackward size={24} className='sm:h-7 sm:w-7' />
-                  </button>
-                  <button
-                    onClick={handlePlayPause}
-                    disabled={!selectedTrack}
-                    className='flex h-14 w-14 items-center justify-center rounded-full bg-white text-black shadow-lg shadow-white/20 transition-transform active:scale-95 disabled:opacity-50 sm:h-16 sm:w-16'
-                  >
-                    {isPlaying ? (
-                      <HiPause size={28} className='sm:h-8 sm:w-8' />
-                    ) : (
-                      <HiPlay size={28} className='sm:h-8 sm:w-8' />
-                    )}
-                  </button>
-                  <button
-                    onClick={onNext}
-                    disabled={!nextTrack}
-                    className='rounded-full p-2 text-white transition-transform active:scale-95 disabled:opacity-30 sm:p-3'
-                  >
-                    <HiForward size={24} className='sm:h-7 sm:w-7' />
-                  </button>
-                </div>
+                {transport(true)}
 
-                {/* Queue */}
-                {upcomingTracks.length > 0 && (
-                  <div
-                    className='w-full max-w-[min(85vw,400px)]'
-                    data-scrollable
-                  >
-                    <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                      Up Next ({upcomingTracks.length})
-                    </h3>
-                    <div className='space-y-2'>
-                      {upcomingTracks.slice(0, 10).map((track, index) => (
-                        <div
-                          key={track.id}
-                          className='flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3'
-                        >
-                          <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center text-xs text-gray-500'>
-                            {index + 1}
-                          </span>
-                          {track.artworkUrl ? (
-                            <Image
-                              src={track.artworkUrl}
-                              alt={track.title}
-                              width={40}
-                              height={40}
-                              className='rounded-lg'
-                            />
-                          ) : (
-                            <div className='h-10 w-10 flex-shrink-0 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
-                          )}
-                          <div className='flex-1 overflow-hidden'>
-                            <p className='truncate text-sm font-semibold text-white'>
-                              {track.title}
-                            </p>
-                            <p className='truncate text-xs text-gray-400'>
-                              {track.artist}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {upcomingTracks.length > 10 && (
-                        <p className='py-2 text-center text-xs text-gray-500'>
-                          +{upcomingTracks.length - 10} more tracks
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {queueList}
               </div>
             </div>
           </motion.div>
@@ -526,243 +565,123 @@ export function NowPlayingOverlay({
     )
   }
 
-  // Desktop: Side panel
+  // Desktop: side panel
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <motion.aside
+          role='dialog'
+          aria-modal='false'
+          aria-label='Now playing'
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{
             type: 'spring',
-            damping: 30,
+            damping: 32,
             stiffness: 300
           }}
-          className='fixed inset-y-0 right-0 z-[61] w-[400px] border-l border-white/10 bg-[#05040A]/98 shadow-2xl'
+          className='fixed inset-y-0 right-0 z-[61] flex w-[420px] flex-col border-l border-line bg-ink-950/95 shadow-[-40px_0_80px_-40px_rgb(0_0_0/0.9)] backdrop-blur-2xl'
+          style={{
+            backgroundImage: `radial-gradient(90% 40% at 50% 0%, ${accent}1f, transparent 70%)`
+          }}
           ref={overlayRef}
         >
-          <div className='flex items-center justify-between border-b border-white/10 p-6'>
-            <span className='font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-              Now Playing
-            </span>
+          <div className='flex h-(--nav-h) shrink-0 items-center justify-between border-b border-line px-6'>
+            <span className='hud-label'>Now playing</span>
             <button
+              ref={closeRef}
+              type='button'
               onClick={onClose}
-              className='rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white'
+              aria-label='Close player'
+              className='flex size-9 items-center justify-center rounded-lg text-bone-muted transition-colors hover:bg-white/[0.06] hover:text-bone'
             >
-              <HiXMark size={20} />
+              <X className='size-[18px]' />
             </button>
           </div>
 
-          <div className='h-[calc(100vh-80px)] overflow-y-auto p-6'>
-            <div className='relative aspect-square w-full overflow-hidden rounded-2xl shadow-2xl shadow-cyan-500/20'>
-              {selectedTrack.artworkUrl ? (
-                <Image
-                  src={selectedTrack.artworkUrl}
-                  alt={selectedTrack.title}
-                  fill
-                  className='object-cover'
-                />
-              ) : (
-                <div className='h-full w-full bg-gradient-to-br from-cyan-500 via-blue-500 to-fuchsia-500' />
-              )}
-            </div>
+          <div className='flex-1 overflow-y-auto px-6 pt-6 pb-10'>
+            <TrackArt
+              track={selectedTrack as BeatTrack}
+              className='w-full rounded-2xl shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9)]'
+              sizes='372px'
+              glow
+              detail
+            />
 
-            {/* Track Info */}
             <div className='mt-6'>
-              <h2 className='text-2xl font-bold text-white'>
+              <div className='mb-3 flex items-center gap-2'>
+                {sourceTag}
+                {isPlaying && <EqBars />}
+              </div>
+              <h2 className='font-display-tight text-[1.75rem] text-bone'>
                 {selectedTrack.title}
               </h2>
-              <p className='mt-1 text-lg text-gray-400'>
-                {selectedTrack.artist}
-              </p>
+              <p className='mt-1.5 text-[15px] text-bone-muted'>{subtitle}</p>
             </div>
 
-            {/* Progress */}
-            <div className='mt-6'>
-              <div
-                className='relative h-2 cursor-pointer overflow-hidden rounded-full bg-white/20'
-                onClick={handleProgressClick}
-              >
-                <div
-                  className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400'
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <div className='mt-2 flex justify-between text-xs text-gray-500'>
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
-              </div>
-            </div>
+            <Scrubber
+              current={currentTime}
+              duration={duration}
+              onSeek={onSeek}
+              className='mt-6'
+            />
 
-            {/* Controls */}
-            <div className='mt-6 mb-8 flex items-center justify-center gap-6'>
+            <div className='mt-4'>{transport(false)}</div>
+
+            <div className='mt-6 flex items-center justify-center gap-3'>
               <button
-                onClick={onPrev}
-                disabled={!selectedTrack}
-                className='rounded-full p-2 text-white transition-transform hover:scale-110 disabled:opacity-50'
+                type='button'
+                onClick={() => onVolumeChange(volume > 0 ? 0 : 80)}
+                aria-label={volume > 0 ? 'Mute' : 'Unmute'}
+                className='flex size-8 items-center justify-center rounded-full text-bone-dim transition-colors hover:text-bone'
               >
-                <HiBackward size={24} />
-              </button>
-              <button
-                onClick={handlePlayPause}
-                disabled={!selectedTrack}
-                className='flex h-14 w-14 items-center justify-center rounded-full bg-white text-black shadow-lg transition-transform hover:scale-105 disabled:opacity-50'
-              >
-                {isPlaying ? <HiPause size={24} /> : <HiPlay size={24} />}
-              </button>
-              <button
-                onClick={onNext}
-                disabled={!selectedTrack}
-                className='rounded-full p-2 text-white transition-transform hover:scale-110 disabled:opacity-50'
-              >
-                <HiForward size={24} />
-              </button>
-            </div>
-
-            {/* Volume */}
-            <div className='mt-6'>
-              <div className='flex -translate-x-4 items-center justify-center gap-4'>
-                <HiVolumeUp size={20} className='text-gray-400' />
-                <ElasticSlider
-                  value={volume}
-                  onChange={onVolumeChange}
-                  maxValue={100}
-                  startingValue={0}
-                />
-              </div>
-            </div>
-
-            {/* Beat Metadata */}
-            {beatTrack && (
-              <div className='mt-6 space-y-4'>
-                <div className='rounded-xl border border-white/10 bg-white/5 p-4'>
-                  <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                    Details
-                  </h3>
-                  <div className='space-y-2'>
-                    <div className='flex justify-between'>
-                      <span className='text-sm text-gray-500'>Genre</span>
-                      <span className='text-sm font-medium text-white'>
-                        {beatTrack.genre}
-                      </span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-sm text-gray-500'>BPM</span>
-                      <span className='text-sm font-medium text-white'>
-                        {beatTrack.bpm}
-                      </span>
-                    </div>
-                    {beatTrack.key && (
-                      <div className='flex justify-between'>
-                        <span className='text-sm text-gray-500'>Key</span>
-                        <span className='text-sm font-medium text-white'>
-                          {beatTrack.key}
-                        </span>
-                      </div>
-                    )}
-                    {beatTrack.mood && (
-                      <div className='flex justify-between'>
-                        <span className='text-sm text-gray-500'>Mood</span>
-                        <span className='text-sm font-medium text-white'>
-                          {beatTrack.mood}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {beatTrack.tags && beatTrack.tags.length > 0 && (
-                  <div className='rounded-xl border border-white/10 bg-white/5 p-4'>
-                    <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                      Tags
-                    </h3>
-                    <div className='flex flex-wrap gap-2'>
-                      {beatTrack.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-gray-300'
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                {volume > 0 ? (
+                  <Volume2 className='size-4' />
+                ) : (
+                  <VolumeX className='size-4' />
                 )}
-              </div>
-            )}
+              </button>
+              <ElasticSlider
+                value={volume}
+                onChange={onVolumeChange}
+                maxValue={100}
+                startingValue={0}
+                className='w-52'
+              />
+            </div>
 
-            {/* Spotify Metadata */}
-            {spotifyTrack && (
-              <div className='mt-6 space-y-4'>
-                <div className='rounded-xl border border-white/10 bg-white/5 p-4'>
-                  <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                    Album
-                  </h3>
-                  <div className='space-y-2'>
-                    <div className='flex justify-between'>
-                      <span className='text-sm text-gray-500'>Name</span>
-                      <span className='max-w-[200px] truncate text-right text-sm font-medium text-white'>
-                        {spotifyTrack.album.name}
-                      </span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span className='text-sm text-gray-500'>Artists</span>
-                      <span className='max-w-[200px] truncate text-right text-sm font-medium text-white'>
-                        {spotifyTrack.artists.map(a => a.name).join(', ')}
-                      </span>
-                    </div>
+            {details.length > 0 && (
+              <dl className='mt-8 grid grid-cols-2 overflow-hidden rounded-xl border border-line'>
+                {details.map((d, i) => (
+                  <div
+                    key={d.label}
+                    className={cn(
+                      'flex min-w-0 flex-col gap-1.5 px-4 py-3',
+                      i % 2 === 1 && 'border-l border-line',
+                      i >= 2 && 'border-t border-line'
+                    )}
+                  >
+                    <dt className='hud-label'>{d.label}</dt>
+                    <dd className='truncate text-sm font-medium text-bone'>
+                      {d.value}
+                    </dd>
                   </div>
-                </div>
+                ))}
+              </dl>
+            )}
+
+            {beatTrack?.tags && beatTrack.tags.length > 0 && (
+              <div className='mt-4 flex flex-wrap gap-1.5'>
+                {beatTrack.tags.map(tag => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
               </div>
             )}
 
-            {/* Queue */}
-            {upcomingTracks.length > 0 && (
-              <div className='mt-6 pb-6'>
-                <h3 className='mb-3 font-mono text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                  Queue
-                </h3>
-                <div className='space-y-2'>
-                  {upcomingTracks.slice(0, 10).map((track, index) => (
-                    <div
-                      key={track.id}
-                      className='flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10'
-                    >
-                      <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center text-xs text-gray-500'>
-                        {index + 1}
-                      </span>
-                      {track.artworkUrl ? (
-                        <Image
-                          src={track.artworkUrl}
-                          alt={track.title}
-                          width={40}
-                          height={40}
-                          className='rounded-lg'
-                        />
-                      ) : (
-                        <div className='h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
-                      )}
-                      <div className='flex-1 overflow-hidden'>
-                        <p className='truncate text-sm font-semibold text-white'>
-                          {track.title}
-                        </p>
-                        <p className='truncate text-xs text-gray-400'>
-                          {track.artist}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {upcomingTracks.length > 10 && (
-                    <p className='py-2 text-center text-xs text-gray-500'>
-                      +{upcomingTracks.length - 10} more tracks
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+            {queueList && <div className='mt-8'>{queueList}</div>}
           </div>
-        </motion.div>
+        </motion.aside>
       )}
     </AnimatePresence>
   )
