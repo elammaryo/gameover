@@ -4,6 +4,7 @@ import { useContext, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Color, Mesh, Program, Renderer, Triangle } from 'ogl'
 import { PlayBarContext } from '../providers/PlayBarProvider'
+import { cn } from '@/lib/utils'
 
 /**
  * LED-matrix aurora. The original aurora shader, sampled once per cell and
@@ -29,6 +30,7 @@ uniform vec2 uResolution;
 uniform float uBlend;
 uniform float uEnergy;
 uniform float uCell;
+uniform float uIntensity;
 
 out vec4 fragColor;
 
@@ -104,7 +106,8 @@ void main() {
   float base = 0.04 * smoothstep(0.1, 1.0, uv.y);
   vec3 col = ramp(uv.x) * level + vec3(base);
   float alpha = shape * clamp(level + base, 0.0, 1.0);
-  fragColor = vec4(col * shape, alpha);
+  // premultiplied alpha: scale colour and coverage together
+  fragColor = vec4(col * shape, alpha) * uIntensity;
 }
 `
 
@@ -139,9 +142,12 @@ export function Backdrop() {
   const host = useRef<HTMLDivElement>(null)
   const target = useRef(paletteFor(pathname).map(toRgb))
   const playing = useRef(isPlaying)
+  const home = pathname === '/'
+  const onHome = useRef(home)
 
   useEffect(() => {
     target.current = paletteFor(pathname).map(toRgb)
+    onHome.current = pathname === '/'
   }, [pathname])
 
   useEffect(() => {
@@ -184,7 +190,8 @@ export function Backdrop() {
         uResolution: { value: [1, 1] },
         uBlend: { value: 0.6 },
         uEnergy: { value: 0 },
-        uCell: { value: 8 * dpr }
+        uCell: { value: 8 * dpr },
+        uIntensity: { value: 1 }
       }
     })
     const mesh = new Mesh(gl, { geometry, program })
@@ -205,6 +212,7 @@ export function Backdrop() {
     let last = 0
     let clock = 12 // start mid-flow so the first frame isn't flat
     let energy = 0
+    let intensity = onHome.current ? 1 : 0.6
 
     const frame = (t: number) => {
       raf = requestAnimationFrame(frame)
@@ -215,6 +223,13 @@ export function Backdrop() {
 
       energy += ((playing.current ? 1 : 0) - energy) * 0.06
       if (!reduce.matches) clock += dt * (0.32 + energy * 0.38)
+
+      // full strength at the top of the landing page; calmer behind content
+      // once you scroll, and on reading-heavy pages
+      const depth = Math.min(1, window.scrollY / (window.innerHeight * 0.9))
+      const goalIntensity = (onHome.current ? 1 : 0.6) * (1 - 0.62 * depth)
+      intensity += (goalIntensity - intensity) * 0.12
+      program.uniforms.uIntensity.value = intensity
 
       const goal = target.current
       for (let i = 0; i < 3; i++) {
@@ -243,7 +258,12 @@ export function Backdrop() {
     <div
       ref={host}
       aria-hidden
-      className='pointer-events-none fixed inset-0 z-0 opacity-70 [mask-image:linear-gradient(to_bottom,black,black_30%,transparent_88%)]'
+      className={cn(
+        'pointer-events-none fixed inset-0 z-0 opacity-75',
+        home
+          ? '[mask-image:linear-gradient(to_bottom,black,black_30%,transparent_88%)]'
+          : '[mask-image:linear-gradient(to_bottom,black,black_18%,transparent_62%)]'
+      )}
     />
   )
 }

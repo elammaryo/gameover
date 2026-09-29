@@ -1,249 +1,389 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import logo from '../public/gameover-logo.png'
-import sentinelImage from '../public/sentinel.png'
-import BlurText from './components/BlurText'
-import { NavBar } from './components/NavBar'
-import { Button } from './components/Button'
 import Image from 'next/image'
-import Aurora from './components/Aurora'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ArrowRight, ArrowUpRight, Pause, Play } from 'lucide-react'
+import { SiSpotify } from 'react-icons/si'
+import sentinelImage from '../public/sentinel.png'
+import { Wordmark } from './components/brand/Wordmark'
+import { buttonClasses } from './components/Button'
+import { BeatCover } from './components/Covers'
+import { EqBars, Eyebrow, SectionHeader } from './components/ui'
+import { useBeatPlayback } from './components/usePlayback'
+import type { BeatTrack } from './models/Track'
+import { LOCAL_BEATS, beatSubtitle, pickFeatured } from '@/lib/beats'
+import { navigateWithTransition } from '@/lib/transition'
+import { cn } from '@/lib/utils'
+
+const FEATURED = pickFeatured(LOCAL_BEATS)
+
+// "Burna Boy", "Central Cee", ... for the ticker
+const TYPE_BEATS = [
+  ...new Set(
+    LOCAL_BEATS.map(b => b.subtitle)
+      .filter((s): s is string => !!s && /type beat/i.test(s))
+      .map(s => s.replace(/\s*type beat\s*/i, '').trim())
+  )
+]
+
+const MODES = [
+  {
+    href: '/studio',
+    label: 'Studio',
+    blurb: 'Every beat and pack. Filter by genre, tempo and mood, then press play.',
+    accent: 'var(--color-signal)',
+    transition: 'Loading studio'
+  },
+  {
+    href: '/spotify',
+    label: 'Spotify',
+    blurb: 'Playlists from my own library. Connect Spotify to play them right here.',
+    accent: 'var(--color-spotify)',
+    transition: 'Loading playlists'
+  },
+  {
+    href: '/tech',
+    label: 'Tech',
+    blurb: 'How it’s built: Next.js, signed S3 audio, Spotify OAuth and WebGL.',
+    accent: 'var(--color-live)'
+  },
+  {
+    href: '/about',
+    label: 'About',
+    blurb: 'The producer behind the pads, and what’s on repeat right now.',
+    accent: '#A78BFA'
+  }
+] as const
+
+// pads that light up on each mode card (3x3, row-major)
+const MODE_PADS = [
+  [0, 1, 2, 3, 5, 6, 7, 8],
+  [0, 2, 4, 6, 8],
+  [1, 3, 4, 5, 7],
+  [0, 1, 2, 4, 7]
+]
 
 export default function Home() {
   const router = useRouter()
 
-  const enterStudio = () => {
-    const overlay = document.getElementById('transition-overlay')
-    const label = document.getElementById('transition-label')
-
-    if (!overlay) return
-
-    overlay.style.opacity = '1'
-    if (label) {
-      label.classList.add('opacity-100', 'glitch-once')
+  const transitionTo =
+    (href: string, label?: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!label) return
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+        return
+      e.preventDefault()
+      navigateWithTransition(router, href, label)
     }
 
-    setTimeout(() => {
-      router.push('/studio')
-    }, 2000)
-  }
-
   return (
-    <div className='relative min-h-screen w-full bg-[#07050A] font-sans'>
-      <div className='pointer-events-none fixed inset-0 opacity-30'>
-        <Aurora
-          colorStops={['#00d4ff', '#ec4899', '#a855f7']}
-          amplitude={1.0}
-          blend={0.6}
-          speed={0.3}
-        />
-      </div>
-
-      <NavBar />
-
-      {/* HERO SECTION */}
-      <main className='flex min-h-screen items-center justify-center'>
-        <div className='inset-0 flex w-screen max-lg:justify-center'>
-          <div className='flex w-[50vw] items-center justify-center max-lg:hidden'>
-            <Image
-              width={8000}
-              height={8000}
-              src={sentinelImage}
-              className='h-screen object-cover px-12 pt-16'
-              alt='Sentinel'
-              quality={75}
-              decoding='async'
-              priority
-              placeholder='blur'
-            />
-          </div>
-
-          <div className='flex w-full flex-col items-start justify-center p-12 lg:w-1/2'>
-            <Image
-              width={520}
-              height={70}
-              src={logo.src}
-              className='w-130 -translate-x-1'
-              alt='GameOver Logo'
-              priority
-            />
-            <BlurText
-              text='Next Level Beats.'
-              delay={750}
-              animateBy='words'
-              direction='top'
-              className='mt-6 text-6xl font-bold text-white sm:text-7xl'
-            />
-            <span className='mt-12 max-w-md text-2xl text-gray-300'>
-              Trap // Drill // Afrobeats // Experimental
-            </span>
-            <p className='mt-4 max-w-md text-xl text-gray-300'>
-              Premium beats and curated Spotify playlists to elevate your
-              listening experience.
-            </p>
-
-            <div className='mt-12 flex w-full flex-wrap gap-4'>
-              <Button
-                onClick={enterStudio}
-                variant='primary'
-                shape='pill'
-                className='group relative overflow-hidden shadow-blue-500/30'
-              >
-                <span className='relative z-10 inline-flex items-center gap-2'>
-                  ENTER THE STUDIO
-                  <span className='transition-transform duration-300 group-hover:translate-x-1'>
-                    →
-                  </span>
-                </span>
-                <span className='pointer-events-none absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 transition-all duration-500 group-hover:translate-x-[120%] group-hover:opacity-100' />
-              </Button>
-
-              <Button
-                onClick={() => router.push('/spotify')}
-                variant='secondary'
-                shape='pill'
-              >
-                Discover My Spotify
-              </Button>
-            </div>
-
-            <div className='absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce'>
-              <span className='text-xs text-gray-500'>Scroll to explore</span>
-            </div>
-          </div>
+    <main className='overflow-x-clip'>
+      {/* ---------------------------------------------------------------- HERO */}
+      <section className='relative mx-auto grid w-full max-w-[1240px] items-center gap-4 px-5 pt-[calc(var(--nav-h)+0.5rem)] sm:px-8 lg:min-h-[min(100svh,960px)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10 lg:pt-(--nav-h)'>
+        <div className='relative order-1 mx-auto w-full max-w-[18.5rem] sm:max-w-[26rem] lg:order-2 lg:max-w-none'>
+          <HeroArt />
         </div>
-      </main>
 
-      {/* TEASER SECTION */}
-      <section className='relative z-10 bg-gradient-to-b from-transparent to-[#07050A] py-24'>
-        <div className='container mx-auto px-4'>
-          <h2 className='text-center font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-            What's Inside
-          </h2>
+        <div className='relative order-2 -mt-6 flex flex-col items-start pb-12 sm:mt-0 lg:order-1 lg:pb-0'>
+          <Eyebrow>Music producer · Toronto</Eyebrow>
 
-          <div className='mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3'>
-            <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-cyan-400/60 hover:bg-white/10'>
-              <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600'>
-                <span className='text-2xl'>🎵</span>
-              </div>
-              <h3 className='text-xl font-semibold text-white'>
-                Premium Beats
-              </h3>
-              <p className='mt-2 text-gray-400'>
-                Trap, Drill, Afrobeats, and Experimental sounds ready to elevate
-                your project.
-              </p>
-            </div>
+          <h1 className='mt-6 w-full'>
+            <span className='group/wordmark block w-full max-w-[34rem]'>
+              <Wordmark split glitchOnHover className='w-full' />
+            </span>
+            <span className='font-display-wide mt-5 block text-[clamp(3rem,7.4vw,6.4rem)] text-bone sm:mt-6'>
+              Next level beats
+              <span
+                aria-hidden
+                className='ml-[0.06em] inline-block size-[0.17em] translate-y-[-0.02em] rounded-[0.03em] bg-signal shadow-[0_0_0.3em_var(--color-signal)]'
+              />
+              <span className='sr-only'>.</span>
+            </span>
+          </h1>
 
-            <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-fuchsia-400/60 hover:bg-white/10'>
-              <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600'>
-                <span className='text-2xl'>🎧</span>
-              </div>
-              <h3 className='text-xl font-semibold text-white'>
-                Spotify Playlists
-              </h3>
-              <p className='mt-2 text-gray-400'>
-                Curated vibes from my personal collection. Stream directly in
-                the studio.
-              </p>
-            </div>
+          <p className='mt-7 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] tracking-[0.16em] text-bone-muted uppercase sm:text-[13px] sm:tracking-[0.18em]'>
+            {['Trap', 'Drill', 'Afrobeats', 'Experimental'].map((genre, i, all) => (
+              <span key={genre} className='flex items-center gap-3'>
+                {genre}
+                {i < all.length - 1 && (
+                  <span aria-hidden className='text-bone-dim'>
+                    /
+                  </span>
+                )}
+              </span>
+            ))}
+          </p>
 
-            <div className='group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-green-400/60 hover:bg-white/10'>
-              <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600'>
-                <span className='text-2xl'>💻</span>
-              </div>
-              <h3 className='text-xl font-semibold text-white'>
-                Built with Tech
-              </h3>
-              <p className='mt-2 text-gray-400'>
-                Explore the tech stack powering this site. From Next.js to AWS
-                S3 streaming.
-              </p>
-            </div>
-          </div>
+          <p className='mt-4 max-w-[34rem] text-lg leading-relaxed text-pretty text-bone-muted sm:text-xl'>
+            Original beats and curated Spotify playlists, streamed right in your
+            browser.
+          </p>
 
-          <div className='mt-16 text-center'>
-            <Button
-              onClick={enterStudio}
-              variant='outline'
-              shape='pill'
-              className='mx-auto cursor-pointer'
+          <div className='mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap'>
+            <Link
+              href='/studio'
+              onClick={transitionTo('/studio', 'Loading studio')}
+              className={buttonClasses({ size: 'lg', className: 'group/cta' })}
             >
-              Enter The Studio →
-            </Button>
+              Enter the studio
+              <ArrowRight className='size-4 transition-transform duration-200 ease-snap group-hover/cta:translate-x-0.5' />
+            </Link>
+            <Link
+              href='/spotify'
+              onClick={transitionTo('/spotify', 'Loading playlists')}
+              className={buttonClasses({ size: 'lg', variant: 'secondary' })}
+            >
+              <SiSpotify className='size-4 text-spotify' />
+              Discover my Spotify
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='relative z-10 border-t border-white/10 bg-[#07050A] py-12'>
-        <div className='container mx-auto px-4'>
-          <div className='flex flex-col items-center gap-6'>
-            <Image
-              width={260}
-              height={35}
-              src={logo.src}
-              className='w-64 opacity-70'
-              alt='GameOver Logo'
-              loading='lazy'
-            />
+      {/* -------------------------------------------------------------- TICKER */}
+      <Ticker items={TYPE_BEATS} />
 
-            <div className='flex items-center gap-6'>
-              <a
-                href='https://soundcloud.com/goproductions'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-gray-400 transition-colors hover:text-orange-500'
-                aria-label='SoundCloud'
+      {/* ---------------------------------------------------------- QUICK PLAY */}
+      <section
+        aria-labelledby='quick-play'
+        className='mx-auto mt-20 w-full max-w-[1240px] px-5 sm:mt-28 sm:px-8'
+      >
+        <SectionHeader
+          id='quick-play'
+          eyebrow='Quick play'
+          title='Start with a featured beat'
+          action={
+            <Link
+              href='/studio'
+              onClick={transitionTo('/studio', 'Loading studio')}
+              className='group/all hud-label inline-flex items-center gap-2 rounded-md py-1 transition-colors hover:text-bone'
+            >
+              All {LOCAL_BEATS.length} beats
+              <ArrowRight className='size-3.5 transition-transform duration-200 group-hover/all:translate-x-0.5' />
+            </Link>
+          }
+        />
+        <QuickPlay beats={FEATURED} />
+      </section>
+
+      {/* --------------------------------------------------------- MODE SELECT */}
+      <section
+        aria-labelledby='modes'
+        className='mx-auto mt-20 w-full max-w-[1240px] px-5 sm:mt-28 sm:px-8'
+      >
+        <SectionHeader id='modes' eyebrow='Select mode' title='Where to next?' />
+        <ul className='grid gap-3 sm:grid-cols-2 sm:gap-4'>
+          {MODES.map((mode, i) => (
+            <li key={mode.href}>
+              <Link
+                href={mode.href}
+                onClick={transitionTo(
+                  mode.href,
+                  'transition' in mode ? mode.transition : undefined
+                )}
+                className='group surface relative isolate flex h-full min-h-[190px] flex-col justify-between gap-8 overflow-hidden rounded-3xl p-6 transition-[border-color,transform] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:min-h-[240px] sm:p-8'
               >
-                <svg
-                  className='h-6 w-6'
-                  fill='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path d='M7 17.939h-1v-8.068c.308-.231.639-.429 1-.566v8.634zm3 0h1v-9.224c-.229.265-.443.548-.621.857l-.379-.184v8.551zm-2 0h1v-8.848c-.508-.079-.623-.05-1-.01v8.858zm-4 0h1v-7.02c-.312.458-.555.971-.692 1.535l-.308-.182v5.667zm-3-5.25c-.606.547-1 1.354-1 2.268 0 .914.394 1.721 1 2.268v-4.536zm18.879-.671c-.204-2.837-2.404-5.079-5.117-5.079-1.022 0-1.964.328-2.762.877v10.123h9.089c1.607 0 2.911-1.393 2.911-3.106 0-2.233-2.168-3.772-4.121-2.815zm-16.879-.027c-.302-.024-.526-.03-1 .122v5.689c.446.143.636.138 1 .138v-5.949z' />
-                </svg>
-              </a>
+                <span
+                  aria-hidden
+                  className='pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100'
+                  style={{
+                    background: `radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, ${mode.accent} 14%, transparent), transparent 70%)`
+                  }}
+                />
+                <span className='flex items-start justify-between gap-6'>
+                  <span className='tabular font-mono text-xs tracking-[0.2em] text-bone-dim'>
+                    0{i + 1}
+                  </span>
+                  <ModePads lit={MODE_PADS[i]} color={mode.accent} />
+                </span>
+                <span className='flex items-end justify-between gap-6'>
+                  <span className='flex flex-col gap-3'>
+                    <span className='font-display-wide text-[2.4rem] text-bone uppercase sm:text-[3.1rem]'>
+                      {mode.label}
+                    </span>
+                    <span className='max-w-sm text-[15px] leading-relaxed text-bone-muted'>
+                      {mode.blurb}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden
+                    className='flex size-11 shrink-0 items-center justify-center rounded-full border border-line-strong text-bone transition-[background-color,border-color,color] duration-300 group-hover:border-transparent group-hover:bg-bone group-hover:text-ink-950'
+                  >
+                    <ArrowUpRight className='size-[18px] transition-transform duration-300 ease-snap group-hover:rotate-45' />
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
+  )
+}
 
-              <a
-                href='https://open.spotify.com/user/groudono'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-gray-400 transition-colors hover:text-green-500'
-                aria-label='Spotify'
-              >
-                <svg
-                  className='h-6 w-6'
-                  fill='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path d='M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z' />
-                </svg>
-              </a>
+/* ------------------------------------------------------------------------- */
 
-              <a
-                href='https://instagram.com/omer.el__'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-gray-400 transition-colors hover:text-pink-500'
-                aria-label='Instagram'
-              >
-                <svg
-                  className='h-6 w-6'
-                  fill='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' />
-                </svg>
-              </a>
-            </div>
-
-            <p className='text-sm text-gray-500'>
-              © {new Date().getFullYear()} GameOver. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+function HeroArt() {
+  return (
+    <div className='relative aspect-square w-full'>
+      {/* HUD corner brackets */}
+      {[
+        'top-0 left-0 border-t border-l rounded-tl-lg',
+        'top-0 right-0 border-t border-r rounded-tr-lg',
+        'bottom-0 left-0 border-b border-l rounded-bl-lg',
+        'right-0 bottom-0 border-r border-b rounded-br-lg'
+      ].map(pos => (
+        <span
+          key={pos}
+          aria-hidden
+          className={cn('absolute hidden size-8 border-white/20 sm:block', pos)}
+        />
+      ))}
+      <div className='absolute inset-[4%] [mask-image:radial-gradient(closest-side,black_68%,transparent)]'>
+        <Image
+          src={sentinelImage}
+          alt='The GameOver Sentinel: a horned, armoured figure breaking into red and cyan pixels'
+          fill
+          priority
+          placeholder='blur'
+          sizes='(min-width: 1024px) 560px, (min-width: 640px) 480px, 90vw'
+          className='object-cover'
+        />
+      </div>
+      <span className='hud-label absolute bottom-3 left-1/2 hidden -translate-x-1/2 items-center gap-2 whitespace-nowrap sm:flex'>
+        <span aria-hidden className='size-1.5 rounded-[2px] bg-live shadow-[0_0_8px_var(--color-live)]' />
+        P1 · Sentinel
+      </span>
     </div>
+  )
+}
+
+function Ticker({ items }: { items: string[] }) {
+  if (!items.length) return null
+  const run = (hidden: boolean) => (
+    <ul
+      aria-hidden={hidden || undefined}
+      className='flex shrink-0 items-center gap-8 pr-8 sm:gap-10 sm:pr-10'
+    >
+      {items.map(name => (
+        <li key={name} className='flex items-center gap-8 sm:gap-10'>
+          <span className='font-pixel text-[13px] tracking-[0.12em] whitespace-nowrap text-bone-muted uppercase sm:text-sm'>
+            {name} <span className='text-bone-dim'>type beat</span>
+          </span>
+          <span
+            aria-hidden
+            className='size-1.5 rounded-[2px] bg-signal/80 shadow-[0_0_8px_var(--color-signal)]'
+          />
+        </li>
+      ))}
+    </ul>
+  )
+  return (
+    <section
+      aria-label='Type beats in the catalogue'
+      className='relative border-y border-line bg-ink-950/60 py-4 backdrop-blur-sm [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]'
+    >
+      <div className='flex w-max animate-marquee hover:[animation-play-state:paused]'>
+        {run(false)}
+        {run(true)}
+      </div>
+    </section>
+  )
+}
+
+function QuickPlay({ beats }: { beats: BeatTrack[] }) {
+  const { toggle, stateOf } = useBeatPlayback()
+  return (
+    <ul className='-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-6 [&::-webkit-scrollbar]:hidden'>
+      {beats.map(beat => {
+        const { current, playing } = stateOf(beat.id)
+        return (
+          <li
+            key={beat.id}
+            className={cn(
+              'group surface relative isolate flex w-[46%] shrink-0 snap-start flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,transform] duration-300 ease-snap has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live hover:-translate-y-0.5 hover:border-white/15 sm:w-auto',
+              current && 'border-live/30'
+            )}
+          >
+            <div className='relative'>
+              <BeatCover
+                beat={beat}
+                detail
+                glow={current}
+                className='w-full rounded-xl'
+              />
+              {/* visual only: the title button below covers the whole tile */}
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute right-2 bottom-2 flex size-10 items-center justify-center rounded-full shadow-[0_8px_24px_-6px_rgb(0_0_0/0.8)] transition-[transform,background-color] duration-200 ease-snap group-hover:scale-105',
+                  current
+                    ? 'bg-signal text-ink-950'
+                    : 'bg-bone text-ink-950 group-hover:bg-white'
+                )}
+              >
+                {playing ? (
+                  <Pause className='size-4' fill='currentColor' strokeWidth={0} />
+                ) : (
+                  <Play
+                    className='size-4 translate-x-[1px]'
+                    fill='currentColor'
+                    strokeWidth={0}
+                  />
+                )}
+              </span>
+            </div>
+            <div className='min-w-0 px-1 pb-1'>
+              <button
+                type='button'
+                onClick={() => toggle(beat, beats)}
+                aria-label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
+                className={cn(
+                  'flex w-full min-w-0 items-center gap-2 text-left text-[15px] font-semibold after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none',
+                  current ? 'text-live' : 'text-bone'
+                )}
+              >
+                <span className='truncate'>{beat.title}</span>
+                {playing && <EqBars className='shrink-0' />}
+              </button>
+              <p className='mt-0.5 truncate text-[13px] text-bone-dim'>
+                {beatSubtitle(beat) ?? beat.genre}
+              </p>
+              <p className='tabular mt-2 font-mono text-[10.5px] tracking-[0.12em] text-bone-dim uppercase'>
+                {beat.bpm} BPM · {beat.genre}
+              </p>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function ModePads({ lit, color }: { lit: readonly number[]; color: string }) {
+  return (
+    <span aria-hidden className='grid grid-cols-3 gap-1'>
+      {Array.from({ length: 9 }, (_, i) => {
+        const on = lit.includes(i)
+        return (
+          <span
+            key={i}
+            className={cn(
+              'size-2.5 rounded-[3px] transition-[background-color,box-shadow,opacity] duration-300',
+              on ? 'opacity-40 group-hover:opacity-100' : 'bg-white/[0.06]'
+            )}
+            style={
+              on
+                ? {
+                    backgroundColor: color,
+                    boxShadow: `0 0 10px color-mix(in srgb, ${color} 60%, transparent)`,
+                    transitionDelay: `${i * 30}ms`
+                  }
+                : undefined
+            }
+          />
+        )
+      })}
+    </span>
   )
 }

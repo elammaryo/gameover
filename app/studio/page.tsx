@@ -1,313 +1,421 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { NavBar } from '../components/NavBar'
-import FeaturedBeatsSection from '../components/FeaturedBeatCard'
-import { getBeats, getBeatsPlaylists, getSpotifyPlaylists } from '../api'
-import { Playlist } from '../models/Playlist'
-import { BeatTrack } from '../models/Track'
-import { PlaylistsSection } from '../components/PlaylistsSection'
-import { BeatsSection } from '../components/BeatsSection'
-import Aurora from '../components/Aurora'
-import BlurText from '../components/BlurText'
-import { HiMusicalNote, HiSparkles } from 'react-icons/hi2'
-import { SiSoundcloud } from 'react-icons/si'
 
-const tabs = ['Beats', 'Playlists'] as const
-type Tab = (typeof tabs)[number]
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
+import { ChevronDown, Search, X } from 'lucide-react'
+import { SiSoundcloud } from 'react-icons/si'
+import { getBeats, getBeatsPlaylists } from '../api'
+import type { Playlist } from '../models/Playlist'
+import type { BeatTrack } from '../models/Track'
+import FeaturedBeatsSection from '../components/FeaturedBeatCard'
+import { BeatList } from '../components/BeatList'
+import { PackGrid } from '../components/Packs'
+import {
+  CtaBand,
+  EmptyState,
+  FilterChip,
+  Page,
+  PageHeader,
+  SectionHeader,
+  Skeleton,
+  StatStrip,
+  Tabs
+} from '../components/ui'
+import {
+  GENRE_FAMILIES,
+  averageBpm,
+  inFamily,
+  matchesQuery,
+  pickFeatured,
+  type GenreFamilyId
+} from '@/lib/beats'
+import { SOUNDCLOUD_URL } from '@/lib/site'
+import { cn } from '@/lib/utils'
+
+type View = 'beats' | 'packs'
+type Sort = 'latest' | 'bpm-asc' | 'bpm-desc' | 'az'
+
+const SORTS: Array<{ id: Sort; label: string }> = [
+  { id: 'latest', label: 'Latest' },
+  { id: 'bpm-asc', label: 'BPM: low to high' },
+  { id: 'bpm-desc', label: 'BPM: high to low' },
+  { id: 'az', label: 'Title: A–Z' }
+]
+
+function sortBeats(beats: BeatTrack[], sort: Sort) {
+  if (sort === 'latest') return beats
+  const copy = [...beats]
+  if (sort === 'az') return copy.sort((a, b) => a.title.localeCompare(b.title))
+  return copy.sort((a, b) => (sort === 'bpm-asc' ? a.bpm - b.bpm : b.bpm - a.bpm))
+}
+
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener('hashchange', onChange)
+  return () => window.removeEventListener('hashchange', onChange)
+}
+
+const readHash = () => window.location.hash
+
+function isTyping(el: EventTarget | null) {
+  return (
+    el instanceof HTMLElement &&
+    (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))
+  )
+}
 
 export default function Studio() {
-  const [activeTab, setActiveTab] = useState<Tab>('Beats')
-  const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [beats, setBeats] = useState<BeatTrack[]>([])
-  const [loading, setLoading] = useState(true)
+  const [packs, setPacks] = useState<Playlist[]>([])
   const [beatsLoading, setBeatsLoading] = useState(true)
-  const [playlistsLoading, setPlaylistsLoading] = useState(true)
+  const [packsLoading, setPacksLoading] = useState(true)
+  // the tab lives in the URL hash, so coming back from a pack lands on Packs
+  const hash = useSyncExternalStore(subscribeToHash, readHash, () => '')
+  const [picked, setPicked] = useState<View | null>(null)
+  const view: View = picked ?? (hash === '#packs' ? 'packs' : 'beats')
+  const [family, setFamily] = useState<GenreFamilyId | 'all'>('all')
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState<Sort>('latest')
+  const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     getBeats()
-      .then((data: BeatTrack[]) => {
-        setBeats(data)
-        setBeatsLoading(false)
-      })
-      .catch((error: Error) => {
-        console.error('Error fetching beats:', error)
-        setBeatsLoading(false)
-      })
+      .then(setBeats)
+      .catch(error => console.error('Error fetching beats:', error))
+      .finally(() => setBeatsLoading(false))
 
     getBeatsPlaylists()
-      .then((data: Playlist[]) => {
-        setPlaylists(data)
-        setPlaylistsLoading(false)
-      })
-      .catch((error: Error) => {
-        console.error('Error fetching playlists:', error)
-        setPlaylistsLoading(false)
-      })
-
-    const overlay = document.getElementById('transition-overlay')
-    const label = document.getElementById('transition-label')
-
-    if (label) {
-      label.classList.remove('opacity-100', 'glitch-once')
-    }
-
-    if (overlay) {
-      overlay.style.opacity = '1'
-      requestAnimationFrame(() => {
-        overlay.style.opacity = '0'
-      })
-    }
+      .then(setPacks)
+      .catch(error => console.error('Error fetching packs:', error))
+      .finally(() => setPacksLoading(false))
   }, [])
 
-  useEffect(() => {
-    if (!beatsLoading && !playlistsLoading) {
-      setLoading(false)
-    }
-  }, [beatsLoading, playlistsLoading])
+  const changeView = (next: View) => {
+    setPicked(next)
+    const url = next === 'packs' ? '#packs' : window.location.pathname
+    window.history.replaceState(null, '', url)
+  }
 
-  const featuredBeatIds: string[] = ['109', '91', '46', '80', '17', '79']
-  const featuredBeats: BeatTrack[] = beats
-    .filter(beat => featuredBeatIds.includes(beat.id))
-    .sort(
-      (a, b) => featuredBeatIds.indexOf(a.id) - featuredBeatIds.indexOf(b.id)
-    )
+  // "/" jumps to search, like most music apps
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+      if (isTyping(e.target)) return
+      e.preventDefault()
+      setPicked('beats')
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+      requestAnimationFrame(() => searchRef.current?.focus())
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const featured = useMemo(() => pickFeatured(beats), [beats])
+
+  const families = useMemo(
+    () =>
+      GENRE_FAMILIES.map(f => ({
+        ...f,
+        count: beats.filter(b => f.test(b.genre ?? '')).length
+      })).filter(f => f.count > 0),
+    [beats]
+  )
+
+  const visible = useMemo(
+    () =>
+      sortBeats(
+        beats.filter(b => inFamily(b, family) && matchesQuery(b, query)),
+        sort
+      ),
+    [beats, family, query, sort]
+  )
+
+  const filtered = family !== 'all' || query.trim() !== ''
+  const clearFilters = () => {
+    setFamily('all')
+    setQuery('')
+  }
+
+  const loadingValue = <span className='text-bone-dim'>—</span>
 
   return (
-    <main className='relative min-h-screen bg-[#07050A] pb-20 text-white'>
-      <div className='pointer-events-none fixed inset-0 opacity-30'>
-        <Aurora
-          colorStops={['#00d4ff', '#0ea5e9', '#3b82f6']}
-          amplitude={1.3}
-          blend={0.7}
-          speed={0.35}
+    <Page>
+      <PageHeader eyebrow='GameOver Studio' title='The sound lab'>
+        Hard-hitting trap, drill and afrobeats, made for artists. Press play on
+        anything below, or dig through the packs.
+      </PageHeader>
+
+      <StatStrip
+        className='mt-10 sm:mt-12'
+        items={[
+          {
+            label: 'Beats',
+            value: beatsLoading ? loadingValue : beats.length
+          },
+          {
+            label: 'Packs',
+            value: packsLoading ? loadingValue : packs.length
+          },
+          {
+            label: 'Genres',
+            value: beatsLoading
+              ? loadingValue
+              : new Set(beats.map(b => b.genre)).size
+          },
+          {
+            label: 'Avg tempo',
+            value: beatsLoading ? loadingValue : averageBpm(beats),
+            hint: beatsLoading ? undefined : 'BPM'
+          }
+        ]}
+      />
+
+      {/* FEATURED */}
+      <section aria-labelledby='featured-title' className='mt-20 sm:mt-24'>
+        <SectionHeader
+          id='featured-title'
+          eyebrow='Featured'
+          title='Hand-picked heat'
         />
-      </div>
-
-      <NavBar selectedTab='studio' />
-
-      <div className='relative z-10 mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-24 pb-16 sm:px-6'>
-        {/* HEADER SECTION */}
-        <header className='mb-8 flex flex-col gap-6'>
-          <div className='flex items-center gap-3'>
-            <HiMusicalNote className='text-cyan-400' size={24} />
-            <h1 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase sm:text-sm'>
-              GameOver Studio
-            </h1>
-          </div>
-
-          <BlurText
-            text='Welcome to the Sound Lab'
-            delay={50}
-            animateBy='words'
-            direction='top'
-            className='text-4xl font-bold sm:text-5xl lg:text-6xl'
-          />
-
-          <p className='max-w-3xl text-lg text-gray-300 sm:text-xl'>
-            Hard-hitting trap, drill, and afrobeats crafted for artists. Stream
-            instantly or explore curated collections tailored for every mood.
-          </p>
-
-          <div className='flex flex-wrap items-center gap-3'>
-            {['Trap', 'Drill', 'Afrobeats', 'Experimental'].map(genre => (
-              <span
-                key={genre}
-                className='inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-300 transition-all hover:border-cyan-400/60 hover:bg-cyan-400/20'
-              >
-                {genre}
-              </span>
+        {beatsLoading ? (
+          <div className='grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            <Skeleton className='h-[380px] rounded-3xl md:col-span-2 lg:row-span-2 lg:h-auto lg:min-h-[480px]' />
+            {Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={i} className='h-24 rounded-2xl lg:h-[232px]' />
             ))}
           </div>
-        </header>
+        ) : featured.length ? (
+          <FeaturedBeatsSection featuredBeats={featured} allBeats={beats} />
+        ) : (
+          <EmptyState title='The featured shelf is empty'>
+            Beats couldn’t load right now. Refresh to try again.
+          </EmptyState>
+        )}
+      </section>
 
-        {/* FEATURED BEATS SECTION */}
-        <section className='mb-8'>
-          {beatsLoading ? (
-            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-              {[...Array(6)].map((_, i) => (
+      {/* LIBRARY */}
+      <section
+        id='packs'
+        aria-label='Library'
+        className='mt-20 scroll-mt-[calc(var(--nav-h)+24px)] sm:mt-28'
+      >
+        <div className='flex flex-col gap-3 border-b border-line pb-4'>
+          <p className='hud-label'>Library</p>
+          <Tabs
+            idPrefix='library'
+            value={view}
+            onChange={changeView}
+            tabs={[
+              {
+                id: 'beats',
+                label: 'Beats',
+                count: beatsLoading ? undefined : beats.length
+              },
+              {
+                id: 'packs',
+                label: 'Packs',
+                count: packsLoading ? undefined : packs.length,
+                shot: 'tab-packs'
+              }
+            ]}
+          />
+        </div>
+
+        <div
+          id='library-panel'
+          role='tabpanel'
+          aria-labelledby={`library-tab-${view}`}
+          className='pt-6'
+        >
+          {view === 'beats' ? (
+            <>
+              <div className='flex flex-col gap-4'>
+                <div className='flex flex-col gap-3 sm:flex-row'>
+                  <label className='group/search relative flex-1'>
+                    <span className='sr-only'>Search beats</span>
+                    <Search
+                      aria-hidden
+                      className='pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-bone-dim transition-colors group-focus-within/search:text-bone'
+                    />
+                    <input
+                      ref={searchRef}
+                      type='search'
+                      value={query}
+                      onChange={e => setQuery(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') {
+                          setQuery('')
+                          e.currentTarget.blur()
+                        }
+                      }}
+                      placeholder='Search title, artist, mood, key…'
+                      autoComplete='off'
+                      spellCheck={false}
+                      className='h-12 w-full rounded-xl border border-line-strong bg-ink-900/80 pr-20 pl-11 text-[15px] text-bone transition-[border-color,box-shadow] outline-none placeholder:text-bone-dim hover:border-white/20 focus:border-live/60 focus:shadow-[0_0_0_4px_rgb(59_231_255/0.12)]'
+                    />
+                    {query ? (
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setQuery('')
+                          searchRef.current?.focus()
+                        }}
+                        aria-label='Clear search'
+                        className='absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-bone-dim transition-colors hover:bg-white/[0.06] hover:text-bone'
+                      >
+                        <X className='size-4' />
+                      </button>
+                    ) : (
+                      <kbd
+                        aria-hidden
+                        className='pointer-events-none absolute top-1/2 right-3 hidden h-6 -translate-y-1/2 items-center rounded-md border border-line-strong px-2 font-mono text-[11px] text-bone-dim sm:flex'
+                      >
+                        /
+                      </kbd>
+                    )}
+                  </label>
+
+                  <label className='relative sm:w-56'>
+                    <span className='sr-only'>Sort beats</span>
+                    <select
+                      value={sort}
+                      onChange={e => setSort(e.target.value as Sort)}
+                      className='h-12 w-full cursor-pointer appearance-none rounded-xl border border-line-strong bg-ink-900/80 pr-10 pl-4 text-[15px] text-bone transition-colors outline-none hover:border-white/20 focus:border-live/60'
+                    >
+                      {SORTS.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      aria-hidden
+                      className='pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-bone-dim'
+                    />
+                  </label>
+                </div>
+
                 <div
+                  role='group'
+                  aria-label='Filter by genre'
+                  className='-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden'
+                >
+                  <FilterChip
+                    active={family === 'all'}
+                    count={beatsLoading ? undefined : beats.length}
+                    onClick={() => setFamily('all')}
+                  >
+                    All
+                  </FilterChip>
+                  {families.map(f => (
+                    <FilterChip
+                      key={f.id}
+                      active={family === f.id}
+                      count={f.count}
+                      onClick={() =>
+                        setFamily(current => (current === f.id ? 'all' : f.id))
+                      }
+                    >
+                      {f.label}
+                    </FilterChip>
+                  ))}
+                </div>
+              </div>
+
+              <div className='mt-6 flex min-h-5 items-center justify-between gap-4'>
+                <p
+                  className='hud-label tabular'
+                  aria-live='polite'
+                  aria-atomic='true'
+                >
+                  {beatsLoading
+                    ? 'Loading beats…'
+                    : filtered
+                      ? `${visible.length} of ${beats.length} beats`
+                      : `${beats.length} beats`}
+                </p>
+                {filtered && (
+                  <button
+                    type='button'
+                    onClick={clearFilters}
+                    className='hud-label rounded-md px-1 py-1 text-bone-muted underline decoration-line-strong underline-offset-4 transition-colors hover:text-bone'
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
+              {beatsLoading ? (
+                <div className='mt-4 flex flex-col gap-2'>
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <Skeleton key={i} className='h-[60px]' />
+                  ))}
+                </div>
+              ) : visible.length ? (
+                <BeatList beats={visible} className='mt-3' />
+              ) : beats.length ? (
+                <EmptyState
+                  className='mt-4'
+                  title={
+                    query.trim()
+                      ? `Nothing matches “${query.trim()}”`
+                      : 'No beats in this genre yet'
+                  }
+                  action={
+                    <button
+                      type='button'
+                      onClick={clearFilters}
+                      className='h-10 rounded-xl border border-line-strong px-4 text-sm font-semibold text-bone transition-colors hover:bg-white/[0.05]'
+                    >
+                      Clear filters
+                    </button>
+                  }
+                >
+                  Try a different word, or browse everything.
+                </EmptyState>
+              ) : (
+                <EmptyState className='mt-4' title='No beats available yet'>
+                  Check back soon, or catch the latest on SoundCloud.
+                </EmptyState>
+              )}
+            </>
+          ) : packsLoading || beatsLoading ? (
+            <div className='grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4'>
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton
                   key={i}
-                  className='h-48 animate-pulse rounded-2xl bg-white/5'
+                  className={cn('h-[100px] rounded-2xl sm:aspect-[4/5] sm:h-auto')}
                 />
               ))}
             </div>
+          ) : packs.length ? (
+            <PackGrid packs={packs} beats={beats} />
           ) : (
-            <FeaturedBeatsSection
-              featuredBeats={featuredBeats}
-              allBeats={beats}
-            />
+            <EmptyState title='No packs yet'>
+              Packs group beats by vibe. The first ones are on the way.
+            </EmptyState>
           )}
-        </section>
+        </div>
+      </section>
 
-        {/* LIBRARY STATS */}
-        <section className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-          <div className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-cyan-400/40 hover:bg-white/10'>
-            <div className='absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
-            <div className='relative z-10'>
-              <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600'>
-                <HiMusicalNote size={20} />
-              </div>
-              {beatsLoading ? (
-                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
-              ) : (
-                <div className='text-3xl font-bold text-white'>
-                  {beats.length}
-                </div>
-              )}
-              <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                Total Beats
-              </div>
-            </div>
-          </div>
-
-          {/* Playlists */}
-          <div className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-fuchsia-400/40 hover:bg-white/10'>
-            <div className='absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
-            <div className='relative z-10'>
-              <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600'>
-                <HiSparkles size={20} />
-              </div>
-              {playlistsLoading ? (
-                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
-              ) : (
-                <div className='text-3xl font-bold text-fuchsia-400'>
-                  {playlists.length}
-                </div>
-              )}
-              <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                Playlists
-              </div>
-            </div>
-          </div>
-
-          {/* Genres */}
-          <div className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-green-400/40 hover:bg-white/10'>
-            <div className='absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
-            <div className='relative z-10'>
-              <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600'>
-                <span className='text-xl'>🎼</span>
-              </div>
-              {beatsLoading ? (
-                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
-              ) : (
-                <div className='text-3xl font-bold text-green-400'>
-                  {new Set(beats.map(b => b.genre)).size}
-                </div>
-              )}
-              <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                Genres
-              </div>
-            </div>
-          </div>
-
-          {/* Avg BPM */}
-          <div className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-orange-400/40 hover:bg-white/10'>
-            <div className='absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
-            <div className='relative z-10'>
-              <div className='mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-600'>
-                <span className='text-xl'>⚡</span>
-              </div>
-              {beatsLoading ? (
-                <div className='h-9 w-16 animate-pulse rounded bg-white/10' />
-              ) : (
-                <div className='text-3xl font-bold text-orange-400'>
-                  {beats.length > 0
-                    ? Math.round(
-                        beats.reduce((acc, b) => acc + b.bpm, 0) / beats.length
-                      )
-                    : 0}
-                </div>
-              )}
-              <div className='mt-1 text-xs tracking-[0.2em] text-gray-400 uppercase'>
-                Avg BPM
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* TABS SECTION */}
-        <section className='mt-4'>
-          <div className='flex items-center justify-between border-b border-white/10 pb-4'>
-            <div className='flex gap-6 text-sm'>
-              {tabs.map(tab => {
-                const isActive = tab === activeTab
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`group relative pb-2 font-semibold tracking-[0.18em] uppercase transition-colors ${
-                      isActive
-                        ? 'text-white'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                  >
-                    {tab}
-                    {isActive && (
-                      <span className='absolute right-0 -bottom-[4px] left-0 mx-auto h-[3px] w-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400 shadow-lg shadow-cyan-400/50' />
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className='hidden text-xs tracking-[0.18em] text-gray-500 uppercase sm:block'>
-              Vibe · BPM · Energy
-            </div>
-          </div>
-        </section>
-
-        {/* CONTENT GRID / LIST */}
-        <section className='mt-6'>
-          {activeTab === 'Beats' ? (
-            beatsLoading ? (
-              <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-                {[...Array(9)].map((_, i) => (
-                  <div
-                    key={i}
-                    className='h-40 animate-pulse rounded-2xl bg-white/5'
-                  />
-                ))}
-              </div>
-            ) : beats.length === 0 ? (
-              <div className='flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm'>
-                <HiMusicalNote className='text-gray-600' size={48} />
-                <p className='text-gray-400'>No beats available yet.</p>
-              </div>
-            ) : (
-              <BeatsSection beats={beats} />
-            )
-          ) : playlists.length === 0 ? (
-            <div className='flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm'>
-              <HiSparkles className='text-gray-600' size={48} />
-              <p className='text-gray-400'>No playlists found.</p>
-            </div>
-          ) : (
-            <PlaylistsSection playlists={playlists} isLoggedIn={false} />
-          )}
-        </section>
-
-        {/* SOUNDCLOUD CTA */}
-        <section className='mt-16'>
-          <div className='rounded-2xl border border-orange-400/20 bg-gradient-to-r from-orange-500/10 to-red-500/5 p-8 text-center backdrop-blur-sm'>
-            <SiSoundcloud className='mx-auto mb-4 text-orange-500' size={48} />
-            <h3 className='mb-3 text-2xl font-bold text-white'>
-              More Beats on SoundCloud
-            </h3>
-            <p className='mb-6 text-gray-400'>
-              Discover exclusive releases, demos, and experimental tracks on my
-              SoundCloud
-            </p>
-            <a
-              href='https://soundcloud.com/goproductions'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='inline-flex items-center gap-2 rounded-full border border-orange-500 bg-orange-500/10 px-8 py-3 font-semibold text-orange-400 transition-all hover:border-orange-400 hover:bg-orange-500/20'
-            >
-              Listen on SoundCloud →
-            </a>
-          </div>
-        </section>
-      </div>
-    </main>
+      <CtaBand
+        className='mt-24 sm:mt-32'
+        icon={<SiSoundcloud />}
+        accent='var(--color-soundcloud)'
+        variant='soundcloud'
+        title='More on SoundCloud'
+        href={SOUNDCLOUD_URL}
+        cta='Listen on SoundCloud'
+      >
+        Exclusive releases, demos and experiments that haven’t made it to the
+        studio yet.
+      </CtaBand>
+    </Page>
   )
 }

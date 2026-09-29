@@ -1,4 +1,61 @@
-import type { BeatTrack, Track } from '@/app/models/Track'
+import { BeatTrack, type Track } from '@/app/models/Track'
+import beatsData from '@/app/api/beats/beats.json'
+
+/* ---------------------------------------------------------------------------
+   Catalogue
+--------------------------------------------------------------------------- */
+
+/** Hand-picked beats, in display order (hero first). */
+export const FEATURED_BEAT_IDS = ['109', '91', '46', '80', '17', '79']
+
+/**
+ * The same catalogue /api/beats serves, available at build time so static
+ * spots (home page quick-play, ticker) render instantly with no loading state.
+ */
+export const LOCAL_BEATS: BeatTrack[] = beatsData.map(
+  beat => new BeatTrack(beat as unknown as BeatTrack)
+)
+
+export function pickFeatured(beats: BeatTrack[]) {
+  return FEATURED_BEAT_IDS.map(id => beats.find(b => b.id === id)).filter(
+    (b): b is BeatTrack => !!b
+  )
+}
+
+/** Beats of a pack, in the pack's own order; unknown ids are skipped. */
+export function packBeats(trackIds: string[] = [], beats: BeatTrack[]) {
+  const byId = new Map(beats.map(b => [b.id, b]))
+  return trackIds
+    .map(id => byId.get(id))
+    .filter((b): b is BeatTrack => !!b)
+}
+
+export function averageBpm(beats: BeatTrack[]) {
+  if (!beats.length) return 0
+  return Math.round(beats.reduce((sum, b) => sum + (b.bpm || 0), 0) / beats.length)
+}
+
+export function uniqueValues(values: Array<string | undefined>) {
+  return [...new Set(values.filter((v): v is string => !!v))]
+}
+
+export function shuffled<T>(items: T[]) {
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
+/** Case-insensitive match across everything you'd search a beat by. */
+export function matchesQuery(beat: BeatTrack, query: string) {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  return [beat.title, beat.subtitle, beat.genre, beat.mood, beat.key, `${beat.bpm}`]
+    .filter(Boolean)
+    .some(field => field!.toLowerCase().includes(q))
+}
 
 /* ---------------------------------------------------------------------------
    Formatting
@@ -21,10 +78,49 @@ export function formatLongDuration(ms: number) {
   return hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`
 }
 
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' '
+}
+
+/**
+ * Spotify descriptions arrive as HTML ("R&amp;B", "<a href=...>"). Render
+ * them as plain text instead of injecting remote HTML.
+ */
+export function htmlToText(html?: string | null) {
+  if (!html) return ''
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, code: string) => {
+      if (code[0] === '#') {
+        const hex = code[1].toLowerCase() === 'x'
+        const n = parseInt(code.slice(hex ? 2 : 1), hex ? 16 : 10)
+        return Number.isFinite(n) ? String.fromCodePoint(n) : match
+      }
+      return ENTITIES[code.toLowerCase()] ?? match
+    })
+    .trim()
+}
+
 /** "Burna Boy Type Beat" -> "Burna Boy type beat" */
 export function prettySubtitle(subtitle?: string) {
   if (!subtitle) return undefined
   return subtitle.replace(/\bType Beat\b/i, 'type beat')
+}
+
+/**
+ * The line under a beat's title ("Burna Boy type beat"), or undefined when
+ * there is none or it just repeats the title ("Yeat Type Beat").
+ */
+export function beatSubtitle(beat: { title?: string; subtitle?: string }) {
+  const line = prettySubtitle(beat.subtitle)
+  if (!line) return undefined
+  if (line.toLowerCase() === beat.title?.toLowerCase()) return undefined
+  return line
 }
 
 /* ---------------------------------------------------------------------------

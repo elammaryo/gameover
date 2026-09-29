@@ -92,21 +92,5 @@ export async function getLoginToken(code: string) {
   }
 }
 
-export const handleLogin = async () => {
-  try {
-    const response = await fetch('/api/spotify/login')
-    const data = await response.json()
-    window.location.href = data.url
-  } catch (error) {
-    console.error('Error initiating Spotify login:', error)
-  }
-}
-
-export const handleLogout = async () => {
-  try {
-    await fetch('/api/spotify/logout', { method: 'POST' })
-    window.location.reload()
-  } catch (error) {
-    console.error('Error logging out:', error)
-  }
-}
+// Browser helpers moved to a client-safe module; re-exported for existing imports
+export { handleLogin, handleLogout } from './spotify-auth'

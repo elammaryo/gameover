@@ -5,41 +5,11 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Menu, ShieldAlert, X } from 'lucide-react'
-import { SiInstagram, SiSoundcloud, SiSpotify } from 'react-icons/si'
 import { navigateWithTransition } from '@/lib/transition'
+import { NAV_LINKS, SOCIAL_LINKS } from '@/lib/site'
 import { cn } from '@/lib/utils'
 import { Mark } from './brand/Mark'
 import { Wordmark } from './brand/Wordmark'
-
-export const NAV_LINKS = [
-  { id: 'studio', href: '/studio', label: 'Studio', blurb: 'Beats & packs' },
-  {
-    id: 'spotify',
-    href: '/spotify',
-    label: 'Spotify',
-    blurb: 'Curated playlists'
-  },
-  { id: 'tech', href: '/tech', label: 'Tech', blurb: 'How it’s built' },
-  { id: 'about', href: '/about', label: 'About', blurb: 'The producer' }
-] as const
-
-export const SOCIAL_LINKS = [
-  {
-    name: 'SoundCloud',
-    href: 'https://soundcloud.com/goproductions',
-    icon: SiSoundcloud
-  },
-  {
-    name: 'Spotify',
-    href: 'https://open.spotify.com/user/groudono',
-    icon: SiSpotify
-  },
-  {
-    name: 'Instagram',
-    href: 'https://instagram.com/omer.el__',
-    icon: SiInstagram
-  }
-] as const
 
 const TRANSITION_LABELS: Record<string, string> = {
   '/studio': 'Loading studio',

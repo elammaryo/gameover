@@ -14,7 +14,7 @@ import { NowPlayingOverlay } from './NowPlayingOverlay'
 import { TrackArt } from './Covers'
 import { Scrubber } from './Scrubber'
 import { EqBars, PlayButton } from './ui'
-import { prettySubtitle } from '@/lib/beats'
+import { beatSubtitle } from '@/lib/beats'
 import type { BeatTrack, Track } from '../models/Track'
 import { cn } from '@/lib/utils'
 
@@ -34,7 +34,7 @@ export function trackSubline(track: Track | null) {
   if (!track) return ''
   if (track.source === 'beat') {
     const beat = track as BeatTrack
-    const lead = prettySubtitle(beat.subtitle) ?? beat.genre
+    const lead = beatSubtitle(beat) ?? beat.genre
     return [lead, beat.bpm ? `${beat.bpm} BPM` : null]
       .filter(Boolean)
       .join(' · ')

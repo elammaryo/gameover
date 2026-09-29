@@ -295,10 +295,6 @@
   animation: eq 0.9s var(--ease-snap) infinite;
 }
 
-.glitch-once {
-  animation: glitch-x 0.24s steps(2, end) 0s 2;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

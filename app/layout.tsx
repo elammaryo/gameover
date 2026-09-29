@@ -7,6 +7,7 @@ import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
 import { Backdrop } from './components/Backdrop'
 import { TransitionOverlay } from './components/TransitionOverlay'
 import { NavBar } from './components/NavBar'
+import { SiteFooter } from './components/SiteFooter'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -89,6 +90,7 @@ export default function RootLayout({
           <div id='content' className='relative'>
             {children}
           </div>
+          <SiteFooter />
           <PlayerSpacer />
           <Analytics />
         </PlayBarProvider>

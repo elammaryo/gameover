@@ -1,9 +1,293 @@
-import { Pause, Play } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, ArrowRight, ArrowUpRight, Pause, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { buttonClasses } from './Button'
 
 /* ---------------------------------------------------------------------------
    Small presentational pieces shared by every page
 --------------------------------------------------------------------------- */
+
+/** Page shell: content column aligned with the player dock, clear of the nav. */
+export function Page({
+  children,
+  className
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <main
+      className={cn(
+        'mx-auto w-full max-w-[1240px] px-5 pt-[calc(var(--nav-h)+2.25rem)] pb-8 sm:px-8 sm:pt-[calc(var(--nav-h)+3.5rem)]',
+        className
+      )}
+    >
+      {children}
+    </main>
+  )
+}
+
+export function BackLink({
+  href,
+  children
+}: {
+  href: string
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      className='group/back hud-label -ml-1 inline-flex items-center gap-2 rounded-md px-1 py-1.5 transition-colors hover:text-bone'
+    >
+      <ArrowLeft className='size-3.5 transition-transform duration-200 ease-snap group-hover/back:-translate-x-0.5' />
+      {children}
+    </Link>
+  )
+}
+
+/** Toggle chip with a lit pad, same language as the nav. */
+export function FilterChip({
+  active,
+  count,
+  children,
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  active: boolean
+  count?: number
+}) {
+  return (
+    <button
+      type='button'
+      aria-pressed={active}
+      className={cn(
+        'inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border px-3 font-mono text-[11px] tracking-[0.12em] uppercase transition-[background-color,border-color,color] duration-200',
+        active
+          ? 'border-line-strong bg-white/[0.07] text-bone'
+          : 'border-line text-bone-dim hover:border-line-strong hover:text-bone',
+        className
+      )}
+      {...props}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'size-1.5 rounded-[2px] transition-[background-color,box-shadow] duration-200',
+          active
+            ? 'bg-signal shadow-[0_0_8px_var(--color-signal)]'
+            : 'bg-white/20'
+        )}
+      />
+      {children}
+      {count !== undefined && (
+        <span className='tabular text-bone-dim'>{count}</span>
+      )}
+    </button>
+  )
+}
+
+/** Big section tabs (Beats / Packs). Pair with role=tabpanel content. */
+export function Tabs<T extends string>({
+  tabs,
+  value,
+  onChange,
+  idPrefix,
+  className
+}: {
+  tabs: Array<{ id: T; label: string; count?: number; shot?: string }>
+  value: T
+  onChange: (id: T) => void
+  idPrefix: string
+  className?: string
+}) {
+  return (
+    <div
+      role='tablist'
+      className={cn('flex items-center gap-7 sm:gap-9', className)}
+      onKeyDown={e => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
+        const i = tabs.findIndex(t => t.id === value)
+        const next =
+          tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]
+        onChange(next.id)
+        document.getElementById(`${idPrefix}-tab-${next.id}`)?.focus()
+      }}
+    >
+      {tabs.map(tab => {
+        const selected = tab.id === value
+        return (
+          <button
+            key={tab.id}
+            id={`${idPrefix}-tab-${tab.id}`}
+            type='button'
+            role='tab'
+            data-shot={tab.shot}
+            aria-selected={selected}
+            aria-controls={`${idPrefix}-panel`}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              'group/tab relative flex items-center gap-3 py-2 transition-colors duration-200',
+              selected ? 'text-bone' : 'text-bone-dim hover:text-bone'
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'size-2 rounded-[2px] transition-all duration-200',
+                selected
+                  ? 'bg-signal shadow-[0_0_10px_var(--color-signal)]'
+                  : 'scale-75 bg-white/15 group-hover/tab:bg-white/30'
+              )}
+            />
+            <span className='font-display-tight text-2xl sm:text-[1.75rem]'>
+              {tab.label}
+            </span>
+            {tab.count !== undefined && (
+              <span className='tabular font-mono text-xs text-bone-dim'>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Wide call-to-action panel (SoundCloud, Spotify profile, GitHub...). */
+export function CtaBand({
+  icon,
+  title,
+  children,
+  href,
+  cta,
+  accent = 'var(--color-signal)',
+  variant = 'secondary',
+  className
+}: {
+  icon: React.ReactNode
+  title: React.ReactNode
+  children: React.ReactNode
+  href: string
+  cta: string
+  accent?: string
+  variant?: 'primary' | 'secondary' | 'spotify' | 'soundcloud'
+  className?: string
+}) {
+  const external = href.startsWith('http')
+  const button = (
+    <>
+      {cta}
+      {external ? (
+        <ArrowUpRight className='size-4' />
+      ) : (
+        <ArrowRight className='size-4' />
+      )}
+    </>
+  )
+  return (
+    <section
+      className={cn(
+        'surface relative isolate overflow-hidden rounded-3xl p-6 sm:p-10',
+        className
+      )}
+      style={{
+        backgroundImage: `radial-gradient(60% 120% at 100% 50%, color-mix(in srgb, ${accent} 16%, transparent), transparent 70%)`
+      }}
+    >
+      <div className='flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-10'>
+        <div className='flex items-start gap-4 sm:gap-5'>
+          <span
+            className='flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset [&_svg]:size-[22px]'
+            style={{
+              color: accent,
+              backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)`,
+              boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${accent} 28%, transparent)`
+            }}
+          >
+            {icon}
+          </span>
+          <div className='flex flex-col gap-1.5'>
+            <h2 className='font-display-tight text-xl text-bone sm:text-2xl'>
+              {title}
+            </h2>
+            <p className='max-w-xl text-[15px] leading-relaxed text-bone-muted'>
+              {children}
+            </p>
+          </div>
+        </div>
+        {external ? (
+          <a
+            href={href}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={buttonClasses({ variant, className: 'shrink-0 self-start sm:self-auto' })}
+          >
+            {button}
+          </a>
+        ) : (
+          <Link
+            href={href}
+            className={buttonClasses({ variant, className: 'shrink-0 self-start sm:self-auto' })}
+          >
+            {button}
+          </Link>
+        )}
+      </div>
+    </section>
+  )
+}
+
+/** Friendly "nothing here" panel with an unlit pad grid. */
+export function EmptyState({
+  title,
+  children,
+  action,
+  className
+}: {
+  title: string
+  children?: React.ReactNode
+  action?: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-line-strong px-6 py-14 text-center',
+        className
+      )}
+    >
+      <span aria-hidden className='grid grid-cols-3 gap-1'>
+        {Array.from({ length: 9 }, (_, i) => (
+          <span
+            key={i}
+            className={cn(
+              'size-2.5 rounded-[3px]',
+              i === 4 ? 'bg-signal/70' : 'bg-white/10'
+            )}
+          />
+        ))}
+      </span>
+      <div className='flex flex-col gap-1.5'>
+        <p className='font-display-tight text-lg text-bone'>{title}</p>
+        {children && (
+          <p className='max-w-sm text-sm text-bone-muted'>{children}</p>
+        )}
+      </div>
+      {action}
+    </div>
+  )
+}
+
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn('animate-pulse rounded-xl bg-white/[0.045]', className)}
+    />
+  )
+}
 
 /** Mono uppercase label with a lit pad in front of it */
 export function Eyebrow({
@@ -109,6 +393,7 @@ export function StatStrip({
   items,
   className
 }: {
+  /** 4 items: 2x2 on phones, one row from sm. 3 items: always one row. */
   items: Array<{
     label: string
     value: React.ReactNode
@@ -117,10 +402,12 @@ export function StatStrip({
   }>
   className?: string
 }) {
+  const three = items.length === 3
   return (
     <dl
       className={cn(
-        'surface grid grid-cols-2 overflow-hidden rounded-2xl sm:grid-cols-4',
+        'surface grid overflow-hidden rounded-2xl',
+        three ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4',
         className
       )}
     >
@@ -128,10 +415,14 @@ export function StatStrip({
         <div
           key={item.label}
           className={cn(
-            'relative flex flex-col gap-2 px-5 py-4 sm:px-6 sm:py-5',
-            i % 2 === 1 && 'border-l border-line',
-            i >= 2 && 'border-t border-line sm:border-t-0',
-            i > 0 && 'sm:border-l'
+            'relative flex min-w-0 flex-col gap-2 px-4 py-4 sm:px-6 sm:py-5',
+            three
+              ? i > 0 && 'border-l border-line'
+              : [
+                  i % 2 === 1 && 'border-l border-line',
+                  i >= 2 && 'border-t border-line sm:border-t-0',
+                  i > 0 && 'sm:border-l'
+                ]
           )}
         >
           <dt className='hud-label'>{item.label}</dt>

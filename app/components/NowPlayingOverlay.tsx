@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { TrackArt } from './Covers'
 import { Scrubber } from './Scrubber'
 import { EqBars, PlayButton, Tag } from './ui'
-import { accentFor, prettySubtitle } from '@/lib/beats'
+import { accentFor, beatSubtitle } from '@/lib/beats'
 import { cn } from '@/lib/utils'
 
 interface NowPlayingOverlayProps {
@@ -254,7 +254,7 @@ export function NowPlayingOverlay({
   const spotifyTrack = !isBeat ? (selectedTrack as SpotifyTrack) : null
   const accent = beatTrack ? accentFor(beatTrack) : '#1ED760'
   const subtitle = beatTrack
-    ? (prettySubtitle(beatTrack.subtitle) ?? beatTrack.artist)
+    ? (beatSubtitle(beatTrack) ?? beatTrack.artist)
     : selectedTrack.artist
 
   const details = beatTrack
@@ -342,7 +342,7 @@ export function NowPlayingOverlay({
                 </span>
                 <span className='block truncate text-xs text-bone-dim'>
                   {track.source === 'beat'
-                    ? (prettySubtitle((track as BeatTrack).subtitle) ??
+                    ? (beatSubtitle(track as BeatTrack) ??
                       (track as BeatTrack).genre)
                     : track.artist}
                 </span>

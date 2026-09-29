@@ -5,7 +5,7 @@ import { BeatTrack, Track } from '../models/Track'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import { BeatCover } from './Covers'
 import { EqBars, Eyebrow, PlayButton, Tag } from './ui'
-import { accentFor, prettySubtitle } from '@/lib/beats'
+import { accentFor, beatSubtitle } from '@/lib/beats'
 import { cn } from '@/lib/utils'
 
 function FeaturedBeatsSection({
@@ -81,7 +81,7 @@ function NowPlayingBadge({ playing }: { playing: boolean }) {
 
 function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
   const accent = accentFor(beat)
-  const subtitle = prettySubtitle(beat.subtitle)
+  const subtitle = beatSubtitle(beat)
   return (
     <article
       className={cn(
@@ -143,7 +143,7 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
 
 function MiniCard({ beat, current, playing, onPlay, className }: CardProps) {
   const accent = accentFor(beat)
-  const subtitle = prettySubtitle(beat.subtitle)
+  const subtitle = beatSubtitle(beat)
   return (
     <article
       className={cn(
