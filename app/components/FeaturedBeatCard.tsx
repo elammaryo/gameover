@@ -1,7 +1,13 @@
-import { HiPause, HiPlay } from 'react-icons/hi2'
+'use client'
+
 import { BeatTrack, Track } from '../models/Track'
-import { useContext } from 'react'
-import { PlayBarContext } from '../providers/PlayBarProvider'
+import { BeatCover } from './Covers'
+import { useBeatPlayback } from './usePlayback'
+import { EqBars, Eyebrow, PlayButton, Tag } from './ui'
+import { accentFor, beatSubtitle } from '@/lib/beats'
+import { cn } from '@/lib/utils'
+
+const STUDIO_CONTEXT = { id: 'studio:all::latest', name: 'Studio beats' }
 
 function FeaturedBeatsSection({
   featuredBeats,
@@ -10,146 +16,201 @@ function FeaturedBeatsSection({
   featuredBeats: BeatTrack[]
   allBeats: Track[]
 }) {
-  const { isPlaying, setPlayPause, selectedTrack, setTrack, setQueue } =
-    useContext(PlayBarContext)
-  const isMobile =
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  const { toggle, stateOf } = useBeatPlayback()
 
-  const handlePlay = async (track: BeatTrack) => {
-    if (selectedTrack?.id === track.id && isPlaying) {
-      setPlayPause(false)
-    } else if (selectedTrack?.id === track.id && !isPlaying) {
-      setPlayPause(true)
-    } else {
-      await setTrack(track)
-      setQueue(track, allBeats)
-    }
+  // featured beats play on into the whole catalogue
+  const handlePlay = (track: BeatTrack) =>
+    toggle(track, allBeats as BeatTrack[], STUDIO_CONTEXT)
+
+  const [hero, ...rest] = featuredBeats
+  if (!hero) return null
+
+  const state = (beat: BeatTrack) => {
+    const { current, playing, loading } = stateOf(beat.id)
+    return { current, playing, loading }
   }
-
-  const getGradient = (index: number) => {
-    const gradients = [
-      'from-cyan-500 via-blue-500 to-purple-600',
-      'from-fuchsia-500 via-pink-500 to-rose-600',
-      'from-orange-500 via-amber-500 to-yellow-500',
-      'from-green-500 via-emerald-500 to-teal-600',
-      'from-violet-500 via-purple-500 to-fuchsia-600'
-    ]
-    return gradients[index % gradients.length]
-  }
-
-  const displayBeats = featuredBeats.slice(0, isMobile ? 3 : 6)
 
   return (
-    <section className='space-y-6'>
-      <div className='flex items-center gap-2'>
-        <span className='text-cyan-400'>⚡</span>
-        <h2 className='font-mono text-sm tracking-[0.35em] text-gray-400 uppercase'>
-          Featured Beats
-        </h2>
+    <div className='grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      {/* cards are dealt onto the table on arrival */}
+      <HeroCard
+        beat={hero}
+        {...state(hero)}
+        onPlay={() => handlePlay(hero)}
+        className='intro-deal md:col-span-2 lg:row-span-2'
+        style={{ '--i': 0, '--intro-at': '380ms' } as React.CSSProperties}
+      />
+      {rest.slice(0, 5).map((beat, i) => (
+        <MiniCard
+          key={beat.id}
+          beat={beat}
+          {...state(beat)}
+          onPlay={() => handlePlay(beat)}
+          style={{ '--i': i + 1, '--intro-at': '380ms' } as React.CSSProperties}
+          className={cn(
+            'intro-deal',
+            i === rest.length - 1 &&
+              rest.length % 2 === 1 &&
+              'md:col-span-2 lg:col-span-1'
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+
+type CardProps = {
+  beat: BeatTrack
+  current: boolean
+  playing: boolean
+  loading: boolean
+  onPlay: () => void
+  className?: string
+  style?: React.CSSProperties
+}
+
+function NowPlayingBadge({ playing }: { playing: boolean }) {
+  return (
+    <span className='inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-live/30 bg-live/10 px-3 font-mono text-[10.5px] tracking-[0.16em] whitespace-nowrap text-live uppercase'>
+      <EqBars playing={playing} className='h-3' />
+      {playing ? 'Now playing' : 'Paused'}
+    </span>
+  )
+}
+
+function HeroCard({ beat, current, playing, loading, onPlay, className, style }: CardProps) {
+  const accent = accentFor(beat)
+  const subtitle = beatSubtitle(beat)
+  return (
+    <article
+      className={cn(
+        'group surface relative isolate flex min-h-[380px] flex-col justify-between overflow-hidden rounded-3xl p-6 transition-[border-color] duration-300 hover:border-white/15 sm:p-8 lg:min-h-[480px]',
+        className
+      )}
+      style={{
+        ...style,
+        backgroundImage: `radial-gradient(70% 90% at 85% 40%, ${accent}24, transparent 65%)`
+      }}
+    >
+      {/* z-10 without `relative`: flex items can stack, and the play
+          button's stretched ::after must resolve against the article */}
+      <div className='z-10 flex items-start justify-between gap-3'>
+        <div className='flex flex-col gap-3'>
+          <Eyebrow color={accent}>Featured beat</Eyebrow>
+          <div className='flex flex-wrap gap-1.5'>
+            <Tag>{beat.genre}</Tag>
+            {beat.mood && <Tag dot={accent}>{beat.mood}</Tag>}
+          </div>
+        </div>
+        {current && <NowPlayingBadge playing={playing} />}
       </div>
 
-      {/* Asymmetric Grid Layout */}
-      <div className='grid auto-rows-[240px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        {displayBeats.map((track, index) => {
-          const isCurrentTrack = selectedTrack?.id === track.id
-          const isTrackPlaying = isCurrentTrack && isPlaying
+      <BeatCover
+        beat={beat}
+        glow
+        detail
+        live={current}
+        className='pointer-events-none absolute top-1/2 right-[-10%] w-[62%] max-w-[380px] -translate-y-[46%] rotate-[-6deg] rounded-[28px] opacity-90 transition-transform duration-500 ease-snap group-hover:rotate-[-3deg] sm:right-[-4%] sm:w-[48%]'
+      />
 
-          // First track takes full width on desktop
-          const isHero = index === 0
-          const gridClass = isHero ? 'md:col-span-2 md:row-span-2' : ''
-
-          const card = (
-            <div
-              onClick={() => handlePlay(track)}
-              className='group relative flex h-full min-h-0 cursor-pointer flex-col justify-between overflow-hidden rounded-2xl bg-[#0C0A11]/80 p-6 backdrop-blur-xl transition-all hover:scale-[1.02]'
-            >
-              {/* Background gradient */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${getGradient(index)} opacity-30 transition-opacity group-hover:opacity-40`}
-              />
-
-              {/* Content */}
-              <div className='relative z-10 flex h-full min-h-0 flex-col justify-between'>
-                {/* Top section */}
-                <div>
-                  {/* Genre tag */}
-                  <span className='inline-block rounded-full border border-cyan-400/50 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300'>
-                    {track.genre}
-                  </span>
-
-                  {/* Now playing indicator */}
-                  {isCurrentTrack && (
-                    <div className='mt-2 flex items-center gap-2'>
-                      <div className='h-2 w-2 animate-pulse rounded-full bg-green-400' />
-                      <span className='text-xs font-medium text-green-400'>
-                        {isPlaying ? 'NOW PLAYING' : 'PAUSED'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom section */}
-                <div className='min-h-0'>
-                  <h3
-                    className={`line-clamp-2 leading-tight font-bold text-white ${
-                      isHero ? 'text-xl md:text-3xl lg:text-4xl' : 'text-xl'
-                    }`}
-                  >
-                    {track.title}
-                  </h3>
-                  <p
-                    className={`mt-1 text-gray-400 ${
-                      isHero ? 'text-sm md:text-base lg:text-lg' : 'text-sm'
-                    }`}
-                  >
-                    {track.artist}
-                  </p>
-
-                  <div className='mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-500'>
-                    <span>{track.bpm} BPM</span>
-                    {track.key && <span>· {track.key}</span>}
-                    {track.mood && <span>· {track.mood}</span>}
-                  </div>
-
-                  {/* Play button */}
-                  <div className='mt-3 flex items-center gap-3'>
-                    <button
-                      className={`flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 transition-all hover:scale-110 hover:shadow-cyan-500/50 ${
-                        isHero ? 'h-14 w-14' : 'h-12 w-12'
-                      }`}
-                      onClick={e => {
-                        e.stopPropagation()
-                        handlePlay(track)
-                      }}
-                    >
-                      {isTrackPlaying ? (
-                        <HiPause size={isHero ? 24 : 20} />
-                      ) : (
-                        <HiPlay size={isHero ? 24 : 20} />
-                      )}
-                    </button>
-                    {isHero && (
-                      <span className='text-sm font-medium text-white'>
-                        {isTrackPlaying ? 'Pause' : 'Play Now'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Hover overlay */}
-              <div className='pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100' />
-            </div>
-          )
-
-          return (
-            <div key={track.id} className={gridClass}>
-              {card}
-            </div>
-          )
-        })}
+      <div className='z-10 max-w-[62%] sm:max-w-[58%]'>
+        <h3 className='font-display-wide text-[clamp(2.2rem,5.2vw,4.25rem)] text-balance text-bone'>
+          {beat.title}
+        </h3>
+        {subtitle && (
+          <p className='mt-3 text-base text-bone-muted sm:text-lg'>
+            {subtitle}
+          </p>
+        )}
+        <p className='tabular mt-1.5 font-mono text-xs tracking-[0.12em] text-bone-dim uppercase'>
+          {beat.bpm} BPM{beat.key ? ` · ${beat.key}` : ''}
+        </p>
+        <div className='mt-7 flex items-center gap-4'>
+          <PlayButton
+            data-shot='play-featured'
+            size='xl'
+            tone='accent'
+            playing={playing}
+            loading={loading}
+            label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
+            onClick={onPlay}
+            stretched
+            className='after:rounded-3xl'
+          />
+          <span className='text-sm font-semibold text-bone'>
+            {playing ? 'Pause' : current ? 'Resume' : 'Play now'}
+          </span>
+        </div>
       </div>
-    </section>
+    </article>
+  )
+}
+
+function MiniCard({ beat, current, playing, loading, onPlay, className, style }: CardProps) {
+  const accent = accentFor(beat)
+  const subtitle = beatSubtitle(beat)
+  return (
+    <article
+      className={cn(
+        'group surface relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-3 pr-4 transition-[border-color,translate,scale] duration-300 hover:border-white/15 sm:p-4 lg:flex-col lg:items-stretch lg:justify-between lg:gap-5 lg:p-5',
+        current && 'border-live/30',
+        className
+      )}
+      style={{
+        ...style,
+        backgroundImage: `radial-gradient(80% 70% at 0% 0%, ${accent}1a, transparent 70%)`
+      }}
+    >
+      <div className='flex items-start justify-between gap-3'>
+        <BeatCover
+          beat={beat}
+          live={current}
+          className='size-16 rounded-xl transition-transform duration-500 ease-snap group-hover:scale-[1.04] sm:size-[72px]'
+        />
+        <div className='hidden lg:block'>
+          {current ? (
+            <NowPlayingBadge playing={playing} />
+          ) : (
+            <span className='tabular font-mono text-[11px] tracking-[0.12em] text-bone-dim uppercase'>
+              {beat.bpm} BPM
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className='flex min-w-0 flex-1 items-end justify-between gap-3'>
+        <div className='min-w-0'>
+          <h3
+            className={cn(
+              'font-display-tight truncate text-lg sm:text-xl',
+              current ? 'text-live' : 'text-bone'
+            )}
+          >
+            {beat.title}
+          </h3>
+          <p className='truncate text-sm text-bone-muted'>
+            {subtitle ?? beat.genre}
+          </p>
+          <p className='tabular mt-1 truncate font-mono text-[10.5px] tracking-[0.12em] text-bone-dim uppercase lg:hidden'>
+            {beat.genre} · {beat.bpm} BPM
+          </p>
+          <p className='mt-1 hidden truncate font-mono text-[10.5px] tracking-[0.12em] text-bone-dim uppercase lg:block'>
+            {beat.genre}
+            {beat.mood ? ` · ${beat.mood}` : ''}
+          </p>
+        </div>
+        <PlayButton
+          size='md'
+          tone={current ? 'accent' : 'ghost'}
+          playing={playing}
+          loading={loading}
+          label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
+          onClick={onPlay}
+          stretched
+          className='after:rounded-2xl group-hover:bg-theme group-hover:text-ink-950 group-hover:ring-0'
+        />
+      </div>
+    </article>
   )
 }
 

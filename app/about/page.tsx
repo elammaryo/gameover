@@ -1,491 +1,417 @@
 'use client'
 
-import { NavBar } from '../components/NavBar'
-import Aurora from '../components/Aurora'
 import Image from 'next/image'
-import {
-  SiSpotify,
-  SiSoundcloud,
-  SiInstagram,
-  SiGithub,
-  SiLinkedin
-} from 'react-icons/si'
-import {
-  HiMusicalNote,
-  HiSparkles,
-  HiClock,
-  HiHeart,
-  HiGlobeAlt
-} from 'react-icons/hi2'
+import { useEffect, useState } from 'react'
+import { ArrowUpRight, AudioLines, Code2 } from 'lucide-react'
+import { SiGithub, SiLinkedin } from 'react-icons/si'
 import profileImage from '../../public/profile.png'
-import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { getSpotifyTopArtists, getSpotifyTopTracks } from '../api'
-import { SpotifyTrack } from '../models/Track'
+import type { SpotifyTrack } from '../models/Track'
+import {
+  CtaBand,
+  EmptyState,
+  Eyebrow,
+  Page,
+  SectionHeader,
+  Skeleton,
+  StatStrip,
+  Tag
+} from '../components/ui'
+import { SOCIAL_LINKS } from '@/lib/site'
+import { cn } from '@/lib/utils'
+
+type Artist = { name: string; images: { url: string }[] }
+type Load = 'loading' | 'ready' | 'error'
+
+// kept small on purpose: rough numbers, not the point of the page
+const LISTENING = [
+  { label: 'Minutes listened', value: '56K+' },
+  { label: 'Saved tracks', value: '450+' },
+  { label: 'Unique artists', value: '120+' },
+  { label: 'Playlists made', value: '95+' }
+]
+
+const CHAPTERS = [
+  {
+    title: 'How it started',
+    body: 'My journey into music production began 4 years ago when I first discovered FL Studio. What started as a hobby quickly became a passion. I spent countless hours learning sound design, sampling, and arrangement techniques.'
+  },
+  {
+    title: 'My sound',
+    body: 'I specialize in creating hard-hitting trap and drill beats with heavy 808s, crisp hi-hats, and atmospheric melodies. I also love experimenting with afrobeats rhythms and blending genres to create unique sonic landscapes.'
+  },
+  {
+    title: 'Beyond music',
+    body: 'As a developer, I built this website from scratch using Next.js, AWS, and custom WebGL shaders. I love combining my technical skills with my creative passion to build unique digital experiences.'
+  }
+]
+
+const ROLES = [
+  {
+    title: 'Music producer',
+    icon: AudioLines,
+    accent: 'var(--color-theme)',
+    body: 'Specializing in trap, drill, and afrobeats. I craft hard-hitting beats with heavy 808s, crisp hi-hats, and atmospheric melodies that push boundaries.',
+    points: ['100+ beats created', '4+ years experience', '8 genres explored']
+  },
+  {
+    title: 'Software engineer',
+    icon: Code2,
+    accent: 'var(--color-live)',
+    body: 'Full-stack developer and technical co-founder with production experience shipping features users depend on. From mobile apps to web platforms, I build scalable systems end-to-end.',
+    points: [
+      'Flutter, React, Next.js & Node.js',
+      'Firebase, AWS & CI/CD pipelines',
+      'Founding engineer at SuperOver'
+    ]
+  }
+]
+
+const CONNECT = [
+  ...SOCIAL_LINKS,
+  {
+    name: 'LinkedIn',
+    href: 'https://linkedin.com/in/omerelammary',
+    handle: '@omerelammary',
+    icon: SiLinkedin
+  },
+  {
+    name: 'GitHub',
+    href: 'https://github.com/elammaryo',
+    handle: '@elammaryo',
+    icon: SiGithub
+  }
+]
 
 export default function AboutPage() {
   const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([])
-  const [topArtists, setTopArtists] = useState<
-    { name: string; images: { url: string }[] }[]
-  >([])
-  const router = useRouter()
+  const [topArtists, setTopArtists] = useState<Artist[]>([])
+  const [tracksState, setTracksState] = useState<Load>('loading')
+  const [artistsState, setArtistsState] = useState<Load>('loading')
 
   useEffect(() => {
     getSpotifyTopTracks()
-      .then(tracks => setTopTracks(tracks))
-      .catch(err => console.error(err))
+      .then(tracks => {
+        setTopTracks(tracks)
+        setTracksState('ready')
+      })
+      .catch(err => {
+        console.error(err)
+        setTracksState('error')
+      })
     getSpotifyTopArtists()
-      .then(artists => setTopArtists(artists))
-      .catch(err => console.error(err))
+      .then(artists => {
+        setTopArtists(artists)
+        setArtistsState('ready')
+      })
+      .catch(err => {
+        console.error(err)
+        setArtistsState('error')
+      })
   }, [])
 
-  const stats = [
-    {
-      label: '4+ Years',
-      icon: <HiClock className='text-purple-400' size={16} />,
-      bgClass: 'bg-purple-500/10',
-      borderClass: 'border-purple-500/30'
-    },
-    {
-      label: '100+ Beats',
-      icon: <HiMusicalNote className='text-fuchsia-400' size={16} />,
-      bgClass: 'bg-fuchsia-500/10',
-      borderClass: 'border-fuchsia-500/30'
-    },
-    {
-      label: '8 Genres',
-      icon: <HiSparkles className='text-cyan-400' size={16} />,
-      bgClass: 'bg-cyan-400/10',
-      borderClass: 'border-cyan-400/30'
-    }
-  ]
-
-  const socialLinks = [
-    {
-      name: 'Spotify',
-      url: 'https://open.spotify.com/user/groudono',
-      icon: <SiSpotify size={24} />,
-      color: 'hover:text-green-500',
-      handle: '@groudono'
-    },
-    {
-      name: 'SoundCloud',
-      url: 'https://soundcloud.com/goproductions',
-      icon: <SiSoundcloud size={24} />,
-      color: 'hover:text-orange-500',
-      handle: '@goproductions'
-    },
-    {
-      name: 'Instagram',
-      url: 'https://instagram.com/omer.el__',
-      icon: <SiInstagram size={24} />,
-      color: 'hover:text-pink-500',
-      handle: '@omer.el__'
-    },
-    {
-      name: 'LinkedIn',
-      url: 'https://linkedin.com/in/omerelammary',
-      icon: <SiLinkedin size={24} />,
-      color: 'hover:text-blue-500',
-      handle: '@omerelammary'
-    },
-    {
-      name: 'GitHub',
-      url: 'https://github.com/elammaryo',
-      icon: <SiGithub size={24} />,
-      color: 'hover:text-gray-300',
-      handle: '@elammaryo'
-    }
-  ]
+  const statsOffline =
+    tracksState !== 'loading' &&
+    artistsState !== 'loading' &&
+    !topTracks.length &&
+    !topArtists.length
 
   return (
-    <main className='relative min-h-screen bg-[#07050A] text-white'>
-      <div className='pointer-events-none fixed inset-0 opacity-35'>
-        <Aurora
-          colorStops={['#a855f7', '#ec4899', '#8b5cf6']}
-          amplitude={1.2}
-          blend={0.65}
-          speed={0.3}
-        />
-      </div>
-
-      <NavBar selectedTab='about' />
-
-      <div className='relative z-10 mx-auto max-w-6xl px-4 pt-24 pb-16 sm:px-6'>
-        {/* HEADER SECTION */}
-        <header className='mb-16'>
-          {/* Profile Card */}
-          <div className='relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-fuchsia-500/5 p-8 backdrop-blur-sm md:p-12'>
-            <div className='pointer-events-none absolute top-0 right-0 h-96 w-96 bg-gradient-to-bl from-purple-500/20 to-transparent blur-3xl' />
-
-            <div className='relative z-10 flex flex-col items-center gap-8 md:flex-row'>
-              <div className='relative flex-shrink-0'>
-                <div className='h-40 w-40 overflow-hidden rounded-2xl border-2 border-purple-500/40 bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 shadow-2xl shadow-purple-500/20 md:h-48 md:w-48'>
-                  <Image
-                    src={profileImage}
-                    alt='Profile'
-                    width={192}
-                    height={192}
-                    className='h-full w-full object-cover'
-                  />
-                </div>
-              </div>
-
-              <div className='flex flex-1 flex-col gap-4 text-center md:text-left'>
-                <div>
-                  <h1 className='mb-2 font-mono text-xs tracking-[0.35em] text-purple-400 uppercase'>
-                    Music Producer
-                  </h1>
-                  <h2 className='text-5xl font-bold text-white sm:text-6xl'>
-                    Omer Elammary
-                  </h2>
-                </div>
-                <p className='text-lg leading-relaxed text-gray-300 md:text-xl'>
-                  Crafting hard-hitting trap, drill, and afrobeats that push
-                  boundaries. Based in Toronto, blending heavy 808s with
-                  experimental sound design.
-                </p>
-
-                <div className='flex flex-wrap items-center justify-center gap-4 md:justify-start'>
-                  {stats.map(stat => (
-                    <div
-                      key={stat.label}
-                      className={`flex items-center gap-2 rounded-full border px-4 py-2 ${stat.borderClass} ${stat.bgClass}`}
-                    >
-                      {stat.icon}
-                      <span className='text-sm font-semibold text-white'>
-                        {stat.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+    <Page>
+      {/* PROFILE */}
+      <header className='grid gap-10 md:grid-cols-[minmax(0,19rem)_1fr] md:items-center md:gap-14 lg:grid-cols-[minmax(0,22rem)_1fr]'>
+        <figure className='relative mx-auto w-full max-w-[19rem] md:max-w-none'>
+          <div className='relative aspect-[4/5] overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_40px_90px_-40px_rgb(0_0_0/0.9)]'>
+            <Image
+              src={profileImage}
+              alt='Omer Elammary, the producer behind GameOver'
+              fill
+              priority
+              placeholder='blur'
+              sizes='(min-width: 1024px) 352px, (min-width: 768px) 304px, 80vw'
+              className='object-cover object-[50%_40%]'
+            />
+            <div
+              aria-hidden
+              className='absolute inset-0 bg-[linear-gradient(to_top,rgb(7_6_10/0.85),transparent_45%)]'
+            />
+            <div
+              aria-hidden
+              className='absolute inset-0 opacity-[0.12] [background:repeating-linear-gradient(to_bottom,rgb(0_0_0)_0_1px,transparent_1px_3px)]'
+            />
+            <span className='absolute top-3 left-3 rounded-md bg-ink-950/75 px-2 py-1 font-pixel text-[11px] text-bone backdrop-blur-sm'>
+              P1
+            </span>
+            <figcaption className='absolute inset-x-4 bottom-4 flex items-center justify-between gap-3'>
+              <span className='hud-label text-bone-muted'>Producer × Dev</span>
+              <span className='flex items-center gap-1.5'>
+                <span
+                  aria-hidden
+                  className='size-1.5 animate-blink rounded-[2px] bg-live shadow-[0_0_8px_var(--color-live)]'
+                />
+                <span className='hud-label text-bone-muted'>Toronto</span>
+              </span>
+            </figcaption>
           </div>
+        </figure>
 
-          <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
-            <div className='group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-green-400/40 hover:bg-white/10'>
-              <div className='flex items-center gap-3'>
-                <div className='flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600'>
-                  <SiSpotify size={20} />
-                </div>
-                <div>
-                  <div className='text-2xl font-bold text-white'>56K+</div>
-                  <div className='text-xs text-gray-400'>Minutes Listened</div>
-                </div>
-              </div>
-            </div>
-
-            <div className='group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-purple-400/40 hover:bg-white/10'>
-              <div className='flex items-center gap-3'>
-                <div className='flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-600'>
-                  <HiMusicalNote size={20} />
-                </div>
-                <div>
-                  <div className='text-2xl font-bold text-white'>450+</div>
-                  <div className='text-xs text-gray-400'>Saved Tracks</div>
-                </div>
-              </div>
-            </div>
-
-            <div className='group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-cyan-400/40 hover:bg-white/10'>
-              <div className='flex items-center gap-3'>
-                <div className='flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600'>
-                  <HiSparkles size={20} />
-                </div>
-                <div>
-                  <div className='text-2xl font-bold text-white'>120+</div>
-                  <div className='text-xs text-gray-400'>Unique Artists</div>
-                </div>
-              </div>
-            </div>
-
-            <div className='group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-orange-400/40 hover:bg-white/10'>
-              <div className='flex items-center gap-3'>
-                <div className='flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-600'>
-                  <HiHeart size={20} />
-                </div>
-                <div>
-                  <div className='text-2xl font-bold text-white'>95+</div>
-                  <div className='text-xs text-gray-400'>Playlists Created</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* TOP SPOTIFY ARTISTS */}
-        <section className='mb-16'>
-          <div className='mb-6 flex items-center gap-3'>
-            <SiSpotify className='text-green-500' size={24} />
-            <h2 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-              Top Spotify Artists
-            </h2>
-          </div>
-
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
-            {topArtists.map((artist, index) => (
-              <div
-                key={artist.name}
-                className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm transition-all hover:border-green-400/40 hover:bg-white/10'
-              >
-                <div className='relative aspect-square w-full overflow-hidden'>
-                  <Image
-                    src={
-                      artist.images && artist.images.length > 0
-                        ? artist.images[0].url
-                        : ''
-                    }
-                    alt={artist.name}
-                    width={300}
-                    height={300}
-                    className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
-                  />
-                  <div className='absolute top-3 left-3 flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-lg font-bold text-white shadow-lg'>
-                    {index + 1}
-                  </div>
-                  <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent' />
-                </div>
-
-                <div className='absolute right-0 bottom-0 left-0 p-4'>
-                  <div className='font-semibold text-white'>{artist.name}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* TOP SPOTIFY TRACKS */}
-        <section className='mb-16'>
-          <div className='mb-6 flex items-center gap-3'>
-            <HiMusicalNote className='text-purple-500' size={24} />
-            <h2 className='font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-              Most Played Tracks (Past Month)
-            </h2>
-          </div>
-
-          <div className='space-y-3'>
-            {topTracks.map((track, index) => (
-              <div
-                key={track?.name}
-                className='group flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm transition-all hover:border-purple-400/40 hover:bg-white/10'
-              >
-                <div className='relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg'>
-                  <Image
-                    src={track?.images?.[0]?.url ?? ''}
-                    alt={track.name}
-                    width={64}
-                    height={64}
-                    className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-110'
-                  />
-                  <div className='absolute top-1 left-1 flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-xs font-bold text-white shadow-lg'>
-                    {index + 1}
-                  </div>
-                </div>
-
-                <div className='min-w-0 flex-1'>
-                  <div className='truncate font-semibold text-white'>
-                    {track.name}
-                  </div>
-                  <div className='truncate text-sm text-gray-400'>
-                    {track.artists.map(artist => artist.name).join(', ')}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* MUSICAL JOURNEY / STORY */}
-        <section className='mb-16'>
-          <h2 className='mb-6 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-            My Journey
-          </h2>
-
-          <div className='space-y-6 rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm'>
-            <div>
-              <h3 className='mb-2 text-xl font-semibold text-white'>
-                How It Started
-              </h3>
-              <p className='leading-relaxed text-gray-300'>
-                My journey into music production began 4 years ago when I first
-                discovered FL Studio. What started as a hobby quickly became a
-                passion. I spent countless hours learning sound design,
-                sampling, and arrangement techniques.
-              </p>
-            </div>
-
-            <div>
-              <h3 className='mb-2 text-xl font-semibold text-white'>
-                My Sound
-              </h3>
-              <p className='leading-relaxed text-gray-300'>
-                I specialize in creating hard-hitting trap and drill beats with
-                heavy 808s, crisp hi-hats, and atmospheric melodies. I also love
-                experimenting with afrobeats rhythms and blending genres to
-                create unique sonic landscapes.
-              </p>
-            </div>
-
-            <div>
-              <h3 className='mb-2 text-xl font-semibold text-white'>
-                Beyond Music
-              </h3>
-              <p className='leading-relaxed text-gray-300'>
-                As a developer, I built this website from scratch using Next.js,
-                AWS, and custom WebGL shaders. I love combining my technical
-                skills with my creative passion to build unique digital
-                experiences.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* PRODUCER × DEVELOPER SECTION */}
-        <section className='mb-16'>
-          <h2 className='mb-6 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-            Producer × Developer
-          </h2>
-
-          <div className='grid gap-6 md:grid-cols-2'>
-            {/* Music Producer Card */}
-            <div className='group relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-fuchsia-500/5 p-8 backdrop-blur-sm transition-all hover:border-purple-400/40'>
-              <div className='pointer-events-none absolute top-0 right-0 h-64 w-64 bg-gradient-to-bl from-purple-500/20 to-transparent blur-3xl' />
-
-              <div className='relative z-10'>
-                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-fuchsia-600'>
-                  <HiMusicalNote size={28} className='text-white' />
-                </div>
-
-                <h3 className='mb-3 text-2xl font-bold text-white'>
-                  Music Producer
-                </h3>
-
-                <p className='mb-4 text-gray-300'>
-                  Specializing in trap, drill, and afrobeats. I craft
-                  hard-hitting beats with heavy 808s, crisp hi-hats, and
-                  atmospheric melodies that push boundaries.
-                </p>
-
-                <div className='space-y-2 text-sm text-gray-400'>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-1.5 w-1.5 rounded-full bg-purple-400' />
-                    <span>100+ beats created</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-1.5 w-1.5 rounded-full bg-fuchsia-400' />
-                    <span>4+ years experience</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-1.5 w-1.5 rounded-full bg-pink-400' />
-                    <span>8 genres explored</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Software Engineer Card */}
-            <div className='group relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 p-8 backdrop-blur-sm transition-all hover:border-cyan-400/40'>
-              <div className='pointer-events-none absolute top-0 right-0 h-64 w-64 bg-gradient-to-bl from-cyan-500/20 to-transparent blur-3xl' />
-
-              <div className='relative z-10'>
-                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600'>
-                  <HiGlobeAlt size={28} className='text-white' />
-                </div>
-
-                <h3 className='mb-3 text-2xl font-bold text-white'>
-                  Software Engineer
-                </h3>
-
-                <p className='mb-4 text-gray-300'>
-                  Full-stack developer and technical co-founder with production
-                  experience shipping features users depend on. From mobile apps
-                  to web platforms, I build scalable systems end-to-end.
-                </p>
-
-                <div className='space-y-2 text-sm text-gray-400'>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-1.5 w-1.5 rounded-full bg-cyan-400' />
-                    <span>Flutter, React, Next.js & Node.js</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-1.5 w-1.5 rounded-full bg-blue-400' />
-                    <span>Firebase, AWS & CI/CD pipelines</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className='h-1.5 w-1.5 rounded-full bg-indigo-400' />
-                    <span>Founding engineer at SuperOver</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SOCIAL LINKS */}
-        <section className='mb-16'>
-          <h2 className='mb-6 font-mono text-xs tracking-[0.35em] text-gray-400 uppercase'>
-            Connect With Me
-          </h2>
-
-          <div className='grid gap-4 sm:grid-cols-2'>
-            {socialLinks.map((social, index) => {
-              const isLastAndOdd =
-                socialLinks.length % 2 !== 0 && index === socialLinks.length - 1
-
-              return (
-                <a
-                  key={social.name}
-                  href={social.url}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10 ${social.color} ${
-                    isLastAndOdd ? 'sm:col-span-2' : ''
-                  }`}
+        <div className='flex flex-col gap-6'>
+          <Eyebrow>Music producer</Eyebrow>
+          <h1 className='font-display-wide text-[clamp(2.9rem,7.2vw,5.75rem)] text-balance text-bone'>
+            Omer Elammary
+          </h1>
+          <p className='max-w-2xl text-lg leading-relaxed text-pretty text-bone-muted sm:text-xl'>
+            Crafting hard-hitting trap, drill, and afrobeats that push
+            boundaries. Based in Toronto, blending heavy 808s with experimental
+            sound design.
+          </p>
+          <ul className='flex flex-wrap gap-2'>
+            {['4+ years', '100+ beats', '8 genres'].map((fact, i) => (
+              <li key={fact}>
+                <Tag
+                  dot={['var(--color-theme)', 'var(--color-theme-2)', 'var(--color-live)'][i]}
+                  className='h-8 px-3 text-[11px]'
                 >
-                  <div className='flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 transition-transform group-hover:scale-110'>
-                    {social.icon}
-                  </div>
-                  <div className='flex flex-col'>
-                    <span className='text-lg font-semibold text-white'>
-                      {social.name}
-                    </span>
-                    <span className='text-sm text-gray-400'>
-                      {social.handle}
-                    </span>
-                  </div>
-                  <div className='ml-auto text-gray-500 transition-transform group-hover:translate-x-1'>
-                    →
-                  </div>
-                </a>
-              )
-            })}
-          </div>
-        </section>
+                  {fact}
+                </Tag>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </header>
 
-        {/* TECH STACK TEASER */}
-        <section className='mb-24'>
-          <div className='relative overflow-hidden rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/5 p-8 backdrop-blur-sm'>
-            <div className='relative z-10 text-center'>
-              <HiGlobeAlt className='mx-auto mb-4 text-cyan-400' size={48} />
-              <h3 className='mb-3 text-2xl font-bold text-white'>
-                Curious About The Tech?
-              </h3>
-              <p className='mb-6 text-gray-300'>
-                Explore the full-stack architecture powering this site. Built
-                with Next.js, AWS S3, serverless functions, and custom WebGL
-                shaders.
-              </p>
-              <button
-                onClick={() => router.push('/tech')}
-                className='inline-flex items-center gap-2 rounded-full border border-cyan-500 bg-cyan-500/10 px-8 py-3 font-semibold text-cyan-400 transition-all hover:border-cyan-400 hover:bg-cyan-500/20'
-              >
-                View Tech Stack →
-              </button>
-            </div>
-          </div>
+      <StatStrip className='mt-10 sm:mt-12' items={LISTENING} />
+
+      {/* LIVE SPOTIFY STATS */}
+      {statsOffline ? (
+        <section aria-label='Spotify stats' className='mt-20 sm:mt-28'>
+          <EmptyState title='Live Spotify stats are offline'>
+            The top artists and tracks feed is taking a break. Check back soon.
+          </EmptyState>
         </section>
-      </div>
-    </main>
+      ) : (
+        <>
+          <section aria-labelledby='top-artists' className='mt-20 sm:mt-28'>
+            <SectionHeader
+              id='top-artists'
+              eyebrow='On Spotify'
+              title='Top artists'
+            />
+            <ol className='grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5'>
+              {artistsState === 'loading'
+                ? Array.from({ length: 5 }, (_, i) => (
+                    <li
+                      key={i}
+                      className={cn(i === 0 && 'col-span-2 sm:col-span-1')}
+                    >
+                      <Skeleton className='aspect-square rounded-2xl' />
+                    </li>
+                  ))
+                : topArtists.slice(0, 5).map((artist, i) => (
+                    <li
+                      key={artist.name}
+                      className={cn(
+                        'group relative overflow-hidden rounded-2xl bg-ink-800 ring-1 ring-white/8 ring-inset',
+                        i === 0 && 'col-span-2 sm:col-span-1'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'relative w-full',
+                          i === 0 ? 'aspect-[2/1] sm:aspect-square' : 'aspect-square'
+                        )}
+                      >
+                        {artist.images?.[0]?.url && (
+                          <Image
+                            src={artist.images[0].url}
+                            alt=''
+                            fill
+                            sizes='(min-width: 1024px) 230px, (min-width: 640px) 30vw, 90vw'
+                            className='object-cover transition-transform duration-700 ease-snap group-hover:scale-[1.04]'
+                          />
+                        )}
+                        <div
+                          aria-hidden
+                          className='absolute inset-0 bg-[linear-gradient(to_top,rgb(7_6_10/0.92),rgb(7_6_10/0.2)_55%,transparent)]'
+                        />
+                      </div>
+                      <span className='absolute top-3 left-3 rounded-md bg-ink-950/75 px-2 py-1 font-pixel text-[11px] text-bone backdrop-blur-sm'>
+                        #{i + 1}
+                      </span>
+                      <span className='absolute inset-x-3 bottom-3 truncate text-[15px] font-semibold text-bone'>
+                        {artist.name}
+                      </span>
+                    </li>
+                  ))}
+            </ol>
+          </section>
+
+          <section aria-labelledby='on-repeat' className='mt-20 sm:mt-24'>
+            <SectionHeader id='on-repeat' eyebrow='Past month' title='On repeat' />
+            <ol className='surface divide-y divide-line overflow-hidden rounded-3xl'>
+              {tracksState === 'loading'
+                ? Array.from({ length: 5 }, (_, i) => (
+                    <li key={i} className='flex items-center gap-4 p-3 sm:p-4'>
+                      <Skeleton className='size-14 shrink-0' />
+                      <div className='flex flex-1 flex-col gap-2'>
+                        <Skeleton className='h-3.5 w-1/3' />
+                        <Skeleton className='h-3 w-1/4' />
+                      </div>
+                    </li>
+                  ))
+                : topTracks.slice(0, 5).map((track, i) => (
+                    <li
+                      key={`${track.id ?? track.name}-${i}`}
+                      className='flex items-center gap-4 p-3 transition-colors hover:bg-white/[0.02] sm:gap-5 sm:p-4'
+                    >
+                      <span className='w-7 shrink-0 text-center font-pixel text-sm text-bone-dim sm:w-9 sm:text-base'>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span className='relative size-12 shrink-0 overflow-hidden rounded-lg bg-ink-800 ring-1 ring-white/8 ring-inset sm:size-14'>
+                        {(track.images?.[0]?.url ?? track.artworkUrl) && (
+                          <Image
+                            src={track.images?.[0]?.url ?? track.artworkUrl ?? ''}
+                            alt=''
+                            fill
+                            sizes='56px'
+                            className='object-cover'
+                          />
+                        )}
+                      </span>
+                      <span className='min-w-0 flex-1'>
+                        <span className='block truncate text-[15px] font-semibold text-bone sm:text-base'>
+                          {track.name}
+                        </span>
+                        <span className='block truncate text-[13px] text-bone-dim sm:text-sm'>
+                          {track.artists?.map(a => a.name).join(', ')}
+                        </span>
+                      </span>
+                      <span className='hidden max-w-[16rem] truncate text-sm text-bone-muted md:block'>
+                        {track.album?.name}
+                      </span>
+                    </li>
+                  ))}
+            </ol>
+          </section>
+        </>
+      )}
+
+      {/* STORY */}
+      <section aria-labelledby='story' className='mt-20 sm:mt-28'>
+        <SectionHeader id='story' eyebrow='The story so far' title='My journey' />
+        <ol className='grid gap-3 sm:gap-4 md:grid-cols-3'>
+          {CHAPTERS.map((chapter, i) => (
+            <li key={chapter.title} className='surface flex flex-col gap-4 rounded-3xl p-6 sm:p-7'>
+              <span className='flex items-center justify-between'>
+                <span className='tabular font-mono text-xs tracking-[0.2em] text-bone-dim uppercase'>
+                  Track 0{i + 1}
+                </span>
+                <span aria-hidden className='flex gap-1'>
+                  {Array.from({ length: 3 }, (_, k) => (
+                    <span
+                      key={k}
+                      className={cn(
+                        'size-2 rounded-[2px]',
+                        k <= i ? 'bg-theme/80' : 'bg-white/10'
+                      )}
+                    />
+                  ))}
+                </span>
+              </span>
+              <h3 className='font-display-tight text-xl text-bone sm:text-2xl'>
+                {chapter.title}
+              </h3>
+              <p className='text-[15px] leading-relaxed text-bone-muted'>
+                {chapter.body}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* PRODUCER x DEVELOPER */}
+      <section aria-labelledby='two-sides' className='mt-20 sm:mt-28'>
+        <SectionHeader id='two-sides' eyebrow='Two sides' title='Producer × developer' />
+        <div className='grid gap-3 sm:gap-4 md:grid-cols-2'>
+          {ROLES.map(role => {
+            const Icon = role.icon
+            return (
+              <article
+                key={role.title}
+                className='surface relative isolate overflow-hidden rounded-3xl p-6 sm:p-8'
+                style={{
+                  backgroundImage: `radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, ${role.accent} 12%, transparent), transparent 70%)`
+                }}
+              >
+                <span
+                  className='mb-6 flex size-12 items-center justify-center rounded-xl'
+                  style={{
+                    color: role.accent,
+                    backgroundColor: `color-mix(in srgb, ${role.accent} 12%, transparent)`,
+                    boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${role.accent} 30%, transparent)`
+                  }}
+                >
+                  <Icon className='size-[22px]' />
+                </span>
+                <h3 className='font-display-tight text-2xl text-bone'>{role.title}</h3>
+                <p className='mt-3 max-w-md text-[15px] leading-relaxed text-bone-muted'>
+                  {role.body}
+                </p>
+                <ul className='mt-6 flex flex-col gap-2.5'>
+                  {role.points.map(point => (
+                    <li key={point} className='flex items-center gap-3 text-sm text-bone-muted'>
+                      <span
+                        aria-hidden
+                        className='size-1.5 shrink-0 rounded-[2px]'
+                        style={{ backgroundColor: role.accent }}
+                      />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* CONNECT */}
+      <section aria-labelledby='connect' className='mt-20 sm:mt-28'>
+        <SectionHeader id='connect' eyebrow='Say hi' title='Connect with me' />
+        <ul className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+          {CONNECT.map(({ name, href, handle, icon: Icon }) => (
+            <li key={name}>
+              <a
+                href={href}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='group surface flex items-center gap-4 rounded-2xl p-4 transition-[border-color,translate,scale] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:p-5'
+              >
+                <span className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-bone-muted transition-colors group-hover:text-bone'>
+                  <Icon className='size-5' />
+                </span>
+                <span className='flex min-w-0 flex-col'>
+                  <span className='font-semibold text-bone'>{name}</span>
+                  <span className='truncate font-mono text-xs text-bone-dim'>{handle}</span>
+                </span>
+                <ArrowUpRight className='ml-auto size-4 text-bone-dim transition-[color,translate,scale] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-bone' />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <CtaBand
+        className='mt-24 sm:mt-32'
+        icon={<Code2 />}
+        accent='var(--color-live)'
+        title='Curious about the tech?'
+        href='/tech'
+        cta='View the stack'
+      >
+        Explore the full-stack architecture powering this site. Built with
+        Next.js, AWS S3, serverless functions, and custom WebGL shaders.
+      </CtaBand>
+    </Page>
   )
 }

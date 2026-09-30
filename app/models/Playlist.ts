@@ -32,6 +32,7 @@ export class Playlist {
     uri: string
     items?: SpotifyTrack[] | BeatTrack[]
     owner: { displayName: string; id: string }
+    trackIds?: string[]
   }) {
     this.collaborative = data.collaborative
     this.description = data.description
@@ -47,5 +48,6 @@ export class Playlist {
     this.type = data.type
     this.uri = data.uri
     this.owner = data.owner
+    this.trackIds = data.trackIds ?? []
   }
 }

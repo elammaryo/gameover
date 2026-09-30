@@ -1,486 +1,246 @@
 'use client'
-import React, { useContext, useEffect, useRef, useState } from 'react'
-import ElasticSlider from './ElasticSlider'
-import { HiPlay, HiPause, HiBackward, HiForward } from 'react-icons/hi2'
-import { HiVolumeUp } from 'react-icons/hi'
-import { PlayBarContext } from '../providers/PlayBarProvider'
-import Image from 'next/image'
-import { NowPlayingOverlay } from './NowPlayingOverlay'
+
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { AnimatePresence, motion, type PanInfo } from 'motion/react'
+import { AlertTriangle, ListMusic, Maximize2 } from 'lucide-react'
+import { usePlayer } from '../providers/PlayBarProvider'
+import { player } from '../providers/player'
+import type { BeatTrack } from '../models/Track'
+import { TrackArt } from './Covers'
+import { PlayerPanel, type PanelView } from './PlayerPanel'
+import { PlayerToasts } from './PlayerToasts'
+import { EqBars, PlayButton } from './ui'
+import {
+  PlayerScrubber,
+  ProgressLine,
+  RepeatButton,
+  ShuffleButton,
+  SkipButton,
+  TrackSwap,
+  VolumeControl,
+  trackSubline,
+  useIsMobile
+} from './playerParts'
+import { cn } from '@/lib/utils'
+
+function isTypingTarget(el: EventTarget | null) {
+  if (!(el instanceof HTMLElement)) return false
+  return (
+    el.isContentEditable ||
+    ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(el.tagName) ||
+    el.getAttribute('role') === 'slider'
+  )
+}
+
+const iconButton =
+  'relative flex size-9 items-center justify-center rounded-full text-bone-muted transition-[color,background-color,scale] duration-150 ease-snap hover:bg-white/[0.06] hover:text-bone active:scale-90'
 
 export function PlayerBar() {
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(100)
-  const [isOverlayOpen, setIsOverlayOpen] = useState(false)
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const spotifyProgressInterval = useRef<NodeJS.Timeout | null>(null)
-  const isLoadingRef = useRef(false)
+  const p = usePlayer()
+  const [panel, setPanel] = useState<PanelView | null>(null)
+  const isMobile = useIsMobile()
+  const track = p.selectedTrack
+  const hasTrack = !!track
+  // a swipe on the phone dock shouldn't also count as a tap
+  const swiped = useRef(false)
 
-  const { selectedTrack, onNext, onPrev, isPlaying, setPlayPause, queue } =
-    useContext(PlayBarContext)
-  const track = selectedTrack
-  const shouldShowPlayer = !!selectedTrack
-
-  const isMobile =
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
-
-  // playback state updates
+  // Space plays / pauses anywhere on the site (unless you're typing)
   useEffect(() => {
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+    if (!hasTrack) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || e.repeat || isTypingTarget(e.target)) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      e.preventDefault()
+      player.toggle()
     }
-  }, [isPlaying])
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [hasTrack])
 
-  // position state for beats
-  useEffect(() => {
-    if (
-      track?.source === 'beat' &&
-      'mediaSession' in navigator &&
-      duration > 0
-    ) {
-      navigator.mediaSession.setPositionState({
-        duration: duration,
-        playbackRate: 1,
-        position: Math.max(0, Math.min(currentTime, duration))
-      })
-    }
-  }, [currentTime, duration, track?.source])
+  const toggleView = (v: PanelView) => setPanel(cur => (cur === v ? null : v))
+  const queued = p.upNext.filter(i => i.from === 'user').length
+  const failed = p.status === 'error'
 
-  useEffect(() => {
-    if (
-      !track ||
-      typeof navigator === 'undefined' ||
-      !('mediaSession' in navigator)
-    ) {
-      return
-    }
-    if (track.source === 'beat') {
-      // Set metadata for native media controls
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title || 'Unknown Track',
-        artist: track.artist || 'Unknown Artist',
-        album: 'GameOver Studio',
-        artwork: [
-          {
-            src: track.artworkUrl || '',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      })
-    }
-
-    navigator.mediaSession.setActionHandler('play', () => {
-      setPlayPause(true)
-    })
-
-    navigator.mediaSession.setActionHandler('pause', () => {
-      setPlayPause(false)
-    })
-
-    navigator.mediaSession.setActionHandler('nexttrack', () => {
-      onNext()
-    })
-
-    navigator.mediaSession.setActionHandler('previoustrack', () => {
-      onPrev()
-    })
-
-    // Disable seek buttons
-    navigator.mediaSession.setActionHandler('seekbackward', null)
-    navigator.mediaSession.setActionHandler('seekforward', null)
-
-    navigator.mediaSession.setActionHandler('seekto', details => {
-      if (details.seekTime !== undefined) {
-        const audio = audioRef.current
-        if (audio && track.source === 'beat') {
-          audio.currentTime = details.seekTime
-          setCurrentTime(details.seekTime)
-        } else if (track.source === 'spotify' && window.spotifyPlayerInstance) {
-          window.spotifyPlayerInstance.seek(details.seekTime * 1000)
-        }
-      }
-    })
-
-    // Cleanup
-    return () => {
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = null
-        navigator.mediaSession.setActionHandler('play', null)
-        navigator.mediaSession.setActionHandler('pause', null)
-        navigator.mediaSession.setActionHandler('nexttrack', null)
-        navigator.mediaSession.setActionHandler('previoustrack', null)
-        navigator.mediaSession.setActionHandler('seekto', null)
-      }
-    }
-  }, [track, setPlayPause, onNext, onPrev])
-
-  // Handle Spotify progress
-  useEffect(() => {
-    if (selectedTrack?.source === 'spotify' && window.spotifyPlayerInstance) {
-      if (spotifyProgressInterval.current) {
-        clearInterval(spotifyProgressInterval.current)
-      }
-
-      if (selectedTrack.duration_ms) {
-        setDuration(selectedTrack.duration_ms / 1000)
-      }
-
-      spotifyProgressInterval.current = setInterval(async () => {
-        const state = await window.spotifyPlayerInstance?.getCurrentState()
-        if (state) {
-          const position = state.position / 1000
-          const dur = state.duration / 1000
-
-          setCurrentTime(position)
-          setDuration(dur)
-
-          // Spotify position state
-          if ('mediaSession' in navigator && dur > 0) {
-            navigator.mediaSession.setPositionState({
-              duration: dur,
-              playbackRate: 1,
-              position: Math.max(0, Math.min(position, dur))
-            })
-          }
-        }
-      }, 1000)
-      return () => {
-        if (spotifyProgressInterval.current) {
-          clearInterval(spotifyProgressInterval.current)
-        }
-      }
-    } else {
-      if (spotifyProgressInterval.current) {
-        clearInterval(spotifyProgressInterval.current)
-        spotifyProgressInterval.current = null
-      }
-    }
-  }, [selectedTrack?.source, selectedTrack?.id])
-
-  // Update audio on track changes
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (!track?.audioUrl || track?.source !== 'beat') {
-      audio.pause()
-      audio.src = ''
-      isLoadingRef.current = false
-      return
-    }
-
-    // Prevent loading if already loading
-    if (isLoadingRef.current) return
-
-    isLoadingRef.current = true
-    setCurrentTime(0)
-
-    const handleCanPlay = () => {
-      isLoadingRef.current = false
-      audio
-        .play()
-        .then(() => {
-          setPlayPause(true)
-        })
-        .catch(err => {
-          console.error('Auto-play error:', err)
-          setPlayPause(false)
-        })
-    }
-
-    const handleError = () => {
-      isLoadingRef.current = false
-      console.error('Audio load error')
-      setPlayPause(false)
-    }
-
-    audio.addEventListener('canplay', handleCanPlay)
-    audio.addEventListener('error', handleError)
-
-    audio.load()
-
-    return () => {
-      audio.removeEventListener('canplay', handleCanPlay)
-      audio.removeEventListener('error', handleError)
-    }
-  }, [track?.audioUrl, track?.id])
-
-  // Play/pause control
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || selectedTrack?.source !== 'beat') return
-
-    if (isPlaying) {
-      audio.play().catch(err => {
-        console.error('Play error:', err)
-        setPlayPause(false)
-      })
-    } else {
-      audio.pause()
-    }
-  }, [isPlaying, selectedTrack?.source])
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100
-    }
-
-    if (window.spotifyPlayerInstance) {
-      window.spotifyPlayerInstance.setVolume(volume / 100)
-    }
-  }, [volume])
-
-  function handleTimeUpdate() {
-    if (audioRef.current && selectedTrack?.source === 'beat') {
-      setCurrentTime(audioRef.current.currentTime)
-    }
+  const onSwipe = (_: unknown, info: PanInfo) => {
+    const swipe = info.offset.x + info.velocity.x * 0.2
+    if (swipe < -70 && p.canNext) p.onNext()
+    else if (swipe > 70) p.onPrev()
   }
 
-  function handleLoadedMetadata() {
-    if (audioRef.current && selectedTrack?.source === 'beat') {
-      setDuration(audioRef.current.duration)
-    }
-  }
+  return (
+    <>
+      <PlayerPanel view={hasTrack ? panel : null} onViewChange={setPanel} />
+      <PlayerToasts docked={hasTrack} />
 
-  function handleEnded() {
-    onNext()
-  }
-
-  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    const newTime = percent * duration
-
-    if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
-      window.spotifyPlayerInstance.seek(newTime * 1000) // Convert to ms
-      setCurrentTime(newTime)
-      return
-    }
-
-    if (!audioRef.current) return
-    audioRef.current.currentTime = newTime
-    setCurrentTime(newTime)
-  }
-
-  function handleSeekFromOverlay(time: number) {
-    if (window.spotifyPlayerInstance && selectedTrack?.source === 'spotify') {
-      window.spotifyPlayerInstance.seek(time * 1000) // Convert to ms
-      setCurrentTime(time)
-      return
-    }
-
-    if (!audioRef.current) return
-    audioRef.current.currentTime = time
-    setCurrentTime(time)
-  }
-
-  // Handle PlayerBar click on mobile
-  const handlePlayerBarClick = (e: React.MouseEvent) => {
-    // Don't open on button clicks
-    if (
-      (e.target as HTMLElement).closest('button') ||
-      (e.target as HTMLElement).closest('[data-volume-slider]')
-    ) {
-      return
-    }
-
-    if (isMobile && track) {
-      setIsOverlayOpen(true)
-    }
-  }
-
-  function formatTime(seconds: number) {
-    if (isNaN(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-  if (shouldShowPlayer) {
-    return (
-      <>
-        <NowPlayingOverlay
-          isOpen={isOverlayOpen}
-          onClose={() => setIsOverlayOpen(false)}
-          currentTime={currentTime}
-          duration={duration}
-          volume={volume}
-          onVolumeChange={setVolume}
-          onSeek={handleSeekFromOverlay}
-          queue={queue}
-        />
-
-        <div className='fixed inset-x-0 bottom-0 z-40'>
-          {track?.source === 'beat' && track?.audioUrl && (
-            <audio
-              ref={audioRef}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onEnded={handleEnded}
-              src={track.audioUrl}
-            />
-          )}
-          <div className='pb-safe mb-safe px-0'>
-            <div
-              onClick={handlePlayerBarClick}
-              className={`relative flex w-full items-center justify-between gap-6 rounded-2xl border-t border-white/10 bg-[#05040A]/95 px-4 py-4 text-white shadow-[0_-10px_35px_rgba(0,0,0,0.6)] transition-colors max-sm:pb-8 sm:py-8 md:cursor-default`}
+      <AnimatePresence>
+        {track && p.current && (
+          <motion.div
+            key='dock'
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 120, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+            className='pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+var(--safe-area-inset-bottom))] sm:px-4 sm:pb-4'
+          >
+            <section
+              aria-label='Player'
+              className='surface-raised pointer-events-auto relative mx-auto max-w-[1240px] overflow-hidden rounded-2xl bg-ink-900/85! backdrop-blur-2xl backdrop-saturate-150'
             >
-              {/* LEFT: cover + titles */}
-              <div
-                className={`flex min-w-0 flex-1 items-center gap-3 sm:w-[30%] sm:flex-none ${
-                  !isMobile && track ? 'md:cursor-pointer' : ''
-                }`}
-                onClick={
-                  !isMobile
-                    ? e => {
-                        e.stopPropagation()
-                        if (track) setIsOverlayOpen(true)
-                      }
-                    : undefined
-                }
-              >
-                {track?.artworkUrl ? (
-                  <Image
-                    width={100}
-                    height={100}
-                    src={track.artworkUrl}
-                    alt={track.title ?? 'Track Artwork'}
-                    className='h-10 w-10 flex-shrink-0 rounded-xl'
-                  />
-                ) : (
-                  <div className='h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-500' />
-                )}
-                <div className='flex min-w-0 flex-col'>
-                  <span className='truncate text-sm font-semibold'>
-                    {track?.title || 'No track selected'}
-                  </span>
-                  <span className='truncate text-xs text-gray-400'>
-                    {track?.artist || 'Select a beat to start'}
-                  </span>
-                </div>
-                {isPlaying && (
-                  <div className='ml-1 hidden h-4 flex-shrink-0 items-end gap-[2px] text-cyan-300 sm:flex'>
-                    <span className='eq-bar-1 w-[2px] bg-cyan-300' />
-                    <span className='eq-bar-2 w-[2px] bg-cyan-300' />
-                    <span className='eq-bar-3 w-[2px] bg-cyan-300' />
-                  </div>
-                )}
-              </div>
+              {/* phones: progress along the bottom edge */}
+              <ProgressLine className='absolute inset-x-3 bottom-0 sm:hidden' />
 
-              {/* CENTER: time + progress + controls - DESKTOP ONLY */}
-              <div className='pointer-events-none absolute left-1/2 hidden -translate-x-1/2 sm:block'>
-                <div className='pointer-events-auto flex flex-col items-center gap-2'>
-                  <div className='flex items-center justify-center gap-2'>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onPrev()
-                      }}
-                      disabled={!track}
-                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                    >
-                      <HiBackward size={14} />
-                    </button>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        setPlayPause(!isPlaying)
-                      }}
-                      disabled={!track?.id}
-                      className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
-                    >
-                      {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
-                    </button>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onNext()
-                      }}
-                      disabled={!track}
-                      className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                    >
-                      <HiForward size={14} />
-                    </button>
-                  </div>
-
-                  <div className='flex w-[30vw] items-center gap-2'>
-                    <span className='text-[10px] text-gray-500'>
-                      {formatTime(currentTime)}
-                    </span>
-                    <div
-                      data-progress-bar
-                      className='relative h-[5px] flex-1 cursor-pointer overflow-hidden rounded-full bg-white/10'
-                      onClick={e => {
-                        e.stopPropagation()
-                        handleSeek(e)
-                      }}
-                    >
-                      <div
-                        className='absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-400 transition-all'
-                        style={{ width: `${progress}%` }}
+              <div className='grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 sm:h-[78px] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1fr)] sm:gap-6 sm:px-3'>
+                {/* LEFT: artwork + titles. Opens Now Playing; swipe to skip on phones */}
+                <motion.div
+                  className='relative min-w-0'
+                  drag={isMobile ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.45}
+                  dragSnapToOrigin
+                  onPointerDown={() => {
+                    swiped.current = false
+                  }}
+                  // drag end is reported after the click, so mark it here
+                  onDragStart={() => {
+                    swiped.current = true
+                  }}
+                  onDragEnd={onSwipe}
+                >
+                  <button
+                    type='button'
+                    data-shot='open-now-playing'
+                    onClick={e => {
+                      e.stopPropagation()
+                      if (swiped.current) return
+                      toggleView('now')
+                    }}
+                    className='group/np flex w-full min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-white/[0.04]'
+                    aria-label={`Now playing: ${track.title}. Open player`}
+                    aria-expanded={panel !== null}
+                  >
+                    <TrackSwap id={p.current.uid} direction={p.direction} distance={18} className='flex min-w-0 items-center gap-3'>
+                      <TrackArt
+                        track={track as BeatTrack}
+                        className='size-11 rounded-lg sm:size-12'
+                        live
                       />
-                    </div>
-                    <span className='text-[10px] text-gray-500'>
-                      {formatTime(duration)}
-                    </span>
+                      <span className='flex min-w-0 flex-col gap-0.5'>
+                        <span className='flex min-w-0 items-center gap-2'>
+                          <span className='truncate text-sm font-semibold text-bone'>
+                            {track.title}
+                          </span>
+                          {p.isPlaying && !p.isLoading && (
+                            <EqBars className='hidden sm:inline-flex' />
+                          )}
+                        </span>
+                        <span
+                          className={cn(
+                            'flex min-w-0 items-center gap-1.5 truncate text-xs',
+                            failed ? 'text-warn' : 'text-bone-dim'
+                          )}
+                        >
+                          {failed && <AlertTriangle className='size-3 shrink-0' />}
+                          <span className='truncate'>
+                            {!failed
+                              ? trackSubline(track)
+                              : p.offline
+                                ? 'Connection lost. Retrying…'
+                                : 'Couldn’t play. Press play to retry'}
+                          </span>
+                        </span>
+                      </span>
+                    </TrackSwap>
+                  </button>
+                </motion.div>
+
+                {/* CENTER: transport + seek (desktop) */}
+                <div className='hidden min-w-0 flex-col items-center gap-1 sm:flex'>
+                  <div className='flex items-center gap-2'>
+                    <ShuffleButton className='hidden md:flex' />
+                    <SkipButton dir='prev' />
+                    <PlayButton
+                      tone='bone'
+                      size='md'
+                      playing={p.isPlaying}
+                      loading={p.isLoading}
+                      label={p.isPlaying ? 'Pause' : 'Play'}
+                      onClick={e => {
+                        e.stopPropagation()
+                        p.toggle()
+                      }}
+                      className='mx-1'
+                    />
+                    <SkipButton dir='next' />
+                    <RepeatButton className='hidden md:flex' />
                   </div>
+                  <PlayerScrubber size='sm' className='max-w-[520px]' />
+                </div>
+
+                {/* RIGHT: queue, volume, Now Playing (desktop) */}
+                <div className='hidden items-center justify-end gap-1 sm:flex'>
+                  <button
+                    type='button'
+                    onClick={() => toggleView('queue')}
+                    aria-label={queued ? `Queue, ${queued} added by you` : 'Queue'}
+                    aria-pressed={panel === 'queue'}
+                    className={cn(iconButton, panel === 'queue' && 'bg-white/[0.06] text-live hover:text-live')}
+                  >
+                    <ListMusic className='size-[18px]' />
+                    {queued > 0 && (
+                      <span
+                        key={queued}
+                        aria-hidden
+                        className='badge-pop tabular absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-live px-1 font-mono text-[9.5px] font-semibold text-ink-950'
+                      >
+                        {queued}
+                      </span>
+                    )}
+                  </button>
+                  <VolumeControl />
+                  <button
+                    type='button'
+                    onClick={() => toggleView('now')}
+                    aria-label='Open Now Playing'
+                    aria-pressed={panel === 'now'}
+                    className={cn(iconButton, 'ml-0.5', panel === 'now' && 'bg-white/[0.06] text-bone')}
+                  >
+                    <Maximize2 className='size-4' />
+                  </button>
+                </div>
+
+                {/* PHONES: play + next */}
+                <div className='flex items-center gap-1 pr-1 sm:hidden'>
+                  <PlayButton
+                    tone='bone'
+                    size='md'
+                    playing={p.isPlaying}
+                    loading={p.isLoading}
+                    label={p.isPlaying ? 'Pause' : 'Play'}
+                    onClick={e => {
+                      e.stopPropagation()
+                      p.toggle()
+                    }}
+                  />
+                  <SkipButton dir='next' className='size-10 text-bone' />
                 </div>
               </div>
+            </section>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
 
-              {/* Mobile controls */}
-              <div className='flex flex-1 items-center justify-end gap-2 sm:hidden'>
-                <button
-                  onClick={e => {
-                    e.stopPropagation()
-                    onPrev()
-                  }}
-                  disabled={!track}
-                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                >
-                  <HiBackward size={14} />
-                </button>
-                <button
-                  onClick={e => {
-                    e.stopPropagation()
-                    setPlayPause(!isPlaying)
-                  }}
-                  disabled={!track?.id}
-                  className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black transition hover:scale-[1.05] disabled:opacity-50'
-                >
-                  {isPlaying ? <HiPause size={18} /> : <HiPlay size={18} />}
-                </button>
-                <button
-                  onClick={e => {
-                    e.stopPropagation()
-                    onNext()
-                  }}
-                  disabled={!track}
-                  className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/5 text-[10px] text-gray-200 hover:bg-white/10 disabled:opacity-50'
-                >
-                  <HiForward size={14} />
-                </button>
-              </div>
+const hasTrackNow = () => player.getState().queue.index >= 0
 
-              {/* RIGHT: volume - DESKTOP ONLY */}
-              <div
-                data-volume-slider
-                className='mr-10 hidden w-[30%] items-center justify-end gap-2 sm:flex'
-                onClick={e => e.stopPropagation()}
-              >
-                <HiVolumeUp size={20} className='mr-6 text-gray-400' />
-                <ElasticSlider
-                  value={volume}
-                  onChange={val => setVolume(val)}
-                  maxValue={100}
-                  startingValue={0}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    )
-  }
-  return null
+/** Keeps page content from ending up underneath the player dock. */
+export function PlayerSpacer() {
+  const hasTrack = useSyncExternalStore(player.subscribe, hasTrackNow, () => false)
+  return (
+    <div
+      aria-hidden
+      className={cn('transition-[height] duration-300', hasTrack ? 'h-24 sm:h-28' : 'h-0')}
+    />
+  )
 }

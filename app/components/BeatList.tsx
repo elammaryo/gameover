@@ -1,0 +1,192 @@
+'use client'
+
+import { useId } from 'react'
+import { motion } from 'motion/react'
+import { Play } from 'lucide-react'
+import type { BeatTrack } from '../models/Track'
+import type { PlayContext } from '../providers/PlayBarProvider'
+import { BeatCover } from './Covers'
+import { TrackMenu } from './TrackMenu'
+import { EqBars, PlayButton, Tag } from './ui'
+import { useBeatPlayback } from './usePlayback'
+import { accentFor, beatSubtitle } from '@/lib/beats'
+import { cn } from '@/lib/utils'
+
+const COLS =
+  'md:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,7rem)_3.5rem_6rem_7.5rem_4.75rem] lg:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,11rem)_4rem_6.5rem_8rem_4.75rem]'
+
+/**
+ * The studio tracklist: number, generated cover, title / type-beat line,
+ * genre, tempo, key, mood. The whole row plays and the list becomes the
+ * queue; "⋯" plays a beat next or adds it to the queue.
+ */
+export function BeatList({
+  beats,
+  queue = beats,
+  context = null,
+  showHeader = true,
+  intro = false,
+  className
+}: {
+  beats: BeatTrack[]
+  /** what plays next; defaults to the visible list */
+  queue?: BeatTrack[]
+  /** where the queue says it's "playing from" */
+  context?: PlayContext | null
+  showHeader?: boolean
+  /** cascade the rows in (on arrival) */
+  intro?: boolean
+  className?: string
+}) {
+  const { toggle, stateOf } = useBeatPlayback()
+  // the live highlight glides from row to row as tracks change
+  const highlightId = `${useId()}-current`
+
+  return (
+    <div className={className}>
+      {showHeader && (
+        <div
+          aria-hidden
+          className={cn(
+            'hud-label hidden items-center gap-4 border-b border-line px-3 pb-3 md:grid',
+            COLS
+          )}
+        >
+          <span className='text-center'>#</span>
+          <span>Title</span>
+          <span>Genre</span>
+          <span>BPM</span>
+          <span>Key</span>
+          <span>Mood</span>
+          <span />
+        </div>
+      )}
+      <ol className='mt-2 flex flex-col gap-0.5'>
+        {beats.map((beat, i) => {
+          const { current, playing, loading } = stateOf(beat.id)
+          const subtitle = beatSubtitle(beat)
+          return (
+            <li
+              key={beat.id}
+              style={
+                intro
+                  ? ({
+                      '--i': Math.min(i, 14),
+                      '--intro-at': '620ms'
+                    } as React.CSSProperties)
+                  : undefined
+              }
+              className={cn(
+                'group/row relative isolate grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[[data-row-play]:focus-visible]:ring-2 has-[[data-row-play]:focus-visible]:ring-live md:gap-4 md:px-3',
+                COLS,
+                intro && 'intro-rise',
+                !current && 'hover:bg-white/[0.04]'
+              )}
+            >
+              {current && (
+                <motion.span
+                  aria-hidden
+                  layoutId={highlightId}
+                  transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                  className='absolute inset-0 -z-10 rounded-xl bg-live/[0.07] ring-1 ring-live/15 ring-inset transition-colors group-hover/row:bg-live/[0.1]'
+                />
+              )}
+              {/* index, or a live meter for the current beat */}
+              <span className='relative hidden size-9 items-center justify-center md:flex'>
+                {current ? (
+                  playing ? (
+                    <EqBars />
+                  ) : (
+                    <Play
+                      className='size-3.5 text-live'
+                      fill='currentColor'
+                      strokeWidth={0}
+                    />
+                  )
+                ) : (
+                  <>
+                    <span className='tabular font-mono text-xs text-bone-dim transition-opacity group-hover/row:opacity-0'>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <Play
+                      aria-hidden
+                      className='absolute size-3.5 text-bone opacity-0 transition-opacity group-hover/row:opacity-100'
+                      fill='currentColor'
+                      strokeWidth={0}
+                    />
+                  </>
+                )}
+              </span>
+
+              <span className='flex min-w-0 items-center gap-3'>
+                <BeatCover
+                  beat={beat}
+                  className='size-11 rounded-lg sm:size-12'
+                  glow={current}
+                  live={current}
+                />
+                <span className='min-w-0'>
+                  <span
+                    className={cn(
+                      'flex min-w-0 items-center gap-2 text-[15px] font-semibold',
+                      current ? 'text-live' : 'text-bone'
+                    )}
+                  >
+                    <span className='truncate'>{beat.title}</span>
+                    {current && playing && <EqBars className='md:hidden' />}
+                  </span>
+                  <span className='block truncate text-[13px] text-bone-dim md:hidden'>
+                    {subtitle ?? beat.genre} · {beat.bpm} BPM
+                  </span>
+                  {subtitle && (
+                    <span className='hidden truncate text-[13px] text-bone-dim md:block'>
+                      {subtitle}
+                    </span>
+                  )}
+                </span>
+              </span>
+
+              <span className='hidden truncate text-sm text-bone-muted md:block'>
+                {beat.genre}
+              </span>
+              <span className='tabular hidden font-mono text-sm text-bone-muted md:block'>
+                {beat.bpm}
+              </span>
+              <span className='hidden truncate text-sm text-bone-muted md:block'>
+                {beat.key ?? <span className='text-bone-dim'>—</span>}
+              </span>
+              <span className='hidden md:block'>
+                {beat.mood ? (
+                  <Tag dot={accentFor(beat)}>{beat.mood}</Tag>
+                ) : (
+                  <span className='text-sm text-bone-dim'>—</span>
+                )}
+              </span>
+
+              <span className='flex items-center justify-end gap-1'>
+                <TrackMenu
+                  track={beat}
+                  className='md:opacity-0 md:group-focus-within/row:opacity-100 md:group-hover/row:opacity-100 pointer-coarse:opacity-100'
+                />
+                <PlayButton
+                  data-row-play
+                  size='md'
+                  tone={current ? 'accent' : 'ghost'}
+                  playing={playing}
+                  loading={loading}
+                  label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
+                  onClick={() => toggle(beat, queue, context)}
+                  stretched
+                  className={cn(
+                    'after:rounded-xl focus-visible:outline-none md:size-9',
+                    !current && 'group-hover/row:bg-white/[0.12]'
+                  )}
+                />
+              </span>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}

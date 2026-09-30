@@ -1,5 +1,8 @@
+'use client'
+
 import { motion, Transition, Easing } from 'motion/react'
 import { useEffect, useRef, useState, useMemo } from 'react'
+import { STAGE_REVEAL_EVENT, stageActive } from '@/lib/stage'
 
 type BlurTextProps = {
   text?: string
@@ -52,17 +55,26 @@ const BlurText: React.FC<BlurTextProps> = ({
 
   useEffect(() => {
     if (!ref.current) return
+    const show = () => setInView(true)
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setInView(true)
+          // under a stage transition, wait for the reveal
+          if (stageActive()) {
+            window.addEventListener(STAGE_REVEAL_EVENT, show, { once: true })
+          } else {
+            show()
+          }
           observer.unobserve(ref.current as Element)
         }
       },
       { threshold, rootMargin }
     )
     observer.observe(ref.current)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      window.removeEventListener(STAGE_REVEAL_EVENT, show)
+    }
   }, [threshold, rootMargin])
 
   const defaultFrom = useMemo(

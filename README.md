@@ -9,11 +9,12 @@ custom audio playback.
 
 ## 🚀 Features
 
-- **Custom Audio Player** - Built from scratch with React + HTML5 Audio API
+- **Custom Audio Player** - Built from scratch on the HTML5 Audio API, with a
+  real queue (play next, add to queue, drag to reorder, shuffle, repeat)
 - **Spotify OAuth 2.0** - Full authentication flow with token refresh
 - **AWS S3 Integration** - Secure audio delivery with signed URLs
 - **Real-time Playback** - Seamless navigation without interrupting music
-- **WebGL Shaders** - Aurora background animations
+- **WebGL Shaders** - LED-matrix aurora backdrop that reacts to playback
 - **Responsive Design** - Mobile-first approach
 
 ## 🛠️ Tech Stack
@@ -53,7 +54,14 @@ app/
 └── pages/            # Route pages
 
 lib/
-└── spotify.ts        # Spotify API utilities
+├── beats.ts          # Catalogue helpers, formatting, generated cover sprites
+├── queue.ts          # The play queue as a pure reducer (tested on its own)
+├── playerTime.ts     # Playback position store (read by seek bars only)
+├── coverArt.ts       # Beat covers as PNGs for the lock screen
+├── toast.ts          # Small confirmations shown above the player
+├── site.ts           # Nav + social links shared by header and footer
+├── spotify.ts        # Server-side Spotify token utilities
+└── spotify-auth.ts   # Browser login/logout helpers
 
 public/               # Static assets
 ```
@@ -102,14 +110,68 @@ appearing:
 Never commit or expose the printed token; it grants access to the authorized
 Spotify account.
 
+## 🎧 Player
+
+One player object for the whole visit (`app/providers/player.ts`) owns the
+queue, beat playback, Spotify playback and the OS media controls. Components
+read it through hooks in `PlayBarProvider.tsx` (`usePlayer`, `useNowPlaying`,
+`usePlayerSelect`); long lists subscribe narrowly so queue edits don't
+re-render every row.
+
+- **Beats** (`app/providers/beatEngine.ts`): one `<audio>` element. Every
+  load gets a token, so a skip during a load simply replaces it. S3 links
+  are reused for 40 minutes at most; if a link expires mid-track or the
+  download stalls, the engine fetches a fresh one and carries on from the
+  same second. The next beat's link is fetched ahead of time. Beats that
+  won't load are skipped with a note (three in a row and it stops and says
+  so). Skips and pauses fade briefly, except where the browser can't (iOS,
+  background tabs).
+- **Queue** (`lib/queue.ts`): what you started (a studio list, a pack, a
+  playlist) plays in order or shuffled; *Play next* / *Add to queue* (the ⋯
+  on a row) go ahead of it. Reorder by dragging the handle (or focus it and
+  use ↑ ↓), remove, clear, shuffle (turning it off restores the order),
+  repeat off / all / one. *Previous* restarts the track after 3 seconds.
+- **Spotify**: the Web Playback SDK plays the run of Spotify tracks from the
+  current one; the queue follows Spotify as it moves on, and takes over at
+  the next track change if you edited the queue or a beat comes next.
+- **Motion**: track changes slide in the direction you skipped (dock, Now
+  Playing, the list's highlight); on phones swipe the dock or the artwork to
+  skip and drag the sheet down to close. Reduced motion keeps only fades.
+- **Keys**: Space plays / pauses anywhere (outside inputs); media keys and
+  lock-screen controls work through the Media Session API.
+
+The queue rules have tests (`tests/queue.test.mjs`): run `npm test`.
+
 ## 🎨 Design
 
-Custom-built with:
+A drum-machine / arcade system on ink surfaces with bone text. Each section
+keeps its own colours (home cyan/pink/purple, studio red, Spotify green,
+about purple, tech indigo/cyan), set on `<html data-theme>` by
+`lib/theme.ts` and used through the `--color-theme*` tokens.
 
-- Tailwind CSS for styling
-- WebGL shaders for aurora backgrounds
-- Motion for smooth animations
-- Elastic interactions for slider components
+- **Title**: the original GAMEOVER logotype and gradient, traced to vector
+  (`public/brand/gameover-wordmark.svg`, `app/components/brand/Wordmark.tsx`)
+- **Icon**: the title's G as a liquid-chrome slab (`public/brand/gameover-g*`,
+  `public/gameover-icon.svg`, `app/favicon.ico`, `app/apple-icon.png`,
+  `public/icons/*`). Live on the site it's WebGL (`brand/GIcon.tsx`): it
+  leans toward the pointer, flips like a coin, bounces on the beat and
+  glitches now and then. `scripts/build-g-icon.py` builds its distance field.
+- **Title screen → studio**: START plays a stage transition
+  (`StageTransition.tsx`): a portal into an LED warp, a "STAGE 01" card over a
+  16-step sequencer, and an 808 drop that breaks the screen into pixels.
+  Sound effects are synthesised with Web Audio (`lib/sfx.ts`) and can be
+  switched off on the title screen.
+- **Beat sync**: `lib/beatClock.ts` turns the playing beat's BPM and position
+  into kick / hi-hat envelopes; the LED backdrop, meters and cover playheads
+  move in time. Clicks send ripples through the LED wall.
+- **Type**: Archivo (expanded display), Geist + Geist Mono (UI, HUD labels),
+  Silkscreen (arcade moments: the title screen HUD, the 404)
+- **Covers**: every beat gets a generated pad sprite coloured by its mood;
+  packs spell their initial on the pad grid
+- **Backdrop**: the original aurora shader sampled per cell and drawn as LEDs,
+  mounted once in the layout and cross-faded per route
+- Tailwind CSS v4, Motion for sheets and menus; everything respects
+  `prefers-reduced-motion`
 
 ## 👤 Author
 

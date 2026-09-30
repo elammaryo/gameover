@@ -3,239 +3,706 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------------------
+   GameOver design tokens
+   Ink surfaces, bone text, one signal red for actions, one live cyan for
+   "what's playing right now". Content (covers, artwork) brings the colour.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-ink-950: #07060a;
+  --color-ink-900: #0c0b10;
+  --color-ink-850: #110f16;
+  --color-ink-800: #17151d;
+  --color-ink-700: #211e28;
+  --color-ink-600: #2d2a35;
+
+  --color-bone: #f3f0ea;
+  --color-bone-muted: #b1acb7;
+  --color-bone-dim: #8a8592;
+
+  --color-signal: #ff3448;
+  --color-signal-hi: #ff5c6a;
+  --color-signal-lo: #d91e34;
+
+  /* page accent: overridden per section via <html data-theme> (lib/theme.ts) */
+  --color-theme: #ff3448;
+  --color-theme-hi: #ff5c6a;
+  --color-theme-2: #ff7a2e;
+  --color-theme-3: #3be7ff;
+  --color-live: #3be7ff;
+  --color-warn: #ffb547;
+  --color-spotify: #1ed760;
+  --color-soundcloud: #ff5500;
+
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pad: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-blink: blink 1.1s steps(2, jump-none) infinite;
+  --animate-marquee: marquee 38s linear infinite;
+}
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-archivo), var(--font-geist-sans), ui-sans-serif,
+    sans-serif;
+  --font-pixel: var(--font-silkscreen), var(--font-geist-mono), monospace;
 
-@keyframes logoPulse {
-  0% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-}
+  /* shadcn aliases, kept so generated components pick up the palette */
+  --color-background: var(--color-ink-950);
+  --color-foreground: var(--color-bone);
+  --color-card: var(--color-ink-900);
+  --color-card-foreground: var(--color-bone);
+  --color-popover: var(--color-ink-900);
+  --color-popover-foreground: var(--color-bone);
+  --color-primary: var(--color-signal);
+  --color-primary-foreground: var(--color-ink-950);
+  --color-secondary: var(--color-ink-800);
+  --color-secondary-foreground: var(--color-bone);
+  --color-muted: var(--color-ink-800);
+  --color-muted-foreground: var(--color-bone-muted);
+  --color-accent: var(--color-ink-700);
+  --color-accent-foreground: var(--color-bone);
+  --color-destructive: var(--color-signal);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line-strong);
+  --color-ring: var(--color-live);
 
-.animate-logoPulse {
-  animation: logoPulse 3s ease-in-out infinite;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #07050a;
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
   --safe-area-inset-top: env(safe-area-inset-top);
   --safe-area-inset-right: env(safe-area-inset-right);
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
   --safe-area-inset-left: env(safe-area-inset-left);
+  --nav-h: 64px;
+  --dock-h: 0px;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+@media (min-width: 640px) {
+  :root {
+    --nav-h: 76px;
+  }
+}
+
+/* Section colour themes (keep in sync with lib/theme.ts) */
+:root[data-theme='home'] {
+  --color-theme: #00d4ff;
+  --color-theme-hi: #5ce4ff;
+  --color-theme-2: #ec4899;
+  --color-theme-3: #a855f7;
+}
+:root[data-theme='studio'] {
+  --color-theme: #ff3448;
+  --color-theme-hi: #ff5c6a;
+  --color-theme-2: #ff7a2e;
+  --color-theme-3: #3be7ff;
+}
+:root[data-theme='spotify'] {
+  --color-theme: #1ed760;
+  --color-theme-hi: #4be584;
+  --color-theme-2: #1db954;
+  --color-theme-3: #00ff7f;
+}
+:root[data-theme='about'] {
+  --color-theme: #b46cfa;
+  --color-theme-hi: #c68dfb;
+  --color-theme-2: #ec4899;
+  --color-theme-3: #8b5cf6;
+}
+:root[data-theme='tech'] {
+  --color-theme: #00eaff;
+  --color-theme-hi: #5cf1ff;
+  --color-theme-2: #5227ff;
+  --color-theme-3: #ff00ea;
+}
+:root[data-theme='lost'] {
+  --color-theme: #ff3448;
+  --color-theme-hi: #ff5c6a;
+  --color-theme-2: #b3122a;
+  --color-theme-3: #ff5c6a;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--color-line);
   }
+
+  html {
+    color-scheme: dark;
+    background: var(--color-ink-950);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--nav-h) + 16px);
+  }
+
   body {
-    @apply bg-background text-foreground;
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--color-ink-950);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     padding-top: var(--safe-area-inset-top);
     padding-right: var(--safe-area-inset-right);
-    padding-bottom: var(--safe-area-inset-bottom);
     padding-left: var(--safe-area-inset-left);
-    margin: 0;
-    box-sizing: border-box;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-theme) 40%, transparent);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-live);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  input[type='search']::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-600) transparent;
   }
 }
 
-@keyframes glitch {
+/* ---------------------------------------------------------------------------
+   Type helpers
+--------------------------------------------------------------------------- */
+@utility font-display-wide {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+@utility font-display-tight {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+@utility hud-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-bone-dim);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* chromatic split: the red/cyan offset from the Sentinel artwork */
+@utility text-split {
+  text-shadow:
+    -0.045em 0 0 rgb(255 52 72 / 0.85),
+    0.045em 0 0 rgb(59 231 255 / 0.75);
+}
+
+/* ---------------------------------------------------------------------------
+   Surfaces
+--------------------------------------------------------------------------- */
+@utility surface {
+  background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.035),
+      rgb(255 255 255 / 0.01) 40%
+    ),
+    var(--color-ink-900);
+  border: 1px solid var(--color-line);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+@utility surface-raised {
+  background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.05),
+      rgb(255 255 255 / 0.015) 45%
+    ),
+    var(--color-ink-850);
+  border: 1px solid var(--color-line-strong);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 24px 60px -24px rgb(0 0 0 / 0.8);
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+--------------------------------------------------------------------------- */
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@utility wordmark-mask {
+  -webkit-mask: url('/brand/gameover-wordmark.svg') center / contain no-repeat;
+  mask: url('/brand/gameover-wordmark.svg') center / contain no-repeat;
+}
+
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.eq-bar {
+  transform-origin: bottom;
+  animation: eq 0.9s var(--ease-snap) infinite;
+}
+
+/* with a beat playing, the bars ride its kick and hats instead
+   (--kick / --hat come from useBeatPulse) */
+[data-beat='on'] > .eq-bar {
+  animation: none;
+}
+[data-beat='on'] > .eq-bar:nth-child(1) {
+  transform: scaleY(calc(0.2 + var(--kick) * 0.8));
+}
+[data-beat='on'] > .eq-bar:nth-child(2) {
+  transform: scaleY(calc(0.22 + var(--hat) * 0.6));
+}
+[data-beat='on'] > .eq-bar:nth-child(3) {
+  transform: scaleY(calc(0.3 + var(--kick) * 0.45 + var(--hat) * 0.25));
+}
+[data-beat='on'] > .eq-bar:nth-child(4) {
+  transform: scaleY(calc(0.18 + var(--hat) * 0.42 + var(--kick) * 0.3));
+}
+
+/* ---------------------------------------------------------------------------
+   Player bits
+--------------------------------------------------------------------------- */
+
+/* the play button's spinner waits a moment, so quick loads never flash it */
+@keyframes play-spinner-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+@keyframes play-spinner-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.play-spinner {
+  animation:
+    play-spinner-spin 0.85s linear infinite,
+    play-spinner-in 180ms var(--ease-snap) 200ms both;
+}
+
+/* the queue button's count pops when something is added */
+@keyframes badge-pop {
   0% {
-    transform: translate(0, 0);
-  }
-  20% {
-    transform: translate(-1px, 1px);
-  }
-  40% {
-    transform: translate(1px, -1px);
+    scale: 0.4;
   }
   60% {
-    transform: translate(-1px, 0);
+    scale: 1.25;
   }
-  80% {
-    transform: translate(1px, 1px);
+}
+.badge-pop {
+  animation: badge-pop 420ms var(--ease-pad);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-pop {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Entrances. Pages rise in when they mount; while a stage transition covers
+   the screen (<html data-stage="on">) they wait, then play on the reveal.
+   `--i` staggers siblings. Fill mode is `backwards` on purpose: once done,
+   the animation lets go, so hover transforms keep working.
+--------------------------------------------------------------------------- */
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+
+@keyframes intro-deal {
+  from {
+    opacity: 0;
+    transform: translateY(56px) rotate(-3deg) scale(0.94);
+  }
+}
+
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility intro-rise {
+  animation: intro-rise 760ms var(--ease-snap) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms + var(--intro-at, 0ms));
+}
+
+@utility intro-deal {
+  animation: intro-deal 860ms var(--ease-snap) backwards;
+  animation-delay: calc(var(--i, 0) * 85ms + var(--intro-at, 140ms));
+}
+
+@utility intro-fade {
+  animation: intro-fade 900ms ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 70ms + var(--intro-at, 0ms));
+}
+
+:root[data-stage='on'] :is(.intro-rise, .intro-deal, .intro-fade) {
+  animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------------------------
+   Title screen (app/page.tsx)
+--------------------------------------------------------------------------- */
+
+/* pressing START: the title screen zooms away under the stage portal, and
+   rests while it's covered */
+.title-screen {
+  transition:
+    scale 700ms ease-in,
+    opacity 700ms ease-in;
+}
+:root[data-stage='on'] .title-screen {
+  scale: 1.07;
+  opacity: 0.4;
+}
+:root[data-stage-covered] .title-screen,
+:root[data-stage-covered] .title-screen * {
+  animation-play-state: paused !important;
+}
+
+/* a CRT refresh line drifting down the screen */
+.title-sweep {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--color-theme) 5%, transparent) 70%,
+    rgb(255 255 255 / 0.05) 71%,
+    transparent 73%
+  );
+  animation: title-sweep 9s linear infinite;
+}
+@keyframes title-sweep {
+  from {
+    translate: 0 -28vh;
+  }
+  to {
+    translate: 0 110svh;
+  }
+}
+
+.sentinel-float {
+  animation: sentinel-float 7s ease-in-out infinite;
+}
+@keyframes sentinel-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -9px;
+  }
+}
+
+/* START: breathes while idle, pumps with the kick while a beat plays */
+.start-glow {
+  background: linear-gradient(
+    90deg,
+    var(--color-theme),
+    var(--color-theme-3),
+    var(--color-theme-2)
+  );
+  filter: blur(16px);
+  opacity: calc(0.4 + var(--kick) * 0.5);
+  animation: start-breathe 2.6s ease-in-out infinite;
+}
+.start-glow[data-beat='on'] {
+  animation: none;
+  scale: calc(1 + var(--kick) * 0.06);
+}
+@keyframes start-breathe {
+  0%,
+  100% {
+    opacity: 0.32;
+    scale: 0.97;
+  }
+  50% {
+    opacity: 0.62;
+    scale: 1.05;
+  }
+}
+
+@keyframes start-sheen {
+  0% {
+    translate: 0 0;
+  }
+  28%,
+  100% {
+    translate: 420% 0;
+  }
+}
+
+/* the Konami code (app/components/CheatCodes.tsx) */
+:root[data-cheat] [data-backdrop] {
+  animation: cheat-hue 1.6s linear infinite;
+}
+@keyframes cheat-hue {
+  from {
+    filter: hue-rotate(0deg) saturate(1.5);
+  }
+  to {
+    filter: hue-rotate(360deg) saturate(1.5);
+  }
+}
+.cheat-toast {
+  animation: cheat-pop 460ms var(--ease-pad) both;
+}
+@keyframes cheat-pop {
+  from {
+    opacity: 0;
+    scale: 0.8;
+    translate: 0 -10px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Stage transition (app/components/StageTransition.tsx)
+--------------------------------------------------------------------------- */
+
+/* the portal opens from the button: a colour wash first, the black stage
+   a beat behind it, so a ring of light leads the edge */
+.stage-wash,
+.stage-portal {
+  clip-path: circle(0px at var(--ox) var(--oy));
+  animation: stage-portal 560ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+.stage-wash {
+  background: linear-gradient(
+    135deg,
+    var(--stage-c0),
+    var(--stage-c1) 55%,
+    var(--stage-c2)
+  );
+}
+.stage-portal {
+  animation-delay: 45ms;
+}
+@keyframes stage-portal {
+  to {
+    clip-path: circle(150vmax at var(--ox) var(--oy));
+  }
+}
+
+.stage-pixel {
+  /* (colour-mixes live in custom properties: the CSS minifier drops
+     keyframes that use color-mix() with var() directly) */
+  --pixel-flash: color-mix(in srgb, var(--stage-c0) 50%, var(--color-ink-950));
+  background: var(--color-ink-950);
+  scale: 1.04;
+}
+.stage-pixel-out {
+  animation: stage-pixel-out 360ms var(--ease-snap) var(--d) both;
+}
+@keyframes stage-pixel-out {
+  0% {
+    opacity: 1;
+    scale: 1.04;
+  }
+  30% {
+    background: var(--pixel-flash);
   }
   100% {
-    transform: translate(0, 0);
+    opacity: 0;
+    scale: 0.25;
+    background: var(--color-ink-950);
   }
 }
 
-.glitch-once {
-  animation: glitch 0.25s steps(2, end) 0s 2;
+.stage-scan {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.035) 0 1px,
+    transparent 1px 3px
+  );
 }
 
-@keyframes studioEnter {
+.stage-kicker {
+  animation: stage-type 420ms steps(10, end) 180ms both;
+}
+@keyframes stage-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.stage-title {
+  text-shadow:
+    -0.035em 0 color-mix(in srgb, var(--stage-c0) 85%, transparent),
+    0.035em 0 color-mix(in srgb, var(--stage-c2) 75%, transparent);
+  animation: stage-title 900ms var(--ease-snap) 200ms both;
+}
+@keyframes stage-title {
   0% {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    letter-spacing: 0.3em;
+    filter: blur(10px);
   }
-  60% {
+  45% {
     opacity: 1;
-    transform: translateY(0) scale(1.01);
+    filter: blur(0);
   }
   100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    letter-spacing: -0.03em;
   }
 }
 
-.animate-studioEnter {
-  animation: studioEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.stage-pad {
+  --pad: var(--stage-c2);
+  --pad-lit: color-mix(in srgb, var(--pad) 82%, transparent);
+  --pad-glow: color-mix(in srgb, var(--pad) 55%, transparent);
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  animation: stage-pad 380ms var(--ease-pad) both;
+  animation-delay: calc(300ms + var(--i) * 53.57ms);
+}
+.stage-pad[data-kind='kick'] {
+  --pad: var(--stage-c0);
+}
+.stage-pad[data-kind='clap'] {
+  --pad: var(--color-bone);
+}
+@keyframes stage-pad {
+  from {
+    background: rgb(255 255 255 / 0.08);
+    scale: 0.7;
+  }
+  25% {
+    background: var(--pad);
+    scale: 1.35;
+    box-shadow: 0 0 18px var(--pad);
+  }
+  to {
+    background: var(--pad-lit);
+    scale: 1;
+    box-shadow: 0 0 10px var(--pad-glow);
+  }
 }
 
-@keyframes eqBar1 {
+.stage-card-out {
+  animation: stage-card-out 380ms cubic-bezier(0.55, 0, 0.75, 0) both;
+}
+@keyframes stage-card-out {
+  to {
+    opacity: 0;
+    scale: 1.22;
+    filter: blur(10px);
+  }
+}
+
+.stage-flash {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(255 255 255 / 0.9),
+    color-mix(in srgb, var(--stage-c0) 60%, transparent) 45%,
+    transparent 75%
+  );
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.stage-flash-on {
+  animation: stage-flash 420ms ease-out both;
+}
+@keyframes stage-flash {
   0% {
-    height: 20%;
-  }
-  50% {
-    height: 80%;
+    opacity: 0.85;
   }
   100% {
-    height: 20%;
+    opacity: 0;
   }
 }
 
-@keyframes eqBar2 {
+/* the drop: the new page takes the hit */
+:root.stage-hit #content {
+  animation: stage-hit 320ms linear;
+}
+@keyframes stage-hit {
   0% {
-    height: 40%;
+    translate: 0 0;
   }
-  50% {
-    height: 100%;
+  15% {
+    translate: -6px 4px;
+  }
+  35% {
+    translate: 5px -3px;
+  }
+  55% {
+    translate: -3px 2px;
+  }
+  75% {
+    translate: 2px -1px;
   }
   100% {
-    height: 40%;
+    translate: 0 0;
   }
 }
 
-@keyframes eqBar3 {
-  0% {
-    height: 30%;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
-  50% {
-    height: 70%;
-  }
-  100% {
-    height: 30%;
-  }
-}
-
-.eq-bar-1 {
-  animation: eqBar1 0.7s ease-in-out infinite;
-}
-.eq-bar-2 {
-  animation: eqBar2 0.7s ease-in-out infinite 0.1s;
-}
-.eq-bar-3 {
-  animation: eqBar3 0.7s ease-in-out infinite 0.2s;
 }

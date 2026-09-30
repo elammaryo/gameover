@@ -1,65 +1,78 @@
-import clsx from 'clsx'
+import { cn } from '@/lib/utils'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline'
-type ButtonShape = 'pill' | 'rounded'
+type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'outline'
+  | 'spotify'
+  | 'soundcloud'
+type ButtonSize = 'sm' | 'md' | 'lg'
+type ButtonShape = 'pad' | 'pill' | 'rounded'
+
+const base =
+  'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-semibold tracking-[-0.01em] transition-[translate,scale,background-color,border-color,color,box-shadow] duration-200 ease-snap focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-live disabled:pointer-events-none disabled:opacity-40 active:translate-y-px active:scale-[0.985]'
+
+const sizes: Record<ButtonSize, string> = {
+  sm: 'h-9 px-3.5 text-[13px]',
+  md: 'h-11 px-5 text-sm',
+  lg: 'h-13 px-7 text-[15px]'
+}
+
+const shapes: Record<ButtonShape, string> = {
+  pad: 'rounded-xl',
+  rounded: 'rounded-xl',
+  pill: 'rounded-full'
+}
+
+const variants: Record<ButtonVariant, string> = {
+  // a lit pad in the section's colour, ink label, bevelled like a rubber pad
+  primary:
+    'bg-theme text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.35),inset_0_-2px_0_rgb(0_0_0/0.22),0_12px_32px_-12px_color-mix(in_srgb,var(--color-theme)_75%,transparent)] hover:-translate-y-px hover:bg-theme-hi hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-2px_0_rgb(0_0_0/0.22),0_16px_40px_-12px_color-mix(in_srgb,var(--color-theme)_90%,transparent)]',
+  secondary:
+    'bg-ink-800 text-bone border border-line-strong shadow-[inset_0_1px_0_rgb(255_255_255/0.06)] hover:-translate-y-px hover:bg-ink-700 hover:border-white/20',
+  outline:
+    'border border-line-strong text-bone hover:border-white/30 hover:bg-white/[0.04]',
+  ghost: 'text-bone-muted hover:bg-white/[0.05] hover:text-bone',
+  spotify:
+    'bg-spotify text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_12px_32px_-14px_rgb(30_215_96/0.7)] hover:-translate-y-px hover:brightness-110',
+  soundcloud:
+    'bg-soundcloud text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.3),0_12px_32px_-14px_rgb(255_85_0/0.7)] hover:-translate-y-px hover:brightness-110'
+}
+
+export function buttonClasses({
+  variant = 'primary',
+  size = 'md',
+  shape = 'pad',
+  className
+}: {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  shape?: ButtonShape
+  className?: string
+} = {}) {
+  return cn(base, sizes[size], shapes[shape], variants[variant], className)
+}
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
+  size?: ButtonSize
   shape?: ButtonShape
-  hoverColor?: string // Hex color for secondary button hover fill
 }
 
 export function Button({
-  children,
   variant = 'primary',
-  shape = 'pill',
-  hoverColor,
+  size = 'md',
+  shape = 'pad',
   className,
-  style,
+  type = 'button',
   ...props
 }: ButtonProps) {
-  const base =
-    'inline-flex items-center justify-center font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07050A] text-sm sm:text-base'
-
-  const shapeClasses =
-    shape === 'pill' ? 'rounded-full px-8 py-3' : 'rounded-lg px-7 py-3'
-
-  const variantClasses: Record<ButtonVariant, string> = {
-    primary:
-      'relative overflow-hidden rounded-full px-8 py-3 bg-gradient-to-r from-cyan-500 via-blue-500 to-fuchsia-500 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-xl hover:shadow-fuchsia-500/40 active:translate-y-0 active:scale-[0.98]',
-    secondary: hoverColor
-      ? 'rounded-full px-8 py-3 border border-gray-600/70 text-gray-200 bg-black/10 transition-all duration-300 hover:text-white hover:translate-y-[-2px] active:translate-y-0 active:scale-[0.98]'
-      : 'rounded-full px-8 py-3 border border-gray-600/70 text-gray-200 bg-black/10 transition-all duration-300 hover:bg-white/5 hover:border-gray-300 hover:translate-y-[-2px] active:translate-y-0 active:scale-[0.98]',
-    ghost:
-      'text-gray-300 hover:text-white hover:bg-white/5 active:scale-[0.98]',
-    outline:
-      'rounded-full px-8 py-3 border border-cyan-400/40 text-cyan-300 transition-all duration-300 hover:border-cyan-300 hover:text-cyan-100 hover:bg-cyan-300/10 active:scale-[0.98]'
-  }
-
-  // Custom CSS variables for hover color
-  const customStyle = hoverColor
-    ? {
-        ...style,
-        '--hover-bg-color': hoverColor,
-        '--hover-border-color': hoverColor
-      }
-    : style
-
   return (
     <button
-      className={clsx(
-        base,
-        shapeClasses,
-        variantClasses[variant],
-        hoverColor &&
-          variant === 'secondary' &&
-          'hover:border-[var(--hover-border-color)] hover:bg-[var(--hover-bg-color)]',
-        className
-      )}
-      style={customStyle as React.CSSProperties}
+      type={type}
+      className={buttonClasses({ variant, size, shape, className })}
       {...props}
-    >
-      {children}
-    </button>
+    />
   )
 }

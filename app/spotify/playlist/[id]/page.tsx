@@ -1,409 +1,333 @@
 'use client'
 
-import { useEffect, useState, useContext } from 'react'
-import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
-import { NavBar } from '@/app/components/NavBar'
-import Aurora from '@/app/components/Aurora'
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { ArrowUpRight, Lock, Pause, Play } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
-import {
-  HiPlay,
-  HiPause,
-  HiArrowLeft,
-  HiClock,
-  HiMusicalNote,
-  HiLockClosed
-} from 'react-icons/hi2'
-import { getPlaylistTracks, playSpotifyTrack } from '@/app/api'
-import { Playlist } from '@/app/models/Playlist'
-import { PlayBarContext } from '@/app/providers/PlayBarProvider'
+import { getPlaylistTracks } from '@/app/api'
+import type { Playlist } from '@/app/models/Playlist'
 import { SpotifyTrack } from '@/app/models/Track'
-import { handleLogin } from '@/lib/spotify'
+import { playerActions as p, useNowPlaying } from '@/app/providers/PlayBarProvider'
+import { Button, buttonClasses } from '@/app/components/Button'
+import { PlaylistArt, spotifyContext } from '@/app/components/SpotifyPlaylists'
+import { TrackMenu } from '@/app/components/TrackMenu'
+import {
+  BackLink,
+  EmptyState,
+  EqBars,
+  Eyebrow,
+  Page,
+  Skeleton
+} from '@/app/components/ui'
+import { useSpotifySession } from '@/app/components/useSpotifySession'
+import { formatLongDuration, formatMs, htmlToText } from '@/lib/beats'
+import { handleLogin } from '@/lib/spotify-auth'
+import { cn } from '@/lib/utils'
 
-export default function PlaylistDetailPage() {
-  const searchParams = useParams()
-  const router = useRouter()
+const COLS =
+  'md:grid-cols-[2.25rem_minmax(0,1.4fr)_minmax(0,1fr)_6rem]'
 
-  const { setQueue, setTrack, setPlayPause, selectedTrack, isPlaying } =
-    useContext(PlayBarContext)
+export default function SpotifyPlaylistPage() {
+  const params = useParams()
+  const id = String(params.id ?? '')
+  const session = useSpotifySession()
+  const connected = session === 'connected'
+  // rows only re-render when the playing track or play state changes
+  const now = useNowPlaying()
+  const isPlaying = now.isPlaying
+
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    const checkAuth = () => {
-      const loggedIn = document.cookie
-        .split(';')
-        .find(c => c.trim().startsWith('spotify_logged_in='))
-        ?.split('=')[1]
+    getPlaylistTracks(id)
+      .then(setPlaylist)
+      .catch(error => console.error('Error fetching playlist:', error))
+      .finally(() => setLoading(false))
+  }, [id])
 
-      setIsLoggedIn(loggedIn === 'true')
-    }
+  // Rows skip unplayable items (local files have no id), but keep each
+  // track's original position: that's the offset Spotify's context expects.
+  const rows = useMemo(
+    () =>
+      (playlist?.tracks?.items ?? []).flatMap((item, position) =>
+        item?.track?.id
+          ? [
+              {
+                position,
+                track: new SpotifyTrack({ ...item.track, title: item.track.name })
+              }
+            ]
+          : []
+      ),
+    [playlist]
+  )
+  const tracks = useMemo(() => rows.map(r => r.track), [rows])
 
-    checkAuth()
-  }, [])
+  const context = playlist ? spotifyContext(playlist) : null
+  const onList =
+    now.contextId === context?.id && tracks.some(t => t.id === now.trackId)
+  const listPlaying = onList && isPlaying
+  const totalMs = tracks.reduce((sum, t) => sum + (t.duration_ms ?? 0), 0)
 
-  useEffect(() => {
-    const playlistId = searchParams.id as string
-
-    getPlaylistTracks(playlistId)
-      .then(playlist => {
-        setPlaylist(playlist)
-        setLoading(false)
-      })
-      .catch(error => {
-        console.error('Error fetching playlist:', error)
-        setLoading(false)
-      })
-  }, [searchParams.id])
-
-  const playlistTracks = playlist?.tracks?.items || []
-
-  const isPlaylistPlaying =
-    playlistTracks.some(item => item.track.id === selectedTrack?.id) &&
-    isPlaying
-
-  const handlePlayPlaylist = async () => {
-    if (!isLoggedIn) {
+  const playFrom = (index: number) => {
+    if (session === 'checking') return
+    if (!connected) {
       handleLogin()
       return
     }
-
-    if (isPlaylistPlaying) {
-      setPlayPause(false)
-    } else {
-      const firstTrack = playlistTracks[0]?.track
-      if (!firstTrack || !playlist) return
-
-      playSpotifyTrack({
-        contextUri: playlist.uri,
-        offset: 0
-      })
-
-      setTrack(new SpotifyTrack({ ...firstTrack, title: firstTrack.name }))
-      setQueue(
-        new SpotifyTrack({ ...firstTrack, title: firstTrack.name }),
-        playlistTracks.map(
-          item => new SpotifyTrack({ ...item.track, title: item.track.name })
-        )
-      )
-    }
-  }
-
-  const handlePlayTrack = async (track: SpotifyTrack, index: number) => {
-    if (!isLoggedIn) {
-      handleLogin()
+    const row = rows[index]
+    if (!row || !playlist) return
+    if (now.trackId === row.track.id) {
+      p.toggle()
       return
     }
+    p.play(tracks, index, context)
+  }
 
-    if (isPlaying && selectedTrack?.id === track.id) {
-      setPlayPause(false)
-    } else if (selectedTrack?.id === track.id) {
-      setPlayPause(true)
-    } else {
-      playSpotifyTrack({
-        contextUri: playlist?.uri,
-        offset: index
-      })
-
-      setTrack(new SpotifyTrack({ ...track, title: track.name }))
-      setQueue(
-        track,
-        playlistTracks.map(
-          item => new SpotifyTrack({ ...item.track, title: item.track.name })
-        )
-      )
+  const playAll = () => {
+    if (connected && onList) {
+      p.toggle()
+      return
     }
-  }
-
-  const formatDuration = (ms: number) => {
-    const minutes = Math.floor(ms / 60000)
-    const seconds = Math.floor((ms % 60000) / 1000)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
-
-  const formatTotalDuration = (ms: number) => {
-    const hours = Math.floor(ms / 3600000)
-    const minutes = Math.floor((ms % 3600000) / 60000)
-    return hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`
+    playFrom(0)
   }
 
   if (loading) {
     return (
-      <main className='relative min-h-screen bg-[#07050A] text-white'>
-        <div className='pointer-events-none fixed inset-0 opacity-40'>
-          <Aurora
-            colorStops={['#1DB954', '#1ed760', '#00ff7f']}
-            amplitude={1.3}
-            blend={0.7}
-            speed={0.35}
-          />
+      <Page>
+        <BackLink href='/spotify'>Spotify</BackLink>
+        <div className='mt-6 grid gap-8 sm:grid-cols-[15rem_1fr] sm:items-end md:grid-cols-[18rem_1fr] md:gap-12'>
+          <Skeleton className='aspect-square w-full max-w-[18rem] rounded-3xl' />
+          <div className='flex flex-col gap-4'>
+            <Skeleton className='h-3 w-28' />
+            <Skeleton className='h-16 w-3/4' />
+            <Skeleton className='h-4 w-1/2' />
+            <Skeleton className='h-12 w-64' />
+          </div>
         </div>
-        <NavBar selectedTab='spotify' />
-        <div className='flex h-screen items-center justify-center'>
-          <div className='h-16 w-16 animate-spin rounded-full border-4 border-green-500/20 border-t-green-500' />
+        <div className='mt-12 flex flex-col gap-2'>
+          {Array.from({ length: 8 }, (_, i) => (
+            <Skeleton key={i} className='h-[60px]' />
+          ))}
         </div>
-      </main>
+      </Page>
     )
   }
 
   if (!playlist) {
     return (
-      <main className='relative min-h-screen bg-[#07050A] text-white'>
-        <NavBar selectedTab='spotify' />
-        <div className='flex h-screen items-center justify-center'>
-          <div className='text-center'>
-            <SiSpotify className='mx-auto mb-4 text-gray-600' size={64} />
-            <p className='text-xl text-gray-400'>Playlist not found</p>
-          </div>
-        </div>
-      </main>
+      <Page>
+        <BackLink href='/spotify'>Spotify</BackLink>
+        <EmptyState
+          className='mt-8'
+          title='This playlist didn’t load'
+          action={
+            <Link href='/spotify' className={buttonClasses({ variant: 'secondary' })}>
+              Back to all playlists
+            </Link>
+          }
+        >
+          It may be private, or Spotify didn’t answer. Try again in a moment.
+        </EmptyState>
+      </Page>
     )
   }
 
-  const totalDuration = (playlist.tracks?.items ?? []).reduce(
-    (acc, item) => acc + (item.track.duration_ms || 0),
-    0
-  )
+  const description = htmlToText(playlist.description)
 
   return (
-    <main className='relative min-h-screen bg-[#07050A] text-white'>
-      <div className='pointer-events-none fixed inset-0 opacity-40'>
-        <Aurora
-          colorStops={['#1DB954', '#1ed760', '#00ff7f']}
-          amplitude={1.3}
-          blend={0.7}
-          speed={0.35}
+    <Page>
+      <BackLink href='/spotify'>Spotify</BackLink>
+
+      <header className='mt-6 grid gap-8 sm:grid-cols-[minmax(0,15rem)_1fr] sm:items-end md:grid-cols-[minmax(0,18rem)_1fr] md:gap-12'>
+        <PlaylistArt
+          playlist={playlist}
+          sizes='(min-width: 768px) 288px, (min-width: 640px) 240px, 80vw'
+          priority
+          className='w-full max-w-[18rem] rounded-3xl shadow-[0_40px_90px_-40px_rgb(0_0_0/0.9)]'
         />
-      </div>
-
-      <NavBar selectedTab='spotify' />
-
-      <div className='relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6'>
-        <button
-          onClick={() => router.back()}
-          className='mb-6 flex items-center gap-2 text-gray-400 transition-colors hover:text-white'
-        >
-          <HiArrowLeft size={20} />
-          <span>Back to Playlists</span>
-        </button>
-
-        {/* Playlist Header */}
-        <section className='mb-12'>
-          <div className='flex flex-col gap-8 md:flex-row md:items-end'>
-            {/* Playlist Cover */}
-            <div className='relative h-64 w-64 flex-shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-green-500/20'>
-              {playlist.images && playlist?.images[0]?.url ? (
-                <Image
-                  src={playlist.images[0].url}
-                  alt={playlist.name ?? 'Playlist Cover'}
-                  width={256}
-                  height={256}
-                  className='h-full w-full object-cover'
-                  priority
-                />
-              ) : (
-                <div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-green-500 to-emerald-600'>
-                  <HiMusicalNote size={96} className='text-white/50' />
-                </div>
-              )}
-            </div>
-
-            {/* Playlist Info */}
-            <div className='flex flex-col gap-4'>
-              <span className='font-mono text-xs tracking-[0.35em] text-green-400 uppercase'>
-                Playlist
-              </span>
-              <h1 className='text-4xl font-bold text-white sm:text-5xl lg:text-6xl'>
-                {playlist.name}
-              </h1>
-              {playlist.description && (
-                <p
-                  className='max-w-2xl text-gray-300'
-                  dangerouslySetInnerHTML={{ __html: playlist.description }}
-                />
-              )}
-              <div className='flex flex-wrap items-center gap-2 text-sm text-gray-400'>
-                <span className='font-semibold text-white'>
-                  {playlist.owner?.displayName ?? 'N/A'}
-                </span>
-                <span>•</span>
-                <span>{playlist.tracks?.total} songs</span>
-                <span>•</span>
-                <span>{formatTotalDuration(totalDuration)}</span>
-              </div>
-
-              {/* Actions */}
-              <div className='mt-4 flex flex-wrap items-center gap-4'>
-                {/* Play/Pause or Login Button */}
-                <button
-                  onClick={handlePlayPlaylist}
-                  className='group flex h-14 w-14 items-center justify-center rounded-full bg-green-500 shadow-lg shadow-green-500/25 transition-all hover:scale-105 hover:bg-green-400'
-                  title={
-                    !isLoggedIn
-                      ? 'Login to play'
-                      : isPlaylistPlaying
-                        ? 'Pause'
-                        : 'Play'
-                  }
-                >
-                  {!isLoggedIn ? (
-                    <HiLockClosed size={24} className='text-black' />
-                  ) : isPlaylistPlaying ? (
-                    <HiPause size={24} className='text-black' />
-                  ) : (
-                    <HiPlay size={24} className='ml-1 text-black' />
-                  )}
-                </button>
-
-                <a
-                  href={playlist.external_urls?.spotify}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10'
-                >
-                  <SiSpotify size={20} />
-                  Open in Spotify
-                </a>
-              </div>
-            </div>
+        <div className='flex min-w-0 flex-col gap-5'>
+          <Eyebrow color='var(--color-spotify)'>Playlist</Eyebrow>
+          <h1 className='font-display-wide text-[clamp(2.4rem,7vw,5.25rem)] text-balance break-words text-bone'>
+            {playlist.name}
+          </h1>
+          {description && (
+            <p className='max-w-2xl text-lg leading-relaxed text-bone-muted'>
+              {description}
+            </p>
+          )}
+          <p className='tabular font-mono text-xs tracking-[0.14em] text-bone-dim uppercase'>
+            {playlist.owner?.displayName ?? 'GameOver'} ·{' '}
+            {playlist.tracks?.total ?? tracks.length} songs
+            {totalMs > 0 && ` · ${formatLongDuration(totalMs)}`}
+          </p>
+          <div className='flex flex-wrap items-center gap-3'>
+            {connected ? (
+              <Button size='lg' onClick={playAll} disabled={!tracks.length}>
+                {listPlaying ? (
+                  <Pause className='size-4' fill='currentColor' strokeWidth={0} />
+                ) : (
+                  <Play className='size-4' fill='currentColor' strokeWidth={0} />
+                )}
+                {listPlaying ? 'Pause' : onList ? 'Resume' : 'Play'}
+              </Button>
+            ) : (
+              <Button
+                size='lg'
+                variant='spotify'
+                onClick={handleLogin}
+                disabled={session === 'checking'}
+              >
+                <SiSpotify className='size-4' />
+                Connect to play
+              </Button>
+            )}
+            <a
+              href={playlist.external_urls?.spotify}
+              target='_blank'
+              rel='noopener noreferrer'
+              className={buttonClasses({ variant: 'secondary', size: 'lg' })}
+            >
+              Open in Spotify
+              <ArrowUpRight className='size-4' />
+            </a>
           </div>
-        </section>
+        </div>
+      </header>
 
-        {/* Login Prompt */}
-        {!isLoggedIn && (
-          <section className='mb-8'>
-            <div className='rounded-2xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-transparent p-8 backdrop-blur-sm'>
-              <div className='flex flex-col items-center gap-4 text-center'>
-                <div className='flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20'>
-                  <HiLockClosed size={32} className='text-green-400' />
-                </div>
-                <h3 className='text-2xl font-bold text-white'>
-                  Connect to Spotify to Play
-                </h3>
-                <p className='max-w-md text-gray-300'>
-                  Log in with your Spotify account to play tracks directly in
-                  your browser and access full playlist features.
-                </p>
-                <button
-                  onClick={handleLogin}
-                  className='flex items-center gap-2 rounded-full bg-green-500 px-8 py-3 font-semibold text-black transition-transform hover:scale-105 hover:bg-green-400'
-                >
-                  <SiSpotify size={20} />
-                  Connect Spotify
-                </button>
-              </div>
-            </div>
-          </section>
+      <section aria-label='Tracks' className='mt-12'>
+        {session === 'disconnected' && (
+          <p className='mb-5 flex items-center gap-2.5 rounded-xl border border-line bg-white/[0.02] px-4 py-3 text-sm text-bone-muted'>
+            <Lock className='size-4 shrink-0 text-bone-dim' />
+            Browsing only. Connect Spotify (Premium) to play these tracks here.
+          </p>
         )}
 
-        {/* Tracks List */}
-        <section className='mb-30'>
-          <div className='mb-4 grid grid-cols-[auto_1fr_1fr_auto] gap-4 border-b border-white/10 px-4 pb-2 text-sm font-semibold text-gray-400'>
-            <div className='text-center'>#</div>
-            <div>Title</div>
-            <div className='hidden md:block'>Album</div>
-            <div className='flex items-center justify-end'>
-              <HiClock size={18} />
-            </div>
-          </div>
+        <div
+          aria-hidden
+          className={cn(
+            'hud-label hidden items-center gap-4 border-b border-line px-3 pb-3 md:grid',
+            COLS
+          )}
+        >
+          <span className='text-center'>#</span>
+          <span>Title</span>
+          <span>Album</span>
+          <span className='text-right'>Time</span>
+        </div>
 
-          <div className='space-y-1'>
-            {playlistTracks.map((item, index) => {
-              if (!item) return null
-              const track = item.track
-              const isCurrentTrack = selectedTrack?.id === track.id
-              const trackIsPlaying = isCurrentTrack && isPlaying
-
+        {tracks.length ? (
+          <ol className='mt-2 flex flex-col gap-0.5'>
+            {tracks.map((track, i) => {
+              const current = now.trackId === track.id
+              const playing = current && isPlaying
+              const art = track.album?.images?.at(-1)?.url ?? track.artworkUrl
               return (
-                <div
-                  key={track.id}
-                  onClick={() => handlePlayTrack(track, index)}
-                  className={`group grid cursor-pointer grid-cols-[auto_1fr_1fr_auto] items-center gap-4 rounded-lg px-4 py-3 transition-all hover:bg-white/5 ${
-                    isCurrentTrack ? 'bg-white/10' : ''
-                  } ${!isLoggedIn ? 'opacity-60' : ''}`}
+                <li
+                  key={`${track.id}-${i}`}
+                  className={cn(
+                    'group/row relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[[data-row-play]:focus-visible]:ring-2 has-[[data-row-play]:focus-visible]:ring-live md:gap-4 md:px-3',
+                    COLS,
+                    current ? 'bg-spotify/[0.07]' : 'hover:bg-white/[0.04]'
+                  )}
                 >
-                  {/* Track Number / Play Button */}
-                  <div className='relative flex h-10 w-10 items-center justify-center'>
-                    <span
-                      className={`text-sm ${
-                        isCurrentTrack
-                          ? 'text-green-400'
-                          : 'text-gray-400 group-hover:hidden'
-                      } ${trackIsPlaying || !isLoggedIn ? 'hidden' : ''}`}
-                    >
-                      {index + 1}
-                    </span>
-                    <div
-                      className={`${
-                        trackIsPlaying
-                          ? 'flex'
-                          : !isLoggedIn
-                            ? 'flex'
-                            : 'hidden'
-                      } items-center justify-center group-hover:flex`}
-                    >
-                      {!isLoggedIn ? (
-                        <HiLockClosed size={16} className='text-gray-400' />
-                      ) : trackIsPlaying ? (
-                        <HiPause size={20} className='text-green-400' />
-                      ) : (
-                        <HiPlay
-                          size={20}
-                          className={
-                            isCurrentTrack ? 'text-green-400' : 'text-white'
-                          }
-                        />
-                      )}
-                    </div>
-                  </div>
+                  <span className='relative hidden size-9 items-center justify-center md:flex'>
+                    {current && playing ? (
+                      <EqBars className='[&>span]:bg-spotify' />
+                    ) : (
+                      <>
+                        <span
+                          className={cn(
+                            'tabular font-mono text-xs transition-opacity group-hover/row:opacity-0',
+                            current ? 'text-spotify' : 'text-bone-dim'
+                          )}
+                        >
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        {connected ? (
+                          <Play
+                            aria-hidden
+                            className='absolute size-3.5 text-bone opacity-0 transition-opacity group-hover/row:opacity-100'
+                            fill='currentColor'
+                            strokeWidth={0}
+                          />
+                        ) : (
+                          <Lock
+                            aria-hidden
+                            className='absolute size-3.5 text-bone-dim opacity-0 transition-opacity group-hover/row:opacity-100'
+                          />
+                        )}
+                      </>
+                    )}
+                  </span>
 
-                  {/* Track Info */}
-                  <div className='flex min-w-0 items-center gap-3'>
-                    <div className='relative h-12 w-12 flex-shrink-0 overflow-hidden rounded'>
-                      {track.album.images[0]?.url ? (
+                  <span className='flex min-w-0 items-center gap-3'>
+                    <span className='relative size-11 shrink-0 overflow-hidden rounded-lg bg-ink-800 ring-1 ring-white/8 ring-inset sm:size-12'>
+                      {art && (
                         <Image
-                          src={track.album.images[0].url}
-                          alt={track.album.name ?? 'Album Cover'}
-                          width={48}
-                          height={48}
-                          className='h-full w-full object-cover'
+                          src={art}
+                          alt=''
+                          fill
+                          sizes='48px'
+                          className='object-cover'
                         />
-                      ) : (
-                        <div className='h-full w-full bg-white/5' />
                       )}
-                    </div>
-                    <div className='min-w-0 flex-1 max-md:min-w-[calc(45vw)]'>
-                      <div
-                        className={`truncate font-semibold ${
-                          isCurrentTrack ? 'text-green-400' : 'text-white'
-                        }`}
+                    </span>
+                    <span className='min-w-0'>
+                      <span
+                        className={cn(
+                          'flex min-w-0 items-center gap-2 text-[15px] font-semibold',
+                          current ? 'text-spotify' : 'text-bone'
+                        )}
                       >
-                        {track.name}
-                      </div>
-                      <div className='truncate text-sm text-gray-400'>
-                        {track.artists
-                          .map((artist: { name: string }) => artist.name)
-                          .join(', ')}
-                      </div>
-                    </div>
-                  </div>
+                        <span className='truncate'>{track.name}</span>
+                        {playing && (
+                          <EqBars className='md:hidden [&>span]:bg-spotify' />
+                        )}
+                      </span>
+                      <span className='block truncate text-[13px] text-bone-dim'>
+                        {track.artists?.map(a => a.name).join(', ')}
+                      </span>
+                    </span>
+                  </span>
 
-                  {/* Album Name */}
-                  <div className='hidden min-w-0 truncate text-sm text-gray-400 md:block'>
-                    {track.album.name}
-                  </div>
+                  <span className='hidden truncate text-sm text-bone-muted md:block'>
+                    {track.album?.name}
+                  </span>
 
-                  {/* Duration */}
-                  <div className='flex items-center justify-end text-sm text-gray-400'>
-                    <span>{formatDuration(track.duration_ms ?? 0)}</span>
-                  </div>
-                </div>
+                  <span className='flex items-center justify-end gap-1.5'>
+                    <span className='tabular font-mono text-xs text-bone-dim'>
+                      {formatMs(track.duration_ms ?? 0)}
+                    </span>
+                    {connected && (
+                      <TrackMenu
+                        track={track}
+                        className='md:opacity-0 md:group-focus-within/row:opacity-100 md:group-hover/row:opacity-100 pointer-coarse:opacity-100'
+                      />
+                    )}
+                    <button
+                      type='button'
+                      data-row-play
+                      onClick={() => playFrom(i)}
+                      aria-label={
+                        connected
+                          ? `${playing ? 'Pause' : 'Play'} ${track.name}`
+                          : `Connect Spotify to play ${track.name}`
+                      }
+                      className='after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none'
+                    />
+                  </span>
+                </li>
               )
             })}
-          </div>
-        </section>
-      </div>
-    </main>
+          </ol>
+        ) : (
+          <EmptyState className='mt-4' title='No tracks here yet' />
+        )}
+      </section>
+    </Page>
   )
 }
