@@ -85,10 +85,11 @@ export default function Home() {
 
   return (
     <main className='title-screen relative flex min-h-[100svh] flex-col overflow-x-clip'>
-      <span
-        aria-hidden
-        className='title-sweep pointer-events-none absolute inset-x-0 top-0 z-0 h-[28vh]'
-      />
+      {/* the light sweeps past the bottom edge; its frame clips it so it can
+          never make the page scroll */}
+      <span aria-hidden className='pointer-events-none absolute inset-0 z-0 overflow-hidden'>
+        <span className='title-sweep absolute inset-x-0 top-0 h-[28vh]' />
+      </span>
 
       {/* HUD, top */}
       <div className='intro-fade pointer-events-none absolute inset-x-0 top-[calc(var(--nav-h)+0.5rem)] z-10 mx-auto flex w-full max-w-[1440px] justify-between px-5 font-pixel text-[10px] tracking-[0.22em] uppercase sm:px-8 sm:text-[11px]'>
@@ -104,7 +105,9 @@ export default function Home() {
         </p>
       </div>
 
-      <section className='relative flex flex-1 flex-col items-center justify-center px-5 pt-(--nav-h) pb-4 [--sentinel:clamp(170px,calc(100svh_-_430px),420px)] sm:pb-8 sm:[--sentinel:clamp(170px,calc(100svh_-_500px),580px)]'>
+      {/* the art takes what height is left, a little less on short laptop
+          screens, so the whole title screen fits without scrolling */}
+      <section className='relative flex flex-1 flex-col items-center justify-center px-5 pt-(--nav-h) pb-4 [--sentinel:clamp(170px,calc(100svh_-_430px),420px)] sm:pb-8 sm:[--sentinel:clamp(170px,calc(100svh_-_500px),580px)] sm:[@media(max-height:820px)]:[--sentinel:clamp(150px,calc(100svh_-_540px),580px)]'>
         <Sentinel />
 
         <h1 className='relative z-10 -mt-[calc(var(--sentinel)*0.26)] flex w-full flex-col items-center'>
