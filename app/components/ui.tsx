@@ -425,7 +425,8 @@ export function StatStrip({
           key={item.label}
           style={{ '--i': i + 3 } as React.CSSProperties}
           className={cn(
-            'intro-rise relative flex min-w-0 flex-col gap-2 px-4 py-4 sm:px-6 sm:py-5',
+            // values share a baseline even when a label wraps
+            'intro-rise relative flex min-w-0 flex-col justify-between gap-2 px-4 py-4 sm:px-6 sm:py-5',
             three
               ? i > 0 && 'border-l border-line'
               : [

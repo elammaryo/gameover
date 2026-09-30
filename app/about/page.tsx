@@ -14,6 +14,7 @@ import {
   Page,
   SectionHeader,
   Skeleton,
+  StatStrip,
   Tag
 } from '../components/ui'
 import { SOCIAL_LINKS } from '@/lib/site'
@@ -22,14 +23,13 @@ import { cn } from '@/lib/utils'
 type Artist = { name: string; images: { url: string }[] }
 type Load = 'loading' | 'ready' | 'error'
 
-const HI_SCORES = [
-  { stat: 'Minutes listened', score: '56K+', color: 'var(--color-theme-2)' },
-  { stat: 'Saved tracks', score: '450+', color: 'var(--color-live)' },
-  { stat: 'Unique artists', score: '120+', color: 'var(--color-warn)' },
-  { stat: 'Playlists made', score: '95+', color: 'var(--color-theme)' }
+// kept small on purpose: rough numbers, not the point of the page
+const LISTENING = [
+  { label: 'Minutes listened', value: '56K+' },
+  { label: 'Saved tracks', value: '450+' },
+  { label: 'Unique artists', value: '120+' },
+  { label: 'Playlists made', value: '95+' }
 ]
-
-const RANKS = ['1st', '2nd', '3rd', '4th']
 
 const CHAPTERS = [
   {
@@ -180,52 +180,7 @@ export default function AboutPage() {
         </div>
       </header>
 
-      {/* HI-SCORES */}
-      <section aria-labelledby='hi-scores' className='mt-20 sm:mt-28'>
-        <SectionHeader id='hi-scores' eyebrow='Listening stats' title='Hi-scores' />
-        <div className='surface relative overflow-hidden rounded-3xl px-5 py-6 sm:px-10 sm:py-9'>
-          <div
-            aria-hidden
-            className='pointer-events-none absolute inset-0 opacity-[0.07] [background:repeating-linear-gradient(to_bottom,rgb(255_255_255)_0_1px,transparent_1px_4px)]'
-          />
-          <table className='relative w-full font-pixel'>
-            <caption className='sr-only'>My Spotify listening stats</caption>
-            <thead>
-              <tr className='text-left text-[11px] tracking-[0.2em] text-bone-dim uppercase'>
-                <th scope='col' className='w-16 pb-4 font-normal sm:w-24'>
-                  Rank
-                </th>
-                <th scope='col' className='pb-4 font-normal'>
-                  Stat
-                </th>
-                <th scope='col' className='pb-4 text-right font-normal'>
-                  Score
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {HI_SCORES.map((row, i) => (
-                <tr
-                  key={row.stat}
-                  className='border-t border-dashed border-white/10'
-                  style={{ color: row.color }}
-                >
-                  <td className='py-3.5 text-sm sm:py-4 sm:text-base'>{RANKS[i]}</td>
-                  <td className='py-3.5 text-sm text-bone uppercase sm:py-4 sm:text-lg'>
-                    {row.stat}
-                  </td>
-                  <td
-                    className='py-3.5 text-right text-xl tabular-nums sm:py-4 sm:text-3xl'
-                    style={{ textShadow: `0 0 18px ${row.color}` }}
-                  >
-                    {row.score}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <StatStrip className='mt-10 sm:mt-12' items={LISTENING} />
 
       {/* LIVE SPOTIFY STATS */}
       {statsOffline ? (
