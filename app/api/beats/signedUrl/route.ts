@@ -24,6 +24,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const s3Key = beatsData.find(beat => beat.id === trackId)?.s3Key
+    if (!s3Key) {
+      return NextResponse.json({ error: 'Unknown beat' }, { status: 404 })
+    }
 
     const command = new GetObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,

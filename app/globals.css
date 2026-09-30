@@ -311,6 +311,47 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Player bits
+--------------------------------------------------------------------------- */
+
+/* the play button's spinner waits a moment, so quick loads never flash it */
+@keyframes play-spinner-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+@keyframes play-spinner-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.play-spinner {
+  animation:
+    play-spinner-spin 0.85s linear infinite,
+    play-spinner-in 180ms var(--ease-snap) 200ms both;
+}
+
+/* the queue button's count pops when something is added */
+@keyframes badge-pop {
+  0% {
+    scale: 0.4;
+  }
+  60% {
+    scale: 1.25;
+  }
+}
+.badge-pop {
+  animation: badge-pop 420ms var(--ease-pad);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-pop {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Entrances. Pages rise in when they mount; while a stage transition covers
    the screen (<html data-stage="on">) they wait, then play on the reveal.
    `--i` staggers siblings. Fill mode is `backwards` on purpose: once done,

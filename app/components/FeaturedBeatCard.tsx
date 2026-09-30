@@ -1,12 +1,13 @@
 'use client'
 
-import { useContext } from 'react'
 import { BeatTrack, Track } from '../models/Track'
-import { PlayBarContext } from '../providers/PlayBarProvider'
 import { BeatCover } from './Covers'
+import { useBeatPlayback } from './usePlayback'
 import { EqBars, Eyebrow, PlayButton, Tag } from './ui'
 import { accentFor, beatSubtitle } from '@/lib/beats'
 import { cn } from '@/lib/utils'
+
+const STUDIO_CONTEXT = { id: 'studio:all::latest', name: 'Studio beats' }
 
 function FeaturedBeatsSection({
   featuredBeats,
@@ -15,26 +16,18 @@ function FeaturedBeatsSection({
   featuredBeats: BeatTrack[]
   allBeats: Track[]
 }) {
-  const { isPlaying, setPlayPause, selectedTrack, setTrack, setQueue } =
-    useContext(PlayBarContext)
+  const { toggle, stateOf } = useBeatPlayback()
 
-  const handlePlay = async (track: BeatTrack) => {
-    if (selectedTrack?.id === track.id && isPlaying) {
-      setPlayPause(false)
-    } else if (selectedTrack?.id === track.id && !isPlaying) {
-      setPlayPause(true)
-    } else {
-      await setTrack(track)
-      setQueue(track, allBeats)
-    }
-  }
+  // featured beats play on into the whole catalogue
+  const handlePlay = (track: BeatTrack) =>
+    toggle(track, allBeats as BeatTrack[], STUDIO_CONTEXT)
 
   const [hero, ...rest] = featuredBeats
   if (!hero) return null
 
   const state = (beat: BeatTrack) => {
-    const current = selectedTrack?.id === beat.id
-    return { current, playing: current && isPlaying }
+    const { current, playing, loading } = stateOf(beat.id)
+    return { current, playing, loading }
   }
 
   return (
@@ -70,6 +63,7 @@ type CardProps = {
   beat: BeatTrack
   current: boolean
   playing: boolean
+  loading: boolean
   onPlay: () => void
   className?: string
   style?: React.CSSProperties
@@ -84,7 +78,7 @@ function NowPlayingBadge({ playing }: { playing: boolean }) {
   )
 }
 
-function HeroCard({ beat, current, playing, onPlay, className, style }: CardProps) {
+function HeroCard({ beat, current, playing, loading, onPlay, className, style }: CardProps) {
   const accent = accentFor(beat)
   const subtitle = beatSubtitle(beat)
   return (
@@ -137,6 +131,7 @@ function HeroCard({ beat, current, playing, onPlay, className, style }: CardProp
             size='xl'
             tone='accent'
             playing={playing}
+            loading={loading}
             label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
             onClick={onPlay}
             stretched
@@ -151,7 +146,7 @@ function HeroCard({ beat, current, playing, onPlay, className, style }: CardProp
   )
 }
 
-function MiniCard({ beat, current, playing, onPlay, className, style }: CardProps) {
+function MiniCard({ beat, current, playing, loading, onPlay, className, style }: CardProps) {
   const accent = accentFor(beat)
   const subtitle = beatSubtitle(beat)
   return (
@@ -208,6 +203,7 @@ function MiniCard({ beat, current, playing, onPlay, className, style }: CardProp
           size='md'
           tone={current ? 'accent' : 'ghost'}
           playing={playing}
+          loading={loading}
           label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
           onClick={onPlay}
           stretched

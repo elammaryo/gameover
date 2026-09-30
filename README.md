@@ -9,7 +9,8 @@ custom audio playback.
 
 ## 🚀 Features
 
-- **Custom Audio Player** - Built from scratch with React + HTML5 Audio API
+- **Custom Audio Player** - Built from scratch on the HTML5 Audio API, with a
+  real queue (play next, add to queue, drag to reorder, shuffle, repeat)
 - **Spotify OAuth 2.0** - Full authentication flow with token refresh
 - **AWS S3 Integration** - Secure audio delivery with signed URLs
 - **Real-time Playback** - Seamless navigation without interrupting music
@@ -54,6 +55,10 @@ app/
 
 lib/
 ├── beats.ts          # Catalogue helpers, formatting, generated cover sprites
+├── queue.ts          # The play queue as a pure reducer (tested on its own)
+├── playerTime.ts     # Playback position store (read by seek bars only)
+├── coverArt.ts       # Beat covers as PNGs for the lock screen
+├── toast.ts          # Small confirmations shown above the player
 ├── site.ts           # Nav + social links shared by header and footer
 ├── spotify.ts        # Server-side Spotify token utilities
 └── spotify-auth.ts   # Browser login/logout helpers
@@ -104,6 +109,38 @@ appearing:
 
 Never commit or expose the printed token; it grants access to the authorized
 Spotify account.
+
+## 🎧 Player
+
+One player object for the whole visit (`app/providers/player.ts`) owns the
+queue, beat playback, Spotify playback and the OS media controls. Components
+read it through hooks in `PlayBarProvider.tsx` (`usePlayer`, `useNowPlaying`,
+`usePlayerSelect`); long lists subscribe narrowly so queue edits don't
+re-render every row.
+
+- **Beats** (`app/providers/beatEngine.ts`): one `<audio>` element. Every
+  load gets a token, so a skip during a load simply replaces it. S3 links
+  are reused for 40 minutes at most; if a link expires mid-track or the
+  download stalls, the engine fetches a fresh one and carries on from the
+  same second. The next beat's link is fetched ahead of time. Beats that
+  won't load are skipped with a note (three in a row and it stops and says
+  so). Skips and pauses fade briefly, except where the browser can't (iOS,
+  background tabs).
+- **Queue** (`lib/queue.ts`): what you started (a studio list, a pack, a
+  playlist) plays in order or shuffled; *Play next* / *Add to queue* (the ⋯
+  on a row) go ahead of it. Reorder by dragging the handle (or focus it and
+  use ↑ ↓), remove, clear, shuffle (turning it off restores the order),
+  repeat off / all / one. *Previous* restarts the track after 3 seconds.
+- **Spotify**: the Web Playback SDK plays the run of Spotify tracks from the
+  current one; the queue follows Spotify as it moves on, and takes over at
+  the next track change if you edited the queue or a beat comes next.
+- **Motion**: track changes slide in the direction you skipped (dock, Now
+  Playing, the list's highlight); on phones swipe the dock or the artwork to
+  skip and drag the sheet down to close. Reduced motion keeps only fades.
+- **Keys**: Space plays / pauses anywhere (outside inputs); media keys and
+  lock-screen controls work through the Media Session API.
+
+The queue rules have tests (`tests/queue.test.mjs`): run `npm test`.
 
 ## 🎨 Design
 

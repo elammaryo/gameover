@@ -2,16 +2,17 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { ArrowUpRight, Lock, Pause, Play } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
-import { getPlaylistTracks, playSpotifyTrack } from '@/app/api'
+import { getPlaylistTracks } from '@/app/api'
 import type { Playlist } from '@/app/models/Playlist'
 import { SpotifyTrack } from '@/app/models/Track'
-import { PlayBarContext } from '@/app/providers/PlayBarProvider'
+import { playerActions as p, useNowPlaying } from '@/app/providers/PlayBarProvider'
 import { Button, buttonClasses } from '@/app/components/Button'
-import { PlaylistArt } from '@/app/components/SpotifyPlaylists'
+import { PlaylistArt, spotifyContext } from '@/app/components/SpotifyPlaylists'
+import { TrackMenu } from '@/app/components/TrackMenu'
 import {
   BackLink,
   EmptyState,
@@ -26,15 +27,16 @@ import { handleLogin } from '@/lib/spotify-auth'
 import { cn } from '@/lib/utils'
 
 const COLS =
-  'md:grid-cols-[2.25rem_minmax(0,1.4fr)_minmax(0,1fr)_3.5rem]'
+  'md:grid-cols-[2.25rem_minmax(0,1.4fr)_minmax(0,1fr)_6rem]'
 
 export default function SpotifyPlaylistPage() {
   const params = useParams()
   const id = String(params.id ?? '')
   const session = useSpotifySession()
   const connected = session === 'connected'
-  const { setQueue, setTrack, setPlayPause, selectedTrack, isPlaying } =
-    useContext(PlayBarContext)
+  // rows only re-render when the playing track or play state changes
+  const now = useNowPlaying()
+  const isPlaying = now.isPlaying
 
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,7 +66,9 @@ export default function SpotifyPlaylistPage() {
   )
   const tracks = useMemo(() => rows.map(r => r.track), [rows])
 
-  const onList = tracks.some(t => t.id === selectedTrack?.id)
+  const context = playlist ? spotifyContext(playlist) : null
+  const onList =
+    now.contextId === context?.id && tracks.some(t => t.id === now.trackId)
   const listPlaying = onList && isPlaying
   const totalMs = tracks.reduce((sum, t) => sum + (t.duration_ms ?? 0), 0)
 
@@ -76,18 +80,16 @@ export default function SpotifyPlaylistPage() {
     }
     const row = rows[index]
     if (!row || !playlist) return
-    if (selectedTrack?.id === row.track.id) {
-      setPlayPause(!isPlaying)
+    if (now.trackId === row.track.id) {
+      p.toggle()
       return
     }
-    playSpotifyTrack({ contextUri: playlist.uri, offset: row.position })
-    setTrack(row.track)
-    setQueue(row.track, tracks)
+    p.play(tracks, index, context)
   }
 
   const playAll = () => {
     if (connected && onList) {
-      setPlayPause(!isPlaying)
+      p.toggle()
       return
     }
     playFrom(0)
@@ -220,14 +222,14 @@ export default function SpotifyPlaylistPage() {
         {tracks.length ? (
           <ol className='mt-2 flex flex-col gap-0.5'>
             {tracks.map((track, i) => {
-              const current = selectedTrack?.id === track.id
+              const current = now.trackId === track.id
               const playing = current && isPlaying
               const art = track.album?.images?.at(-1)?.url ?? track.artworkUrl
               return (
                 <li
                   key={`${track.id}-${i}`}
                   className={cn(
-                    'group/row relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live md:gap-4 md:px-3',
+                    'group/row relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[[data-row-play]:focus-visible]:ring-2 has-[[data-row-play]:focus-visible]:ring-live md:gap-4 md:px-3',
                     COLS,
                     current ? 'bg-spotify/[0.07]' : 'hover:bg-white/[0.04]'
                   )}
@@ -296,12 +298,19 @@ export default function SpotifyPlaylistPage() {
                     {track.album?.name}
                   </span>
 
-                  <span className='flex items-center justify-end gap-3'>
+                  <span className='flex items-center justify-end gap-1.5'>
                     <span className='tabular font-mono text-xs text-bone-dim'>
                       {formatMs(track.duration_ms ?? 0)}
                     </span>
+                    {connected && (
+                      <TrackMenu
+                        track={track}
+                        className='md:opacity-0 md:group-focus-within/row:opacity-100 md:group-hover/row:opacity-100 pointer-coarse:opacity-100'
+                      />
+                    )}
                     <button
                       type='button'
+                      data-row-play
                       onClick={() => playFrom(i)}
                       aria-label={
                         connected

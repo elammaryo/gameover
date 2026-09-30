@@ -1,8 +1,8 @@
 'use client'
 
-import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { PlayBarContext } from '../providers/PlayBarProvider'
+import { useIsPlaying } from '../providers/PlayBarProvider'
 import { GIcon } from './brand/GIcon'
 import { readSfx, sfx } from '@/lib/sfx'
 import {
@@ -45,7 +45,7 @@ type Run = StageDetail & { id: number; from: string; at: number }
 export function StageTransition() {
   const router = useRouter()
   const pathname = usePathname()
-  const { isPlaying } = useContext(PlayBarContext)
+  const isPlaying = useIsPlaying()
   const playingRef = useRef(isPlaying)
   const [run, setRun] = useState<Run | null>(null)
   const [ready, setReady] = useState(false)

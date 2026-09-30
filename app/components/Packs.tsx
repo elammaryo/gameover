@@ -35,7 +35,8 @@ export function PackCard({
 }) {
   const { playAll, listState } = useBeatPlayback()
   const list = packBeats(pack.trackIds, beats)
-  const { current, playing } = listState(list)
+  const context = { id: `pack:${pack.id}`, name: `${pack.name} pack` }
+  const { current, playing } = listState(list, context)
   const tile = layout === 'tile'
 
   return (
@@ -80,7 +81,7 @@ export function PackCard({
           tone={current ? 'accent' : 'ghost'}
           playing={playing}
           label={`${playing ? 'Pause' : 'Play'} the ${pack.name} pack`}
-          onClick={() => playAll(list)}
+          onClick={() => playAll(list, { context })}
           disabled={!list.length}
           className='relative z-10'
         />

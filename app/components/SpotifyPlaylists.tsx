@@ -1,31 +1,44 @@
 'use client'
 
 import Image from 'next/image'
-import { useContext, useState } from 'react'
 import { SiSpotify } from 'react-icons/si'
 import type { Playlist } from '../models/Playlist'
 import { SpotifyTrack } from '../models/Track'
-import { PlayBarContext } from '../providers/PlayBarProvider'
-import { getSpotifyAccessToken, playSpotifyTrack } from '../api'
+import {
+  playerActions as p,
+  usePlayerSelect,
+  useNowPlaying
+} from '../providers/PlayBarProvider'
+import { getSpotifyAccessToken } from '../api'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
+
+export const spotifyContext = (playlist: Pick<Playlist, 'id' | 'name'>) => ({
+  id: `spotify:${playlist.id}`,
+  name: playlist.name
+})
 
 /** Start a whole Spotify playlist from the top (needs a connected account). */
 export function useSpotifyPlaylistPlayback() {
-  const { setTrack, setQueue, selectedTrack, isPlaying, setPlayPause } =
-    useContext(PlayBarContext)
-  const [startedId, setStartedId] = useState<string | null>(null)
+  const now = useNowPlaying()
+  const onSpotify = usePlayerSelect(
+    s => s.queue.items[s.queue.index]?.track.source === 'spotify',
+    false
+  )
 
   const stateOf = (playlist: Playlist) => {
-    const current =
-      startedId === playlist.id && selectedTrack?.source === 'spotify'
-    return { current, playing: current && isPlaying }
+    const current = now.contextId === spotifyContext(playlist).id && onSpotify
+    return { current, playing: current && now.isPlaying }
   }
 
   const play = async (playlist: Playlist) => {
     if (stateOf(playlist).current) {
-      setPlayPause(!isPlaying)
+      p.toggle()
       return
     }
+    // the tracks load first: let the browser allow playback while we're
+    // still inside the tap
+    p.prime('spotify')
     try {
       const accessToken = await getSpotifyAccessToken()
       const response = await fetch(playlist.tracks.href, {
@@ -39,14 +52,11 @@ export function useSpotifyPlaylistPlayback() {
           (item: { track: SpotifyTrack }) =>
             new SpotifyTrack({ ...item.track, title: item.track.name })
         )
-      const first = tracks[0]
-      if (!first) return
-      await setTrack(first)
-      setQueue(first, tracks)
-      setStartedId(playlist.id)
-      await playSpotifyTrack({ uris: tracks.map(t => t.uri ?? ''), offset: 0 })
+      if (!tracks.length) return
+      p.play(tracks, 0, spotifyContext(playlist))
     } catch (error) {
       console.error('Error playing playlist:', error)
+      toast('Couldn’t load that playlist', playlist.name, 'warn')
     }
   }
 

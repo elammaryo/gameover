@@ -1,7 +1,7 @@
 'use client'
 
-import { useContext, useEffect } from 'react'
-import { PlayBarContext } from '../providers/PlayBarProvider'
+import { useEffect } from 'react'
+import { useIsPlaying } from '../providers/PlayBarProvider'
 import { readBeat } from '@/lib/beatClock'
 
 /* ---------------------------------------------------------------------------
@@ -48,7 +48,7 @@ function tick() {
 }
 
 export function useBeatPulse(ref: React.RefObject<HTMLElement | null>) {
-  const { isPlaying } = useContext(PlayBarContext)
+  const isPlaying = useIsPlaying()
 
   useEffect(() => {
     const el = ref.current

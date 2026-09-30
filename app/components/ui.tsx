@@ -1,5 +1,12 @@
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, ArrowUpRight, Pause, Play } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  LoaderCircle,
+  Pause,
+  Play
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonClasses } from './Button'
 
@@ -487,6 +494,8 @@ export { EqBars } from './EqBars'
 
 type PlayButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   playing?: boolean
+  /** waiting for audio: a spinner takes over (after a beat, so fast loads don't flicker) */
+  loading?: boolean
   size?: 'sm' | 'md' | 'lg' | 'xl'
   /** accent = the section colour (red in the studio, green on Spotify...) */
   tone?: 'accent' | 'bone' | 'ghost'
@@ -514,8 +523,13 @@ const playTones = {
     'bg-white/[0.06] text-bone ring-1 ring-white/10 ring-inset hover:bg-white/[0.12]'
 }
 
+// icons swap with a little pop; the spinner fades in only if loading lasts
+const iconSwap =
+  'col-start-1 row-start-1 transition-[opacity,scale,rotate] duration-200 ease-pad motion-reduce:transition-none'
+
 export function PlayButton({
   playing,
+  loading = false,
   size = 'md',
   tone = 'accent',
   label,
@@ -523,10 +537,17 @@ export function PlayButton({
   className,
   ...props
 }: PlayButtonProps) {
+  // while loading, whichever icon was showing holds for 200ms, then the
+  // spinner takes over (so quick loads never flash a spinner)
+  const iconState = (visible: boolean) =>
+    visible
+      ? 'scale-100 rotate-0 opacity-100'
+      : cn('scale-50 opacity-0', loading && 'delay-200')
   return (
     <button
       type='button'
       aria-label={label}
+      aria-busy={loading || undefined}
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-full transition-[scale,background-color,color] duration-200 ease-snap disabled:opacity-40',
         stretched
@@ -538,11 +559,33 @@ export function PlayButton({
       )}
       {...props}
     >
-      {playing ? (
-        <Pause fill='currentColor' strokeWidth={0} />
-      ) : (
-        <Play fill='currentColor' strokeWidth={0} className='translate-x-[1px]' />
-      )}
+      <span aria-hidden className='grid place-items-center'>
+        <Play
+          fill='currentColor'
+          strokeWidth={0}
+          className={cn(
+            iconSwap,
+            'translate-x-[1px]',
+            iconState(!playing && !loading),
+            playing && !loading && '-rotate-90'
+          )}
+        />
+        <Pause
+          fill='currentColor'
+          strokeWidth={0}
+          className={cn(
+            iconSwap,
+            iconState(!!playing && !loading),
+            !playing && !loading && 'rotate-90'
+          )}
+        />
+        {loading && (
+          <LoaderCircle
+            strokeWidth={2.5}
+            className='play-spinner col-start-1 row-start-1'
+          />
+        )}
+      </span>
     </button>
   )
 }

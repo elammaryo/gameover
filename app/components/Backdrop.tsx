@@ -1,9 +1,9 @@
 'use client'
 
-import { useContext, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Color, Mesh, Program, Renderer, Triangle } from 'ogl'
-import { PlayBarContext } from '../providers/PlayBarProvider'
+import { useIsPlaying } from '../providers/PlayBarProvider'
 import { cn } from '@/lib/utils'
 import { THEMES, themeFor } from '@/lib/theme'
 import { readBeat } from '@/lib/beatClock'
@@ -148,7 +148,7 @@ const toRgb = (hex: string) => {
 
 export function Backdrop() {
   const pathname = usePathname()
-  const { isPlaying } = useContext(PlayBarContext)
+  const isPlaying = useIsPlaying()
   const host = useRef<HTMLDivElement>(null)
   const target = useRef(paletteFor(pathname).map(toRgb))
   const playing = useRef(isPlaying)

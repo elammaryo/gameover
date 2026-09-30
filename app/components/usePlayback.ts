@@ -1,50 +1,63 @@
 'use client'
 
-import { useContext } from 'react'
-import { PlayBarContext } from '../providers/PlayBarProvider'
 import type { BeatTrack } from '../models/Track'
-import { shuffled } from '@/lib/beats'
+import {
+  playerActions as p,
+  useNowPlaying,
+  type PlayContext
+} from '../providers/PlayBarProvider'
 
 /**
- * One place for "press play on a beat": the same beat toggles pause/resume,
- * a different beat starts playing and the list it came from becomes the
- * queue.
+ * One place for "press play on a beat": the same beat toggles pause/resume;
+ * a different beat starts playing, and the list it came from (`context`)
+ * becomes what plays next. Re-renders only when the playing track or the
+ * play state changes (not on queue edits).
  */
 export function useBeatPlayback() {
-  const { selectedTrack, isPlaying, setTrack, setQueue, setPlayPause } =
-    useContext(PlayBarContext)
+  const now = useNowPlaying()
+  const currentId = now.trackId
 
   const stateOf = (id: string) => {
-    const current = selectedTrack?.id === id
-    return { current, playing: current && isPlaying }
+    const current = currentId === id
+    return { current, playing: current && now.isPlaying, loading: current && now.isLoading }
   }
 
-  const toggle = async (beat: BeatTrack, queue: BeatTrack[]) => {
-    if (selectedTrack?.id === beat.id) {
-      setPlayPause(!isPlaying)
+  const toggle = (beat: BeatTrack, list: BeatTrack[], context: PlayContext | null = null) => {
+    if (currentId === beat.id) {
+      p.toggle()
       return
     }
-    await setTrack(beat)
-    setQueue(beat, queue)
+    const at = list.findIndex(b => b.id === beat.id)
+    if (at < 0) p.play([beat, ...list], 0, context)
+    else p.play(list, at, context)
   }
+
+  /** Is this list what's playing? (By its context when it has one.) */
+  const onList = (beats: BeatTrack[], context?: PlayContext | null) =>
+    (!context || now.contextId === context.id) && beats.some(b => b.id === currentId)
 
   /** Play a whole list from the top (or shuffled). Toggles if already on it. */
-  const playAll = async (beats: BeatTrack[], opts: { shuffle?: boolean } = {}) => {
+  const playAll = (
+    beats: BeatTrack[],
+    opts: { shuffle?: boolean; context?: PlayContext | null } = {}
+  ) => {
     if (!beats.length) return
-    const onThisList = beats.some(b => b.id === selectedTrack?.id)
-    if (onThisList && !opts.shuffle) {
-      setPlayPause(!isPlaying)
+    const context = opts.context ?? null
+    if (onList(beats, context) && !opts.shuffle) {
+      p.toggle()
       return
     }
-    const queue = opts.shuffle ? shuffled(beats) : beats
-    await setTrack(queue[0])
-    setQueue(queue[0], queue)
+    if (opts.shuffle) {
+      p.play(beats, Math.floor(Math.random() * beats.length), context, { shuffle: true })
+    } else {
+      p.play(beats, 0, context)
+    }
   }
 
-  const listState = (beats: BeatTrack[]) => {
-    const current = beats.some(b => b.id === selectedTrack?.id)
-    return { current, playing: current && isPlaying }
+  const listState = (beats: BeatTrack[], context?: PlayContext | null) => {
+    const current = onList(beats, context)
+    return { current, playing: current && now.isPlaying }
   }
 
-  return { toggle, playAll, stateOf, listState, selectedTrack, isPlaying }
+  return { toggle, playAll, stateOf, listState, isPlaying: now.isPlaying }
 }

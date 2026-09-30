@@ -153,6 +153,14 @@ export default function Studio() {
   )
 
   const filtered = family !== 'all' || query.trim() !== ''
+
+  // what the queue shows as "Playing from …"
+  const listContext = useMemo(() => {
+    const q = query.trim()
+    const fam = GENRE_FAMILIES.find(f => f.id === family)
+    const name = q ? `“${q}” in the studio` : fam ? `Studio · ${fam.label}` : 'Studio beats'
+    return { id: `studio:${family}:${q.toLowerCase()}:${sort}`, name }
+  }, [family, query, sort])
   const clearFilters = () => {
     setFamily('all')
     setQuery('')
@@ -357,7 +365,12 @@ export default function Studio() {
               </div>
 
               {visible.length ? (
-                <BeatList beats={visible} className='mt-3' intro={arriving} />
+                <BeatList
+                  beats={visible}
+                  context={listContext}
+                  className='mt-3'
+                  intro={arriving}
+                />
               ) : beats.length ? (
                 <EmptyState
                   className='mt-4'

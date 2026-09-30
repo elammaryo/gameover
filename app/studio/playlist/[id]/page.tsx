@@ -52,7 +52,8 @@ export default function BeatPackPage() {
 
   if (!pack) notFound()
 
-  const { current, playing } = listState(list)
+  const context = { id: `pack:${pack.id}`, name: `${pack.name} pack` }
+  const { current, playing } = listState(list, context)
   const accent = packAccent(pack.name)
   const genres = uniqueValues(list.map(b => b.genre))
   const moods = uniqueValues(list.map(b => b.mood))
@@ -88,7 +89,7 @@ export default function BeatPackPage() {
           <div className='flex flex-wrap items-center gap-3'>
             <Button
               size='lg'
-              onClick={() => playAll(list)}
+              onClick={() => playAll(list, { context })}
               disabled={loading || !list.length}
             >
               {playing ? (
@@ -101,7 +102,7 @@ export default function BeatPackPage() {
             <Button
               size='lg'
               variant='secondary'
-              onClick={() => playAll(list, { shuffle: true })}
+              onClick={() => playAll(list, { shuffle: true, context })}
               disabled={loading || list.length < 2}
             >
               <Shuffle className='size-4' />
@@ -156,7 +157,7 @@ export default function BeatPackPage() {
             ))}
           </div>
         ) : list.length ? (
-          <BeatList beats={list} />
+          <BeatList beats={list} context={context} />
         ) : (
           <EmptyState title='This pack is empty for now'>
             Its beats couldn’t load. Refresh to try again.

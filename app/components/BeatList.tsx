@@ -1,23 +1,29 @@
 'use client'
 
+import { useId } from 'react'
+import { motion } from 'motion/react'
 import { Play } from 'lucide-react'
 import type { BeatTrack } from '../models/Track'
+import type { PlayContext } from '../providers/PlayBarProvider'
 import { BeatCover } from './Covers'
+import { TrackMenu } from './TrackMenu'
 import { EqBars, PlayButton, Tag } from './ui'
 import { useBeatPlayback } from './usePlayback'
 import { accentFor, beatSubtitle } from '@/lib/beats'
 import { cn } from '@/lib/utils'
 
 const COLS =
-  'md:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,9rem)_3.5rem_6rem_7.5rem_2.5rem] lg:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,11rem)_4rem_6.5rem_8rem_2.5rem]'
+  'md:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,7rem)_3.5rem_6rem_7.5rem_4.75rem] lg:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,11rem)_4rem_6.5rem_8rem_4.75rem]'
 
 /**
  * The studio tracklist: number, generated cover, title / type-beat line,
- * genre, tempo, key, mood. The whole row plays; the list becomes the queue.
+ * genre, tempo, key, mood. The whole row plays and the list becomes the
+ * queue; "⋯" plays a beat next or adds it to the queue.
  */
 export function BeatList({
   beats,
   queue = beats,
+  context = null,
   showHeader = true,
   intro = false,
   className
@@ -25,12 +31,16 @@ export function BeatList({
   beats: BeatTrack[]
   /** what plays next; defaults to the visible list */
   queue?: BeatTrack[]
+  /** where the queue says it's "playing from" */
+  context?: PlayContext | null
   showHeader?: boolean
   /** cascade the rows in (on arrival) */
   intro?: boolean
   className?: string
 }) {
   const { toggle, stateOf } = useBeatPlayback()
+  // the live highlight glides from row to row as tracks change
+  const highlightId = `${useId()}-current`
 
   return (
     <div className={className}>
@@ -53,7 +63,7 @@ export function BeatList({
       )}
       <ol className='mt-2 flex flex-col gap-0.5'>
         {beats.map((beat, i) => {
-          const { current, playing } = stateOf(beat.id)
+          const { current, playing, loading } = stateOf(beat.id)
           const subtitle = beatSubtitle(beat)
           return (
             <li
@@ -67,14 +77,20 @@ export function BeatList({
                   : undefined
               }
               className={cn(
-                'group/row relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live md:gap-4 md:px-3',
+                'group/row relative isolate grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[[data-row-play]:focus-visible]:ring-2 has-[[data-row-play]:focus-visible]:ring-live md:gap-4 md:px-3',
                 COLS,
                 intro && 'intro-rise',
-                current
-                  ? 'bg-live/[0.07] hover:bg-live/[0.1]'
-                  : 'hover:bg-white/[0.04]'
+                !current && 'hover:bg-white/[0.04]'
               )}
             >
+              {current && (
+                <motion.span
+                  aria-hidden
+                  layoutId={highlightId}
+                  transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                  className='absolute inset-0 -z-10 rounded-xl bg-live/[0.07] ring-1 ring-live/15 ring-inset transition-colors group-hover/row:bg-live/[0.1]'
+                />
+              )}
               {/* index, or a live meter for the current beat */}
               <span className='relative hidden size-9 items-center justify-center md:flex'>
                 {current ? (
@@ -147,18 +163,26 @@ export function BeatList({
                 )}
               </span>
 
-              <PlayButton
-                size='md'
-                tone={current ? 'accent' : 'ghost'}
-                playing={playing}
-                label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
-                onClick={() => toggle(beat, queue)}
-                stretched
-                className={cn(
-                  'justify-self-end after:rounded-xl focus-visible:outline-none md:size-9',
-                  !current && 'group-hover/row:bg-white/[0.12]'
-                )}
-              />
+              <span className='flex items-center justify-end gap-1'>
+                <TrackMenu
+                  track={beat}
+                  className='md:opacity-0 md:group-focus-within/row:opacity-100 md:group-hover/row:opacity-100 pointer-coarse:opacity-100'
+                />
+                <PlayButton
+                  data-row-play
+                  size='md'
+                  tone={current ? 'accent' : 'ghost'}
+                  playing={playing}
+                  loading={loading}
+                  label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
+                  onClick={() => toggle(beat, queue, context)}
+                  stretched
+                  className={cn(
+                    'after:rounded-xl focus-visible:outline-none md:size-9',
+                    !current && 'group-hover/row:bg-white/[0.12]'
+                  )}
+                />
+              </span>
             </li>
           )
         })}
