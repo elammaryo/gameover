@@ -1,5 +1,7 @@
 import { BeatTrack, type Track } from '@/app/models/Track'
+import { Playlist } from '@/app/models/Playlist'
 import beatsData from '@/app/api/beats/beats.json'
+import packsData from '@/app/api/beats/playlists.json'
 
 /* ---------------------------------------------------------------------------
    Catalogue
@@ -14,6 +16,15 @@ export const FEATURED_BEAT_IDS = ['109', '91', '46', '80', '17', '79']
  */
 export const LOCAL_BEATS: BeatTrack[] = beatsData.map(
   beat => new BeatTrack(beat as unknown as BeatTrack)
+)
+
+/** The packs /api/beats/playlists serves, likewise bundled. */
+export const LOCAL_PACKS: Playlist[] = packsData.map(
+  pack =>
+    new Playlist({
+      ...(pack as unknown as ConstructorParameters<typeof Playlist>[0]),
+      type: 'beat'
+    })
 )
 
 export function pickFeatured(beats: BeatTrack[]) {
@@ -285,23 +296,3 @@ const PAD_FONT: Record<string, string[]> = {
 export function glyphFor(letter: string): string[] {
   return PAD_FONT[letter.toUpperCase()] ?? PAD_FONT.G
 }
-
-/** The GameOver mark: a G on a 5x5 pad grid, H is the cyan "hit" pad */
-export const MARK_PATTERN = ['.XXX.', 'X....', 'X.HXX', 'X...X', '.XXX.']
-
-/** The order the pads light up when the mark "plays", as [x, y] */
-export const MARK_SEQUENCE: Array<[number, number]> = [
-  [3, 0],
-  [2, 0],
-  [1, 0],
-  [0, 1],
-  [0, 2],
-  [0, 3],
-  [1, 4],
-  [2, 4],
-  [3, 4],
-  [4, 3],
-  [4, 2],
-  [3, 2],
-  [2, 2]
-]

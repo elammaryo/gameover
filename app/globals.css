@@ -23,6 +23,12 @@
   --color-signal: #ff3448;
   --color-signal-hi: #ff5c6a;
   --color-signal-lo: #d91e34;
+
+  /* page accent: overridden per section via <html data-theme> (lib/theme.ts) */
+  --color-theme: #ff3448;
+  --color-theme-hi: #ff5c6a;
+  --color-theme-2: #ff7a2e;
+  --color-theme-3: #3be7ff;
   --color-live: #3be7ff;
   --color-warn: #ffb547;
   --color-spotify: #1ed760;
@@ -86,6 +92,44 @@
   }
 }
 
+/* Section colour themes (keep in sync with lib/theme.ts) */
+:root[data-theme='home'] {
+  --color-theme: #00d4ff;
+  --color-theme-hi: #5ce4ff;
+  --color-theme-2: #ec4899;
+  --color-theme-3: #a855f7;
+}
+:root[data-theme='studio'] {
+  --color-theme: #ff3448;
+  --color-theme-hi: #ff5c6a;
+  --color-theme-2: #ff7a2e;
+  --color-theme-3: #3be7ff;
+}
+:root[data-theme='spotify'] {
+  --color-theme: #1ed760;
+  --color-theme-hi: #4be584;
+  --color-theme-2: #1db954;
+  --color-theme-3: #00ff7f;
+}
+:root[data-theme='about'] {
+  --color-theme: #b46cfa;
+  --color-theme-hi: #c68dfb;
+  --color-theme-2: #ec4899;
+  --color-theme-3: #8b5cf6;
+}
+:root[data-theme='tech'] {
+  --color-theme: #00eaff;
+  --color-theme-hi: #5cf1ff;
+  --color-theme-2: #5227ff;
+  --color-theme-3: #ff00ea;
+}
+:root[data-theme='lost'] {
+  --color-theme: #ff3448;
+  --color-theme-hi: #ff5c6a;
+  --color-theme-2: #b3122a;
+  --color-theme-3: #ff5c6a;
+}
+
 @layer base {
   * {
     border-color: var(--color-line);
@@ -114,7 +158,7 @@
   }
 
   ::selection {
-    background: rgb(255 52 72 / 0.4);
+    background: color-mix(in srgb, var(--color-theme) 40%, transparent);
     color: #fff;
   }
 
@@ -228,34 +272,6 @@
   }
 }
 
-@keyframes pad-hit {
-  0% {
-    filter: brightness(1);
-  }
-  18% {
-    filter: brightness(1.9) saturate(1.2);
-    transform: scale(0.86);
-  }
-  100% {
-    filter: brightness(1);
-    transform: scale(1);
-  }
-}
-
-@keyframes pad-snake {
-  0% {
-    opacity: 0.1;
-  }
-  10%,
-  62% {
-    opacity: 1;
-  }
-  78%,
-  100% {
-    opacity: 0.1;
-  }
-}
-
 @utility wordmark-mask {
   -webkit-mask: url('/brand/gameover-wordmark.svg') center / contain no-repeat;
   mask: url('/brand/gameover-wordmark.svg') center / contain no-repeat;
@@ -271,28 +287,371 @@
   }
 }
 
-@keyframes glitch-x {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  20% {
-    transform: translate(-2px, 1px);
-  }
-  40% {
-    transform: translate(2px, -1px);
-  }
-  60% {
-    transform: translate(-1px, 0);
-  }
-  80% {
-    transform: translate(1px, 1px);
-  }
-}
-
 .eq-bar {
   transform-origin: bottom;
   animation: eq 0.9s var(--ease-snap) infinite;
+}
+
+/* with a beat playing, the bars ride its kick and hats instead
+   (--kick / --hat come from useBeatPulse) */
+[data-beat='on'] > .eq-bar {
+  animation: none;
+}
+[data-beat='on'] > .eq-bar:nth-child(1) {
+  transform: scaleY(calc(0.2 + var(--kick) * 0.8));
+}
+[data-beat='on'] > .eq-bar:nth-child(2) {
+  transform: scaleY(calc(0.22 + var(--hat) * 0.6));
+}
+[data-beat='on'] > .eq-bar:nth-child(3) {
+  transform: scaleY(calc(0.3 + var(--kick) * 0.45 + var(--hat) * 0.25));
+}
+[data-beat='on'] > .eq-bar:nth-child(4) {
+  transform: scaleY(calc(0.18 + var(--hat) * 0.42 + var(--kick) * 0.3));
+}
+
+/* ---------------------------------------------------------------------------
+   Entrances. Pages rise in when they mount; while a stage transition covers
+   the screen (<html data-stage="on">) they wait, then play on the reveal.
+   `--i` staggers siblings. Fill mode is `backwards` on purpose: once done,
+   the animation lets go, so hover transforms keep working.
+--------------------------------------------------------------------------- */
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+
+@keyframes intro-deal {
+  from {
+    opacity: 0;
+    transform: translateY(56px) rotate(-3deg) scale(0.94);
+  }
+}
+
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility intro-rise {
+  animation: intro-rise 760ms var(--ease-snap) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms + var(--intro-at, 0ms));
+}
+
+@utility intro-deal {
+  animation: intro-deal 860ms var(--ease-snap) backwards;
+  animation-delay: calc(var(--i, 0) * 85ms + var(--intro-at, 140ms));
+}
+
+@utility intro-fade {
+  animation: intro-fade 900ms ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 70ms + var(--intro-at, 0ms));
+}
+
+:root[data-stage='on'] :is(.intro-rise, .intro-deal, .intro-fade) {
+  animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------------------------
+   Title screen (app/page.tsx)
+--------------------------------------------------------------------------- */
+
+/* pressing START: the title screen zooms away under the stage portal, and
+   rests while it's covered */
+.title-screen {
+  transition:
+    scale 700ms ease-in,
+    opacity 700ms ease-in;
+}
+:root[data-stage='on'] .title-screen {
+  scale: 1.07;
+  opacity: 0.4;
+}
+:root[data-stage-covered] .title-screen,
+:root[data-stage-covered] .title-screen * {
+  animation-play-state: paused !important;
+}
+
+/* a CRT refresh line drifting down the screen */
+.title-sweep {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--color-theme) 5%, transparent) 70%,
+    rgb(255 255 255 / 0.05) 71%,
+    transparent 73%
+  );
+  animation: title-sweep 9s linear infinite;
+}
+@keyframes title-sweep {
+  from {
+    translate: 0 -28vh;
+  }
+  to {
+    translate: 0 110svh;
+  }
+}
+
+.sentinel-float {
+  animation: sentinel-float 7s ease-in-out infinite;
+}
+@keyframes sentinel-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -9px;
+  }
+}
+
+/* START: breathes while idle, pumps with the kick while a beat plays */
+.start-glow {
+  background: linear-gradient(
+    90deg,
+    var(--color-theme),
+    var(--color-theme-3),
+    var(--color-theme-2)
+  );
+  filter: blur(16px);
+  opacity: calc(0.4 + var(--kick) * 0.5);
+  animation: start-breathe 2.6s ease-in-out infinite;
+}
+.start-glow[data-beat='on'] {
+  animation: none;
+  scale: calc(1 + var(--kick) * 0.06);
+}
+@keyframes start-breathe {
+  0%,
+  100% {
+    opacity: 0.32;
+    scale: 0.97;
+  }
+  50% {
+    opacity: 0.62;
+    scale: 1.05;
+  }
+}
+
+@keyframes start-sheen {
+  0% {
+    translate: 0 0;
+  }
+  28%,
+  100% {
+    translate: 420% 0;
+  }
+}
+
+/* the Konami code (app/components/CheatCodes.tsx) */
+:root[data-cheat] [data-backdrop] {
+  animation: cheat-hue 1.6s linear infinite;
+}
+@keyframes cheat-hue {
+  from {
+    filter: hue-rotate(0deg) saturate(1.5);
+  }
+  to {
+    filter: hue-rotate(360deg) saturate(1.5);
+  }
+}
+.cheat-toast {
+  animation: cheat-pop 460ms var(--ease-pad) both;
+}
+@keyframes cheat-pop {
+  from {
+    opacity: 0;
+    scale: 0.8;
+    translate: 0 -10px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Stage transition (app/components/StageTransition.tsx)
+--------------------------------------------------------------------------- */
+
+/* the portal opens from the button: a colour wash first, the black stage
+   a beat behind it, so a ring of light leads the edge */
+.stage-wash,
+.stage-portal {
+  clip-path: circle(0px at var(--ox) var(--oy));
+  animation: stage-portal 560ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+.stage-wash {
+  background: linear-gradient(
+    135deg,
+    var(--stage-c0),
+    var(--stage-c1) 55%,
+    var(--stage-c2)
+  );
+}
+.stage-portal {
+  animation-delay: 45ms;
+}
+@keyframes stage-portal {
+  to {
+    clip-path: circle(150vmax at var(--ox) var(--oy));
+  }
+}
+
+.stage-pixel {
+  /* (colour-mixes live in custom properties: the CSS minifier drops
+     keyframes that use color-mix() with var() directly) */
+  --pixel-flash: color-mix(in srgb, var(--stage-c0) 50%, var(--color-ink-950));
+  background: var(--color-ink-950);
+  scale: 1.04;
+}
+.stage-pixel-out {
+  animation: stage-pixel-out 360ms var(--ease-snap) var(--d) both;
+}
+@keyframes stage-pixel-out {
+  0% {
+    opacity: 1;
+    scale: 1.04;
+  }
+  30% {
+    background: var(--pixel-flash);
+  }
+  100% {
+    opacity: 0;
+    scale: 0.25;
+    background: var(--color-ink-950);
+  }
+}
+
+.stage-scan {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.035) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+.stage-kicker {
+  animation: stage-type 420ms steps(10, end) 180ms both;
+}
+@keyframes stage-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.stage-title {
+  text-shadow:
+    -0.035em 0 color-mix(in srgb, var(--stage-c0) 85%, transparent),
+    0.035em 0 color-mix(in srgb, var(--stage-c2) 75%, transparent);
+  animation: stage-title 900ms var(--ease-snap) 200ms both;
+}
+@keyframes stage-title {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.3em;
+    filter: blur(10px);
+  }
+  45% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    letter-spacing: -0.03em;
+  }
+}
+
+.stage-pad {
+  --pad: var(--stage-c2);
+  --pad-lit: color-mix(in srgb, var(--pad) 82%, transparent);
+  --pad-glow: color-mix(in srgb, var(--pad) 55%, transparent);
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  animation: stage-pad 380ms var(--ease-pad) both;
+  animation-delay: calc(300ms + var(--i) * 53.57ms);
+}
+.stage-pad[data-kind='kick'] {
+  --pad: var(--stage-c0);
+}
+.stage-pad[data-kind='clap'] {
+  --pad: var(--color-bone);
+}
+@keyframes stage-pad {
+  from {
+    background: rgb(255 255 255 / 0.08);
+    scale: 0.7;
+  }
+  25% {
+    background: var(--pad);
+    scale: 1.35;
+    box-shadow: 0 0 18px var(--pad);
+  }
+  to {
+    background: var(--pad-lit);
+    scale: 1;
+    box-shadow: 0 0 10px var(--pad-glow);
+  }
+}
+
+.stage-card-out {
+  animation: stage-card-out 380ms cubic-bezier(0.55, 0, 0.75, 0) both;
+}
+@keyframes stage-card-out {
+  to {
+    opacity: 0;
+    scale: 1.22;
+    filter: blur(10px);
+  }
+}
+
+.stage-flash {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(255 255 255 / 0.9),
+    color-mix(in srgb, var(--stage-c0) 60%, transparent) 45%,
+    transparent 75%
+  );
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.stage-flash-on {
+  animation: stage-flash 420ms ease-out both;
+}
+@keyframes stage-flash {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* the drop: the new page takes the hit */
+:root.stage-hit #content {
+  animation: stage-hit 320ms linear;
+}
+@keyframes stage-hit {
+  0% {
+    translate: 0 0;
+  }
+  15% {
+    translate: -6px 4px;
+  }
+  35% {
+    translate: 5px -3px;
+  }
+  55% {
+    translate: -3px 2px;
+  }
+  75% {
+    translate: 2px -1px;
+  }
+  100% {
+    translate: 0 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -301,6 +660,7 @@
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }

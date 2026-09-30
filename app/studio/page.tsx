@@ -14,6 +14,7 @@ import type { Playlist } from '../models/Playlist'
 import type { BeatTrack } from '../models/Track'
 import FeaturedBeatsSection from '../components/FeaturedBeatCard'
 import { BeatList } from '../components/BeatList'
+import { CountUp } from '../components/CountUp'
 import { PackGrid } from '../components/Packs'
 import {
   CtaBand,
@@ -22,20 +23,21 @@ import {
   Page,
   PageHeader,
   SectionHeader,
-  Skeleton,
   StatStrip,
   Tabs
 } from '../components/ui'
 import {
   GENRE_FAMILIES,
+  LOCAL_BEATS,
+  LOCAL_PACKS,
   averageBpm,
   inFamily,
   matchesQuery,
   pickFeatured,
   type GenreFamilyId
 } from '@/lib/beats'
+import { STAGE_REVEAL_EVENT, stageActive } from '@/lib/stage'
 import { SOUNDCLOUD_URL } from '@/lib/site'
-import { cn } from '@/lib/utils'
 
 type View = 'beats' | 'packs'
 type Sort = 'latest' | 'bpm-asc' | 'bpm-desc' | 'az'
@@ -69,10 +71,13 @@ function isTyping(el: EventTarget | null) {
 }
 
 export default function Studio() {
-  const [beats, setBeats] = useState<BeatTrack[]>([])
-  const [packs, setPacks] = useState<Playlist[]>([])
-  const [beatsLoading, setBeatsLoading] = useState(true)
-  const [packsLoading, setPacksLoading] = useState(true)
+  // the catalogue ships with the page, so the studio is ready the moment it
+  // appears (no loading state behind the stage transition); the API still
+  // gets the final word
+  const [beats, setBeats] = useState<BeatTrack[]>(LOCAL_BEATS)
+  const [packs, setPacks] = useState<Playlist[]>(LOCAL_PACKS)
+  // rows cascade in on arrival only, not on every filter change
+  const [arriving, setArriving] = useState(true)
   // the tab lives in the URL hash, so coming back from a pack lands on Packs
   const hash = useSyncExternalStore(subscribeToHash, readHash, () => '')
   const [picked, setPicked] = useState<View | null>(null)
@@ -84,14 +89,25 @@ export default function Studio() {
 
   useEffect(() => {
     getBeats()
-      .then(setBeats)
+      .then(fresh => fresh.length && setBeats(fresh))
       .catch(error => console.error('Error fetching beats:', error))
-      .finally(() => setBeatsLoading(false))
 
     getBeatsPlaylists()
-      .then(setPacks)
+      .then(fresh => fresh.length && setPacks(fresh))
       .catch(error => console.error('Error fetching packs:', error))
-      .finally(() => setPacksLoading(false))
+  }, [])
+
+  useEffect(() => {
+    let timer = 0
+    const settle = () => {
+      timer = window.setTimeout(() => setArriving(false), 2600)
+    }
+    if (stageActive()) window.addEventListener(STAGE_REVEAL_EVENT, settle, { once: true })
+    else settle()
+    return () => {
+      window.removeEventListener(STAGE_REVEAL_EVENT, settle)
+      window.clearTimeout(timer)
+    }
   }, [])
 
   const changeView = (next: View) => {
@@ -142,55 +158,43 @@ export default function Studio() {
     setQuery('')
   }
 
-  const loadingValue = <span className='text-bone-dim'>—</span>
-
   return (
     <Page>
       <PageHeader eyebrow='GameOver Studio' title='The sound lab'>
-        Hard-hitting trap, drill and afrobeats, made for artists. Press play on
+        Hard-hitting trap, drill and hip-hop, made for artists. Press play on
         anything below, or dig through the packs.
       </PageHeader>
 
       <StatStrip
         className='mt-10 sm:mt-12'
         items={[
-          {
-            label: 'Beats',
-            value: beatsLoading ? loadingValue : beats.length
-          },
-          {
-            label: 'Packs',
-            value: packsLoading ? loadingValue : packs.length
-          },
+          { label: 'Beats', value: <CountUp value={beats.length} /> },
+          { label: 'Packs', value: <CountUp value={packs.length} /> },
           {
             label: 'Genres',
-            value: beatsLoading
-              ? loadingValue
-              : new Set(beats.map(b => b.genre)).size
+            value: <CountUp value={new Set(beats.map(b => b.genre)).size} />
           },
           {
             label: 'Avg tempo',
-            value: beatsLoading ? loadingValue : averageBpm(beats),
-            hint: beatsLoading ? undefined : 'BPM'
+            value: <CountUp value={averageBpm(beats)} duration={1400} />,
+            hint: 'BPM'
           }
         ]}
       />
 
       {/* FEATURED */}
       <section aria-labelledby='featured-title' className='mt-20 sm:mt-24'>
-        <SectionHeader
-          id='featured-title'
-          eyebrow='Featured'
-          title='Hand-picked heat'
-        />
-        {beatsLoading ? (
-          <div className='grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            <Skeleton className='h-[380px] rounded-3xl md:col-span-2 lg:row-span-2 lg:h-auto lg:min-h-[480px]' />
-            {Array.from({ length: 5 }, (_, i) => (
-              <Skeleton key={i} className='h-24 rounded-2xl lg:h-[232px]' />
-            ))}
-          </div>
-        ) : featured.length ? (
+        <div
+          className='intro-rise'
+          style={{ '--i': 6 } as React.CSSProperties}
+        >
+          <SectionHeader
+            id='featured-title'
+            eyebrow='Featured'
+            title='Hand-picked heat'
+          />
+        </div>
+        {featured.length ? (
           <FeaturedBeatsSection featuredBeats={featured} allBeats={beats} />
         ) : (
           <EmptyState title='The featured shelf is empty'>
@@ -205,7 +209,10 @@ export default function Studio() {
         aria-label='Library'
         className='mt-20 scroll-mt-[calc(var(--nav-h)+24px)] sm:mt-28'
       >
-        <div className='flex flex-col gap-3 border-b border-line pb-4'>
+        <div
+          className='intro-rise flex flex-col gap-3 border-b border-line pb-4'
+          style={{ '--i': 8 } as React.CSSProperties}
+        >
           <p className='hud-label'>Library</p>
           <Tabs
             idPrefix='library'
@@ -215,12 +222,12 @@ export default function Studio() {
               {
                 id: 'beats',
                 label: 'Beats',
-                count: beatsLoading ? undefined : beats.length
+                count: beats.length
               },
               {
                 id: 'packs',
                 label: 'Packs',
-                count: packsLoading ? undefined : packs.length,
+                count: packs.length,
                 shot: 'tab-packs'
               }
             ]}
@@ -308,7 +315,7 @@ export default function Studio() {
                 >
                   <FilterChip
                     active={family === 'all'}
-                    count={beatsLoading ? undefined : beats.length}
+                    count={beats.length}
                     onClick={() => setFamily('all')}
                   >
                     All
@@ -334,11 +341,9 @@ export default function Studio() {
                   aria-live='polite'
                   aria-atomic='true'
                 >
-                  {beatsLoading
-                    ? 'Loading beats…'
-                    : filtered
-                      ? `${visible.length} of ${beats.length} beats`
-                      : `${beats.length} beats`}
+                  {filtered
+                    ? `${visible.length} of ${beats.length} beats`
+                    : `${beats.length} beats`}
                 </p>
                 {filtered && (
                   <button
@@ -351,14 +356,8 @@ export default function Studio() {
                 )}
               </div>
 
-              {beatsLoading ? (
-                <div className='mt-4 flex flex-col gap-2'>
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <Skeleton key={i} className='h-[60px]' />
-                  ))}
-                </div>
-              ) : visible.length ? (
-                <BeatList beats={visible} className='mt-3' />
+              {visible.length ? (
+                <BeatList beats={visible} className='mt-3' intro={arriving} />
               ) : beats.length ? (
                 <EmptyState
                   className='mt-4'
@@ -385,15 +384,6 @@ export default function Studio() {
                 </EmptyState>
               )}
             </>
-          ) : packsLoading || beatsLoading ? (
-            <div className='grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4'>
-              {Array.from({ length: 4 }, (_, i) => (
-                <Skeleton
-                  key={i}
-                  className={cn('h-[100px] rounded-2xl sm:aspect-[4/5] sm:h-auto')}
-                />
-              ))}
-            </div>
           ) : packs.length ? (
             <PackGrid packs={packs} beats={beats} />
           ) : (

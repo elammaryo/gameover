@@ -39,11 +39,13 @@ function FeaturedBeatsSection({
 
   return (
     <div className='grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      {/* cards are dealt onto the table on arrival */}
       <HeroCard
         beat={hero}
         {...state(hero)}
         onPlay={() => handlePlay(hero)}
-        className='md:col-span-2 lg:row-span-2'
+        className='intro-deal md:col-span-2 lg:row-span-2'
+        style={{ '--i': 0, '--intro-at': '380ms' } as React.CSSProperties}
       />
       {rest.slice(0, 5).map((beat, i) => (
         <MiniCard
@@ -51,7 +53,9 @@ function FeaturedBeatsSection({
           beat={beat}
           {...state(beat)}
           onPlay={() => handlePlay(beat)}
+          style={{ '--i': i + 1, '--intro-at': '380ms' } as React.CSSProperties}
           className={cn(
+            'intro-deal',
             i === rest.length - 1 &&
               rest.length % 2 === 1 &&
               'md:col-span-2 lg:col-span-1'
@@ -68,6 +72,7 @@ type CardProps = {
   playing: boolean
   onPlay: () => void
   className?: string
+  style?: React.CSSProperties
 }
 
 function NowPlayingBadge({ playing }: { playing: boolean }) {
@@ -79,7 +84,7 @@ function NowPlayingBadge({ playing }: { playing: boolean }) {
   )
 }
 
-function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
+function HeroCard({ beat, current, playing, onPlay, className, style }: CardProps) {
   const accent = accentFor(beat)
   const subtitle = beatSubtitle(beat)
   return (
@@ -89,6 +94,7 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
         className
       )}
       style={{
+        ...style,
         backgroundImage: `radial-gradient(70% 90% at 85% 40%, ${accent}24, transparent 65%)`
       }}
     >
@@ -109,6 +115,7 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
         beat={beat}
         glow
         detail
+        live={current}
         className='pointer-events-none absolute top-1/2 right-[-10%] w-[62%] max-w-[380px] -translate-y-[46%] rotate-[-6deg] rounded-[28px] opacity-90 transition-transform duration-500 ease-snap group-hover:rotate-[-3deg] sm:right-[-4%] sm:w-[48%]'
       />
 
@@ -128,7 +135,7 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
           <PlayButton
             data-shot='play-featured'
             size='xl'
-            tone='signal'
+            tone='accent'
             playing={playing}
             label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
             onClick={onPlay}
@@ -144,7 +151,7 @@ function HeroCard({ beat, current, playing, onPlay, className }: CardProps) {
   )
 }
 
-function MiniCard({ beat, current, playing, onPlay, className }: CardProps) {
+function MiniCard({ beat, current, playing, onPlay, className, style }: CardProps) {
   const accent = accentFor(beat)
   const subtitle = beatSubtitle(beat)
   return (
@@ -155,12 +162,14 @@ function MiniCard({ beat, current, playing, onPlay, className }: CardProps) {
         className
       )}
       style={{
+        ...style,
         backgroundImage: `radial-gradient(80% 70% at 0% 0%, ${accent}1a, transparent 70%)`
       }}
     >
       <div className='flex items-start justify-between gap-3'>
         <BeatCover
           beat={beat}
+          live={current}
           className='size-16 rounded-xl transition-transform duration-500 ease-snap group-hover:scale-[1.04] sm:size-[72px]'
         />
         <div className='hidden lg:block'>
@@ -197,12 +206,12 @@ function MiniCard({ beat, current, playing, onPlay, className }: CardProps) {
         </div>
         <PlayButton
           size='md'
-          tone={current ? 'signal' : 'ghost'}
+          tone={current ? 'accent' : 'ghost'}
           playing={playing}
           label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
           onClick={onPlay}
           stretched
-          className='after:rounded-2xl group-hover:bg-signal group-hover:text-ink-950 group-hover:ring-0'
+          className='after:rounded-2xl group-hover:bg-theme group-hover:text-ink-950 group-hover:ring-0'
         />
       </div>
     </article>

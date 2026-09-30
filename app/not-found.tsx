@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { ArrowRight, RotateCcw } from 'lucide-react'
 import { buttonClasses } from './components/Button'
 import { ContinueCountdown } from './components/ContinueCountdown'
-import { Mark } from './components/brand/Mark'
+import { GIcon } from './components/brand/GIcon'
 
 export const metadata: Metadata = {
   title: 'Page not found'
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main className='mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-[1240px] flex-col items-center justify-center px-5 pt-[calc(var(--nav-h)+2rem)] pb-10 text-center sm:px-8'>
-      <Mark motion='loop' showUnlit className='size-14 opacity-90' />
+      <GIcon label={null} className='size-28 sm:size-32' />
 
       <p className='hud-label mt-10'>Error 404 · Level not found</p>
 

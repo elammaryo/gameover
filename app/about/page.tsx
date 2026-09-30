@@ -23,10 +23,10 @@ type Artist = { name: string; images: { url: string }[] }
 type Load = 'loading' | 'ready' | 'error'
 
 const HI_SCORES = [
-  { stat: 'Minutes listened', score: '56K+', color: 'var(--color-signal)' },
+  { stat: 'Minutes listened', score: '56K+', color: 'var(--color-theme-2)' },
   { stat: 'Saved tracks', score: '450+', color: 'var(--color-live)' },
   { stat: 'Unique artists', score: '120+', color: 'var(--color-warn)' },
-  { stat: 'Playlists made', score: '95+', color: '#A78BFA' }
+  { stat: 'Playlists made', score: '95+', color: 'var(--color-theme)' }
 ]
 
 const RANKS = ['1st', '2nd', '3rd', '4th']
@@ -50,7 +50,7 @@ const ROLES = [
   {
     title: 'Music producer',
     icon: AudioLines,
-    accent: 'var(--color-signal)',
+    accent: 'var(--color-theme)',
     body: 'Specializing in trap, drill, and afrobeats. I craft hard-hitting beats with heavy 808s, crisp hi-hats, and atmospheric melodies that push boundaries.',
     points: ['100+ beats created', '4+ years experience', '8 genres explored']
   },
@@ -169,7 +169,7 @@ export default function AboutPage() {
             {['4+ years', '100+ beats', '8 genres'].map((fact, i) => (
               <li key={fact}>
                 <Tag
-                  dot={['var(--color-signal)', 'var(--color-live)', 'var(--color-warn)'][i]}
+                  dot={['var(--color-theme)', 'var(--color-theme-2)', 'var(--color-live)'][i]}
                   className='h-8 px-3 text-[11px]'
                 >
                   {fact}
@@ -357,7 +357,7 @@ export default function AboutPage() {
                       key={k}
                       className={cn(
                         'size-2 rounded-[2px]',
-                        k <= i ? 'bg-signal/80' : 'bg-white/10'
+                        k <= i ? 'bg-theme/80' : 'bg-white/10'
                       )}
                     />
                   ))}

@@ -1,15 +1,12 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { useContext, useState } from 'react'
-import { Lock } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import type { Playlist } from '../models/Playlist'
 import { SpotifyTrack } from '../models/Track'
 import { PlayBarContext } from '../providers/PlayBarProvider'
 import { getSpotifyAccessToken, playSpotifyTrack } from '../api'
-import { PlayButton } from './ui'
 import { cn } from '@/lib/utils'
 
 /** Start a whole Spotify playlist from the top (needs a connected account). */
@@ -94,78 +91,3 @@ export function PlaylistArt({
 }
 
 export type SpotifyPlaylistPlayback = ReturnType<typeof useSpotifyPlaylistPlayback>
-
-/** Pass the page's single `useSpotifyPlaylistPlayback()` so every card on
-    the page agrees on which playlist is playing. */
-export function SpotifyPlaylistGrid({
-  playlists,
-  isLoggedIn,
-  playback,
-  className
-}: {
-  playlists: Playlist[]
-  isLoggedIn: boolean
-  playback: SpotifyPlaylistPlayback
-  className?: string
-}) {
-  const { play, stateOf } = playback
-
-  return (
-    <div
-      className={cn(
-        'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 [&>article:has(a:focus-visible)]:ring-2 [&>article:has(a:focus-visible)]:ring-live',
-        className
-      )}
-    >
-      {playlists.map(playlist => {
-        const { current, playing } = stateOf(playlist)
-        return (
-          <article
-            key={playlist.id}
-            className={cn(
-              'group surface relative isolate flex flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,translate,scale] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:p-3',
-              current && 'border-spotify/30'
-            )}
-          >
-            <div className='relative'>
-              <PlaylistArt
-                playlist={playlist}
-                sizes='(min-width: 1024px) 280px, (min-width: 768px) 30vw, 45vw'
-                className='w-full transition-transform duration-500 ease-snap group-hover:scale-[1.015]'
-              />
-              {isLoggedIn && (
-                <PlayButton
-                  size='lg'
-                  tone={current ? 'signal' : 'bone'}
-                  playing={playing}
-                  label={`${playing ? 'Pause' : 'Play'} ${playlist.name}`}
-                  onClick={() => play(playlist)}
-                  className={cn(
-                    'absolute right-2.5 bottom-2.5 z-10 shadow-[0_10px_30px_-8px_rgb(0_0_0/0.8)] transition-[opacity,translate,scale,background-color] duration-200 sm:right-3 sm:bottom-3',
-                    // reveal-on-hover only where hover exists (not touch tablets)
-                    !current &&
-                      'sm:[@media(hover:hover)]:translate-y-1 sm:[@media(hover:hover)]:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:focus-visible:translate-y-0 sm:focus-visible:opacity-100'
-                  )}
-                />
-              )}
-            </div>
-            <div className='min-w-0 px-1 pb-1'>
-              <h3 className='truncate'>
-                <Link
-                  href={`/spotify/playlist/${playlist.id}`}
-                  className='text-[15px] font-semibold text-bone after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none sm:text-base'
-                >
-                  {playlist.name}
-                </Link>
-              </h3>
-              <p className='tabular mt-1.5 flex items-center gap-1.5 font-mono text-[11px] tracking-[0.12em] text-bone-dim uppercase'>
-                {!isLoggedIn && <Lock className='size-3' aria-hidden />}
-                {playlist.tracks?.total ?? 0} tracks
-              </p>
-            </div>
-          </article>
-        )
-      })}
-    </div>
-  )
-}

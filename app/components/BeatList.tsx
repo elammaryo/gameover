@@ -19,12 +19,15 @@ export function BeatList({
   beats,
   queue = beats,
   showHeader = true,
+  intro = false,
   className
 }: {
   beats: BeatTrack[]
   /** what plays next; defaults to the visible list */
   queue?: BeatTrack[]
   showHeader?: boolean
+  /** cascade the rows in (on arrival) */
+  intro?: boolean
   className?: string
 }) {
   const { toggle, stateOf } = useBeatPlayback()
@@ -55,9 +58,18 @@ export function BeatList({
           return (
             <li
               key={beat.id}
+              style={
+                intro
+                  ? ({
+                      '--i': Math.min(i, 14),
+                      '--intro-at': '620ms'
+                    } as React.CSSProperties)
+                  : undefined
+              }
               className={cn(
                 'group/row relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live md:gap-4 md:px-3',
                 COLS,
+                intro && 'intro-rise',
                 current
                   ? 'bg-live/[0.07] hover:bg-live/[0.1]'
                   : 'hover:bg-white/[0.04]'
@@ -95,6 +107,7 @@ export function BeatList({
                   beat={beat}
                   className='size-11 rounded-lg sm:size-12'
                   glow={current}
+                  live={current}
                 />
                 <span className='min-w-0'>
                   <span
@@ -136,7 +149,7 @@ export function BeatList({
 
               <PlayButton
                 size='md'
-                tone={current ? 'signal' : 'ghost'}
+                tone={current ? 'accent' : 'ghost'}
                 playing={playing}
                 label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
                 onClick={() => toggle(beat, queue)}

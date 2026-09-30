@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'GameOver — Next Level Beats',
     short_name: 'GameOver',
     description:
-      'Trap, drill and afrobeats by GameOver. Stream original beats and curated playlists.',
+      'Trap, drill and hip-hop beats by GameOver. Stream original beats and curated playlists.',
     start_url: '/',
     display: 'standalone',
     background_color: '#07060a',

@@ -77,7 +77,7 @@ export function PackCard({
         </div>
         <PlayButton
           size='md'
-          tone={current ? 'signal' : 'ghost'}
+          tone={current ? 'accent' : 'ghost'}
           playing={playing}
           label={`${playing ? 'Pause' : 'Play'} the ${pack.name} pack`}
           onClick={() => playAll(list)}

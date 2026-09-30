@@ -5,16 +5,16 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Menu, ShieldAlert, X } from 'lucide-react'
-import { navigateWithTransition } from '@/lib/transition'
+import { enterStage, type StageId } from '@/lib/stage'
 import { NAV_LINKS, SOCIAL_LINKS } from '@/lib/site'
 import { cn } from '@/lib/utils'
-import { Mark } from './brand/Mark'
-import { useFocusTrap } from './useFocusTrap'
 import { Wordmark } from './brand/Wordmark'
+import { useFocusTrap } from './useFocusTrap'
 
-const TRANSITION_LABELS: Record<string, string> = {
-  '/studio': 'Loading studio',
-  '/spotify': 'Loading playlists'
+// leaving the title screen for these plays the stage transition
+const STAGE_FOR: Record<string, StageId> = {
+  '/studio': 'studio',
+  '/spotify': 'spotify'
 }
 
 /**
@@ -28,6 +28,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
   const pathname = usePathname()
   const active =
     selectedTab ?? NAV_LINKS.find(l => pathname.startsWith(l.href))?.id
+  const onHome = pathname === '/'
   // Open state remembers the path it was opened on, so any navigation
   // closes the menu / dialog without an effect.
   const [alertOpenOn, setAlertOpenOn] = useState<string | null>(null)
@@ -179,9 +180,9 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
       return
     setIsMobileMenuOpen(false)
-    if (pathname === '/' && TRANSITION_LABELS[href]) {
+    if (pathname === '/' && STAGE_FOR[href]) {
       e.preventDefault()
-      navigateWithTransition(router, href, TRANSITION_LABELS[href])
+      enterStage(router, href, STAGE_FOR[href], e.currentTarget)
     }
   }
 
@@ -201,13 +202,17 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
           aria-label='Primary'
           className='mx-auto grid h-(--nav-h) max-w-[1440px] grid-cols-[1fr_auto] items-center gap-6 px-5 sm:px-8 md:grid-cols-[1fr_auto_1fr]'
         >
+          {/* the title screen is the logo on home, so the small one bows out */}
           <Link
             href='/'
             aria-label='GameOver home'
-            className='group/mark flex w-fit items-center gap-3 rounded-md'
+            inert={onHome}
+            className={cn(
+              'flex w-fit items-center rounded-md py-2 transition-[opacity,translate] duration-500 ease-snap',
+              onHome && '-translate-y-1 opacity-0'
+            )}
           >
-            <Mark motion='hover' className='size-5 sm:size-[22px]' />
-            <Wordmark className='h-[12px] sm:h-[14px]' />
+            <Wordmark label={null} className='h-3 sm:h-3.5' />
           </Link>
 
           <ul className='hidden items-center gap-9 md:flex'>
@@ -226,7 +231,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
                       className={cn(
                         'size-[7px] rounded-[2px] transition-all duration-200',
                         isActive
-                          ? 'bg-signal shadow-[0_0_10px_var(--color-signal)]'
+                          ? 'bg-theme shadow-[0_0_10px_var(--color-theme)]'
                           : 'scale-50 bg-white/0 group-hover/nav:scale-100 group-hover/nav:bg-white/30'
                       )}
                     />
@@ -310,10 +315,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
             className='fixed inset-0 z-[70] flex flex-col bg-ink-950/95 backdrop-blur-2xl md:hidden'
           >
             <div className='flex h-(--nav-h) items-center justify-between px-5'>
-              <span className='flex items-center gap-3'>
-                <Mark className='size-5' />
-                <Wordmark className='h-[12px]' />
-              </span>
+              <Wordmark className='h-3' />
               <button
                 ref={closeButton}
                 type='button'
@@ -359,7 +361,7 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
                       {isActive && (
                         <span
                           aria-hidden
-                          className='size-2 rounded-[2px] bg-signal shadow-[0_0_10px_var(--color-signal)]'
+                          className='size-2 rounded-[2px] bg-theme shadow-[0_0_10px_var(--color-theme)]'
                         />
                       )}
                       <span className='ml-auto text-right text-xs text-bone-dim'>

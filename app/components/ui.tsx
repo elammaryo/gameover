@@ -74,7 +74,7 @@ export function FilterChip({
         className={cn(
           'size-1.5 rounded-[2px] transition-[background-color,box-shadow] duration-200',
           active
-            ? 'bg-signal shadow-[0_0_8px_var(--color-signal)]'
+            ? 'bg-theme shadow-[0_0_8px_var(--color-theme)]'
             : 'bg-white/20'
         )}
       />
@@ -136,7 +136,7 @@ export function Tabs<T extends string>({
               className={cn(
                 'size-2 rounded-[2px] transition-all duration-200',
                 selected
-                  ? 'bg-signal shadow-[0_0_10px_var(--color-signal)]'
+                  ? 'bg-theme shadow-[0_0_10px_var(--color-theme)]'
                   : 'scale-75 bg-white/15 group-hover/tab:bg-white/30'
               )}
             />
@@ -162,7 +162,7 @@ export function CtaBand({
   children,
   href,
   cta,
-  accent = 'var(--color-signal)',
+  accent = 'var(--color-theme)',
   variant = 'secondary',
   className
 }: {
@@ -264,7 +264,7 @@ export function EmptyState({
             key={i}
             className={cn(
               'size-2.5 rounded-[3px]',
-              i === 4 ? 'bg-signal/70' : 'bg-white/10'
+              i === 4 ? 'bg-theme/70' : 'bg-white/10'
             )}
           />
         ))}
@@ -293,7 +293,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function Eyebrow({
   children,
   className,
-  color = 'var(--color-signal)',
+  color = 'var(--color-theme)',
   as: Tag = 'p'
 }: {
   children: React.ReactNode
@@ -337,16 +337,23 @@ export function PageHeader({
         className
       )}
     >
+      {/* rises in on arrival (paused under a stage transition) */}
       <div className='flex max-w-3xl flex-col gap-5'>
-        <div className='flex items-center gap-3'>
+        <div className='intro-rise flex items-center gap-3'>
           {eyebrowIcon}
           <Eyebrow as='p'>{eyebrow}</Eyebrow>
         </div>
-        <h1 className='font-display-wide text-[clamp(2.4rem,10.5vw,5.25rem)] text-balance break-words text-bone'>
+        <h1
+          className='intro-rise font-display-wide text-[clamp(2.4rem,10.5vw,5.25rem)] text-balance break-words text-bone'
+          style={{ '--i': 1 } as React.CSSProperties}
+        >
           {title}
         </h1>
         {children && (
-          <div className='max-w-2xl text-base leading-relaxed text-pretty text-bone-muted sm:text-lg'>
+          <div
+            className='intro-rise max-w-2xl text-base leading-relaxed text-pretty text-bone-muted sm:text-lg'
+            style={{ '--i': 2 } as React.CSSProperties}
+          >
             {children}
           </div>
         )}
@@ -416,8 +423,9 @@ export function StatStrip({
       {items.map((item, i) => (
         <div
           key={item.label}
+          style={{ '--i': i + 3 } as React.CSSProperties}
           className={cn(
-            'relative flex min-w-0 flex-col gap-2 px-4 py-4 sm:px-6 sm:py-5',
+            'intro-rise relative flex min-w-0 flex-col gap-2 px-4 py-4 sm:px-6 sm:py-5',
             three
               ? i > 0 && 'border-l border-line'
               : [
@@ -474,36 +482,13 @@ export function Tag({
 }
 
 /** Animated level meter used wherever something is playing */
-export function EqBars({
-  className,
-  playing = true
-}: {
-  className?: string
-  playing?: boolean
-}) {
-  return (
-    <span
-      aria-hidden
-      className={cn('inline-flex h-3.5 items-end gap-[2px]', className)}
-    >
-      {[0, 180, 90, 260].map((delay, i) => (
-        <span
-          key={i}
-          className={cn(
-            'w-[3px] rounded-[1px] bg-live',
-            playing ? 'eq-bar h-full' : 'h-1'
-          )}
-          style={playing ? { animationDelay: `${delay}ms` } : undefined}
-        />
-      ))}
-    </span>
-  )
-}
+export { EqBars } from './EqBars'
 
 type PlayButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   playing?: boolean
   size?: 'sm' | 'md' | 'lg' | 'xl'
-  tone?: 'signal' | 'bone' | 'ghost'
+  /** accent = the section colour (red in the studio, green on Spotify...) */
+  tone?: 'accent' | 'bone' | 'ghost'
   label: string
   /**
    * The button's ::after stretches over its row/card (pass the `after:`
@@ -521,8 +506,8 @@ const playSizes = {
 }
 
 const playTones = {
-  signal:
-    'bg-signal text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.35),inset_0_-2px_0_rgb(0_0_0/0.2),0_10px_28px_-10px_rgb(255_52_72/0.85)] hover:bg-signal-hi',
+  accent:
+    'bg-theme text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.35),inset_0_-2px_0_rgb(0_0_0/0.2),0_10px_28px_-10px_color-mix(in_srgb,var(--color-theme)_85%,transparent)] hover:bg-theme-hi',
   bone: 'bg-bone text-ink-950 shadow-[inset_0_-2px_0_rgb(0_0_0/0.15)] hover:bg-white',
   ghost:
     'bg-white/[0.06] text-bone ring-1 ring-white/10 ring-inset hover:bg-white/[0.12]'
@@ -531,7 +516,7 @@ const playTones = {
 export function PlayButton({
   playing,
   size = 'md',
-  tone = 'signal',
+  tone = 'accent',
   label,
   stretched = false,
   className,

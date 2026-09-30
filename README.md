@@ -107,22 +107,33 @@ Spotify account.
 
 ## 🎨 Design
 
-A drum-machine / arcade system: ink surfaces, bone text, one **signal red**
-for actions and one **live cyan** for whatever is playing. Content brings the
-colour.
+A drum-machine / arcade system on ink surfaces with bone text. Each section
+keeps its own colours (home cyan/pink/purple, studio red, Spotify green,
+about purple, tech indigo/cyan), set on `<html data-theme>` by
+`lib/theme.ts` and used through the `--color-theme*` tokens.
 
-- **Mark**: a "G" lit on a 5×5 pad grid with one cyan pad mid-hit
-  (`app/icon.svg`, `app/favicon.ico`, `app/apple-icon.png`, `public/icons/*`,
-  `app/components/brand/`)
+- **Title**: the original GAMEOVER logotype and gradient, traced to vector
+  (`public/brand/gameover-wordmark.svg`, `app/components/brand/Wordmark.tsx`)
+- **Icon**: the title's G as a liquid-chrome slab (`public/brand/gameover-g*`,
+  `public/gameover-icon.svg`, `app/favicon.ico`, `app/apple-icon.png`,
+  `public/icons/*`). Live on the site it's WebGL (`brand/GIcon.tsx`): it
+  leans toward the pointer, flips like a coin, bounces on the beat and
+  glitches now and then. `scripts/build-g-icon.py` builds its distance field.
+- **Title screen → studio**: START plays a stage transition
+  (`StageTransition.tsx`): a portal into an LED warp, a "STAGE 01" card over a
+  16-step sequencer, and an 808 drop that breaks the screen into pixels.
+  Sound effects are synthesised with Web Audio (`lib/sfx.ts`) and can be
+  switched off on the title screen.
+- **Beat sync**: `lib/beatClock.ts` turns the playing beat's BPM and position
+  into kick / hi-hat envelopes; the LED backdrop, meters and cover playheads
+  move in time. Clicks send ripples through the LED wall.
 - **Type**: Archivo (expanded display), Geist + Geist Mono (UI, HUD labels),
-  Silkscreen (arcade moments: hi-scores, the 404)
+  Silkscreen (arcade moments: the title screen HUD, the 404)
 - **Covers**: every beat gets a generated pad sprite coloured by its mood;
   packs spell their initial on the pad grid
 - **Backdrop**: the original aurora shader sampled per cell and drawn as LEDs,
   mounted once in the layout and cross-faded per route
-- **Tokens** live in `app/globals.css` (`ink-*`, `bone*`, `signal`, `live`)
-  with shared pieces in `app/components/ui.tsx`
-- Tailwind CSS v4, Motion for sheets and menus, respects
+- Tailwind CSS v4, Motion for sheets and menus; everything respects
   `prefers-reduced-motion`
 
 ## 👤 Author

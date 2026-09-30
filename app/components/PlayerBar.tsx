@@ -15,6 +15,7 @@ import { TrackArt } from './Covers'
 import { Scrubber } from './Scrubber'
 import { EqBars, PlayButton } from './ui'
 import { beatSubtitle } from '@/lib/beats'
+import { setBeatSource } from '@/lib/beatClock'
 import type { BeatTrack, Track } from '../models/Track'
 import { cn } from '@/lib/utils'
 
@@ -249,6 +250,15 @@ export function PlayerBar() {
     }
   }, [track?.audioUrl, track?.id])
 
+  // Let visuals move in time: register the playing beat and its tempo
+  const beatBpm = track?.source === 'beat' ? (track as BeatTrack).bpm : undefined
+  useEffect(() => {
+    const audio = audioRef.current
+    if (beatBpm && audio) setBeatSource(audio, beatBpm)
+    else setBeatSource(null)
+    return () => setBeatSource(null)
+  }, [beatBpm, track?.id, track?.audioUrl])
+
   // Play/pause control
   useEffect(() => {
     const audio = audioRef.current
@@ -395,6 +405,7 @@ export function PlayerBar() {
                 <TrackArt
                   track={track as BeatTrack}
                   className='size-11 rounded-lg sm:size-12'
+                  live
                 />
               )}
               <span className='flex min-w-0 flex-col gap-0.5'>

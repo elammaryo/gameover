@@ -26,9 +26,9 @@ const shapes: Record<ButtonShape, string> = {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  // a lit pad: signal red, ink label, bevelled like a real rubber pad
+  // a lit pad in the section's colour, ink label, bevelled like a rubber pad
   primary:
-    'bg-signal text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.35),inset_0_-2px_0_rgb(0_0_0/0.22),0_12px_32px_-12px_rgb(255_52_72/0.75)] hover:-translate-y-px hover:bg-signal-hi hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-2px_0_rgb(0_0_0/0.22),0_16px_40px_-12px_rgb(255_52_72/0.9)]',
+    'bg-theme text-ink-950 shadow-[inset_0_1px_0_rgb(255_255_255/0.35),inset_0_-2px_0_rgb(0_0_0/0.22),0_12px_32px_-12px_color-mix(in_srgb,var(--color-theme)_75%,transparent)] hover:-translate-y-px hover:bg-theme-hi hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-2px_0_rgb(0_0_0/0.22),0_16px_40px_-12px_color-mix(in_srgb,var(--color-theme)_90%,transparent)]',
   secondary:
     'bg-ink-800 text-bone border border-line-strong shadow-[inset_0_1px_0_rgb(255_255_255/0.06)] hover:-translate-y-px hover:bg-ink-700 hover:border-white/20',
   outline:

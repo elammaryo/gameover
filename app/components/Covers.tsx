@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { accentFor, glyphFor, packAccent, spriteFor } from '@/lib/beats'
 import type { Track } from '@/app/models/Track'
 import { cn } from '@/lib/utils'
+import { CoverPulse } from './CoverPulse'
 
 const GRID = 7
 const CELL = 10 // viewBox units per pad slot
@@ -75,10 +76,12 @@ type CoverFrameProps = {
   color: string
   className?: string
   glow?: boolean
+  /** the beat that's playing: pulse with it */
+  live?: boolean
   children: React.ReactNode
 }
 
-function CoverFrame({ color, className, glow, children }: CoverFrameProps) {
+function CoverFrame({ color, className, glow, live, children }: CoverFrameProps) {
   return (
     <div
       className={cn(
@@ -95,6 +98,7 @@ function CoverFrame({ color, className, glow, children }: CoverFrameProps) {
       >
         {children}
       </div>
+      {live && <CoverPulse color={color} />}
     </div>
   )
 }
@@ -104,14 +108,16 @@ type BeatCoverProps = {
   className?: string
   glow?: boolean
   detail?: boolean
+  /** the beat that's playing: pulse with it */
+  live?: boolean
 }
 
 /** Generated cover for a beat: its own pad "character", coloured by mood. */
-export function BeatCover({ beat, className, glow, detail }: BeatCoverProps) {
+export function BeatCover({ beat, className, glow, detail, live }: BeatCoverProps) {
   const color = accentFor(beat)
   const sprite = spriteFor(`${beat.id}:${beat.title ?? ''}`, GRID)
   return (
-    <CoverFrame color={color} className={className} glow={glow}>
+    <CoverFrame color={color} className={className} glow={glow} live={live}>
       <PadGrid levels={sprite} color={color} detail={detail} />
     </CoverFrame>
   )
@@ -156,7 +162,8 @@ export function TrackArt({
   sizes = '48px',
   glow,
   detail,
-  priority
+  priority,
+  live
 }: {
   track: Pick<Track, 'id' | 'title' | 'artworkUrl'> & { mood?: string }
   className?: string
@@ -164,6 +171,8 @@ export function TrackArt({
   glow?: boolean
   detail?: boolean
   priority?: boolean
+  /** the beat that's playing: pulse with it */
+  live?: boolean
 }) {
   if (track.artworkUrl) {
     return (
@@ -190,6 +199,7 @@ export function TrackArt({
       className={className}
       glow={glow}
       detail={detail}
+      live={live}
     />
   )
 }

@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { NAV_LINKS, SOCIAL_LINKS } from '@/lib/site'
-import { Mark } from './brand/Mark'
 import { Wordmark } from './brand/Wordmark'
 
 /** Site footer, mounted once in the root layout. */
@@ -15,14 +14,13 @@ export function SiteFooter() {
           <Link
             href='/'
             aria-label='GameOver home'
-            className='group/mark flex w-fit items-center gap-3 rounded-md'
+            className='flex w-fit items-center rounded-md py-1'
           >
-            <Mark motion='hover' className='size-6' />
-            <Wordmark className='h-[15px]' />
+            <Wordmark label={null} className='h-4' />
           </Link>
           <p className='max-w-xs text-sm leading-relaxed text-bone-muted'>
-            Original trap, drill and afrobeats out of Toronto, plus the
-            playlists they came from.
+            Original trap, drill and hip-hop out of Toronto, plus the playlists
+            they came from.
           </p>
         </div>
 
@@ -78,7 +76,7 @@ export function SiteFooter() {
         aria-hidden
         className='mx-auto max-w-[1240px] overflow-hidden px-5 sm:px-8'
       >
-        <Wordmark className='w-full text-white/[0.035]' />
+        <Wordmark tone='mono' label={null} className='w-full text-white/[0.035]' />
       </div>
 
       <div className='border-t border-line'>

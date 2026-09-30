@@ -3,21 +3,26 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { ArrowRight, ArrowUpRight, Pause, Play } from 'lucide-react'
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
+import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { SiSpotify } from 'react-icons/si'
 import sentinelImage from '../public/sentinel.png'
 import { Wordmark } from './components/brand/Wordmark'
-import { buttonClasses } from './components/Button'
-import { BeatCover } from './components/Covers'
-import { EqBars, Eyebrow, SectionHeader } from './components/ui'
-import { useBeatPlayback } from './components/usePlayback'
-import type { BeatTrack } from './models/Track'
-import { LOCAL_BEATS, beatSubtitle, pickFeatured } from '@/lib/beats'
-import { navigateWithTransition } from '@/lib/transition'
+import { useBeatPulse } from './components/useBeatPulse'
+import { LOCAL_BEATS } from '@/lib/beats'
+import { readSfx, setSfxEnabled, subscribeSfx } from '@/lib/sfx'
+import { enterStage, type StageId } from '@/lib/stage'
 import { cn } from '@/lib/utils'
 
-const FEATURED = pickFeatured(LOCAL_BEATS)
+const BEAT_COUNT = LOCAL_BEATS.length
+const YEAR = new Date().getFullYear()
+const HI_BPM = Math.max(0, ...LOCAL_BEATS.map(b => b.bpm || 0))
 
 // "Burna Boy", "Central Cee", ... for the ticker
 const TYPE_BEATS = [
@@ -28,234 +33,279 @@ const TYPE_BEATS = [
   )
 ]
 
-const MODES = [
-  {
-    href: '/studio',
-    label: 'Studio',
-    blurb: 'Every beat and pack. Filter by genre, tempo and mood, then press play.',
-    accent: 'var(--color-signal)',
-    transition: 'Loading studio'
-  },
-  {
-    href: '/spotify',
-    label: 'Spotify',
-    blurb: 'Playlists from my own library. Connect Spotify to play them right here.',
-    accent: 'var(--color-spotify)',
-    transition: 'Loading playlists'
-  },
-  {
-    href: '/tech',
-    label: 'Tech',
-    blurb: 'How it’s built: Next.js, signed S3 audio, Spotify OAuth and WebGL.',
-    accent: 'var(--color-live)'
-  },
-  {
-    href: '/about',
-    label: 'About',
-    blurb: 'The producer behind the pads, and what’s on repeat right now.',
-    accent: '#A78BFA'
-  }
-] as const
-
-// pads that light up on each mode card (3x3, row-major)
-const MODE_PADS = [
-  [0, 1, 2, 3, 5, 6, 7, 8],
-  [0, 2, 4, 6, 8],
-  [1, 3, 4, 5, 7],
-  [0, 1, 2, 4, 7]
+const GENRES = [
+  { label: 'Trap', color: 'var(--color-theme)' },
+  { label: 'Drill', color: 'var(--color-theme-2)' },
+  { label: 'Hip-hop', color: 'var(--color-theme-3)' }
 ]
 
+/**
+ * The title screen: one way in. Everything funnels to START, which plays
+ * the stage transition into the studio.
+ */
 export default function Home() {
   const router = useRouter()
+  const startRef = useRef<HTMLAnchorElement>(null)
 
-  const transitionTo =
-    (href: string, label?: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-      if (!label) return
+  // (the screen zooms away while a stage transition runs: .title-screen in
+  // globals.css keys off <html data-stage>, so it can never get stuck)
+  const enter = (stage: StageId, from: Element | null) => {
+    enterStage(
+      router,
+      stage === 'studio' ? '/studio' : '/spotify',
+      stage,
+      from,
+      stage === 'studio' ? `Loading ${BEAT_COUNT} beats` : undefined
+    )
+  }
+
+  const onClick =
+    (stage: StageId) => (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
         return
       e.preventDefault()
-      navigateWithTransition(router, href, label)
+      enter(stage, e.currentTarget)
     }
 
+  // Enter anywhere on the title screen is "press start"
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key !== 'Enter' || e.repeat || e.metaKey || e.ctrlKey || e.altKey)
+      return
+    const target = e.target as HTMLElement | null
+    if (target?.closest('a, button, input, textarea, select, [contenteditable]'))
+      return
+    e.preventDefault()
+    enter('studio', startRef.current)
+  })
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => onKey(e)
+    window.addEventListener('keydown', listener)
+    return () => window.removeEventListener('keydown', listener)
+  }, [])
+
   return (
-    <main className='overflow-x-clip'>
-      {/* ---------------------------------------------------------------- HERO */}
-      <section className='relative mx-auto grid w-full max-w-[1240px] items-center gap-4 px-5 pt-[calc(var(--nav-h)+0.5rem)] sm:px-8 lg:min-h-[min(100svh,960px)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10 lg:pt-(--nav-h)'>
-        <div className='relative order-1 mx-auto w-full max-w-[18.5rem] sm:max-w-[26rem] lg:order-2 lg:max-w-none'>
-          <HeroArt />
-        </div>
+    <main className='title-screen relative flex min-h-[100svh] flex-col overflow-x-clip'>
+      <span
+        aria-hidden
+        className='title-sweep pointer-events-none absolute inset-x-0 top-0 z-0 h-[28vh]'
+      />
 
-        <div className='relative order-2 -mt-6 flex flex-col items-start pb-12 sm:mt-0 lg:order-1 lg:pb-0'>
-          <Eyebrow>Music producer · Toronto</Eyebrow>
+      {/* HUD, top */}
+      <div className='intro-fade pointer-events-none absolute inset-x-0 top-[calc(var(--nav-h)+0.5rem)] z-10 mx-auto flex w-full max-w-[1440px] justify-between px-5 font-pixel text-[10px] tracking-[0.22em] uppercase sm:px-8 sm:text-[11px]'>
+        <p>
+          <span className='text-bone-dim'>Beats </span>
+          <span className='tabular text-theme'>
+            {String(BEAT_COUNT).padStart(3, '0')}
+          </span>
+        </p>
+        <p>
+          <span className='text-bone-dim'>Hi-BPM </span>
+          <span className='tabular text-theme-2'>{HI_BPM}</span>
+        </p>
+      </div>
 
-          <h1 className='mt-6 w-full'>
-            <span className='group/wordmark block w-full max-w-[34rem]'>
-              <Wordmark split glitchOnHover className='w-full' />
-            </span>
-            <span className='font-display-wide mt-5 block text-[clamp(3rem,7.4vw,6.4rem)] text-bone sm:mt-6'>
-              Next level beats
-              <span
-                aria-hidden
-                className='ml-[0.06em] inline-block size-[0.17em] translate-y-[-0.02em] rounded-[0.03em] bg-signal shadow-[0_0_0.3em_var(--color-signal)]'
-              />
-              <span className='sr-only'>.</span>
-            </span>
-          </h1>
+      <section className='relative flex flex-1 flex-col items-center justify-center px-5 pt-(--nav-h) pb-4 [--sentinel:clamp(170px,calc(100svh_-_430px),420px)] sm:pb-8 sm:[--sentinel:clamp(170px,calc(100svh_-_500px),580px)]'>
+        <Sentinel />
 
-          <p className='mt-7 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] tracking-[0.16em] text-bone-muted uppercase sm:text-[13px] sm:tracking-[0.18em]'>
-            {['Trap', 'Drill', 'Afrobeats', 'Experimental'].map((genre, i, all) => (
-              <span key={genre} className='flex items-center gap-3'>
-                {genre}
-                {i < all.length - 1 && (
-                  <span aria-hidden className='text-bone-dim'>
-                    /
-                  </span>
-                )}
-              </span>
-            ))}
-          </p>
+        <h1 className='relative z-10 -mt-[calc(var(--sentinel)*0.26)] flex w-full flex-col items-center'>
+          <Wordmark
+            label='GameOver'
+            className='intro-rise w-[min(86vw,840px,104svh)]'
+          />
+          <span
+            className='intro-rise font-display-wide mt-[clamp(1rem,2.6vw,1.9rem)] text-[clamp(1.05rem,3vw,2.1rem)] tracking-[0.02em] text-bone uppercase'
+            style={{ '--intro-at': '380ms' } as React.CSSProperties}
+          >
+            Next level beats
+          </span>
+        </h1>
 
-          <p className='mt-4 max-w-[34rem] text-lg leading-relaxed text-pretty text-bone-muted sm:text-xl'>
-            Original beats and curated Spotify playlists, streamed right in your
-            browser.
-          </p>
-
-          <div className='mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap'>
-            <Link
-              href='/studio'
-              onClick={transitionTo('/studio', 'Loading studio')}
-              className={buttonClasses({ size: 'lg', className: 'group/cta' })}
-            >
-              Enter the studio
-              <ArrowRight className='size-4 transition-transform duration-200 ease-snap group-hover/cta:translate-x-0.5' />
-            </Link>
-            <Link
-              href='/spotify'
-              onClick={transitionTo('/spotify', 'Loading playlists')}
-              className={buttonClasses({ size: 'lg', variant: 'secondary' })}
-            >
-              <SiSpotify className='size-4 text-spotify' />
-              Discover my Spotify
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* -------------------------------------------------------------- TICKER */}
-      <Ticker items={TYPE_BEATS} />
-
-      {/* ---------------------------------------------------------- QUICK PLAY */}
-      <section
-        aria-labelledby='quick-play'
-        className='mx-auto mt-20 w-full max-w-[1240px] px-5 sm:mt-28 sm:px-8'
-      >
-        <SectionHeader
-          id='quick-play'
-          eyebrow='Quick play'
-          title='Start with a featured beat'
-          action={
-            <Link
-              href='/studio'
-              onClick={transitionTo('/studio', 'Loading studio')}
-              className='group/all hud-label inline-flex items-center gap-2 rounded-md py-1 transition-colors hover:text-bone'
-            >
-              All {LOCAL_BEATS.length} beats
-              <ArrowRight className='size-3.5 transition-transform duration-200 group-hover/all:translate-x-0.5' />
-            </Link>
-          }
-        />
-        <QuickPlay beats={FEATURED} />
-      </section>
-
-      {/* --------------------------------------------------------- MODE SELECT */}
-      <section
-        aria-labelledby='modes'
-        className='mx-auto mt-20 w-full max-w-[1240px] px-5 sm:mt-28 sm:px-8'
-      >
-        <SectionHeader id='modes' eyebrow='Select mode' title='Where to next?' />
-        <ul className='grid gap-3 sm:grid-cols-2 sm:gap-4'>
-          {MODES.map((mode, i) => (
-            <li key={mode.href}>
-              <Link
-                href={mode.href}
-                onClick={transitionTo(
-                  mode.href,
-                  'transition' in mode ? mode.transition : undefined
-                )}
-                className='group surface relative isolate flex h-full min-h-[190px] flex-col justify-between gap-8 overflow-hidden rounded-3xl p-6 transition-[border-color,translate,scale] duration-300 ease-snap hover:-translate-y-0.5 hover:border-white/15 sm:min-h-[240px] sm:p-8'
-              >
+        <p
+          className='intro-rise relative z-10 mt-4 flex items-center gap-3 font-pixel text-[11px] tracking-[0.3em] text-bone-muted uppercase sm:mt-5 sm:gap-4 sm:text-[12px]'
+          style={{ '--intro-at': '780ms' } as React.CSSProperties}
+        >
+          {GENRES.map((genre, i) => (
+            <span key={genre.label} className='flex items-center gap-3 sm:gap-4'>
+              {i > 0 && (
                 <span
                   aria-hidden
-                  className='pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100'
+                  className='size-[5px] rounded-[1px]'
                   style={{
-                    background: `radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, ${mode.accent} 14%, transparent), transparent 70%)`
+                    backgroundColor: genre.color,
+                    boxShadow: `0 0 8px ${genre.color}`
                   }}
                 />
-                <span className='flex items-start justify-between gap-6'>
-                  <span className='tabular font-mono text-xs tracking-[0.2em] text-bone-dim'>
-                    0{i + 1}
-                  </span>
-                  <ModePads lit={MODE_PADS[i]} color={mode.accent} />
-                </span>
-                <span className='flex items-end justify-between gap-6'>
-                  <span className='flex flex-col gap-3'>
-                    <span className='font-display-wide text-[2.4rem] text-bone uppercase sm:text-[3.1rem]'>
-                      {mode.label}
-                    </span>
-                    <span className='max-w-sm text-[15px] leading-relaxed text-bone-muted'>
-                      {mode.blurb}
-                    </span>
-                  </span>
-                  <span
-                    aria-hidden
-                    className='flex size-11 shrink-0 items-center justify-center rounded-full border border-line-strong text-bone transition-[background-color,border-color,color] duration-300 group-hover:border-transparent group-hover:bg-bone group-hover:text-ink-950'
-                  >
-                    <ArrowUpRight className='size-[18px] transition-transform duration-300 ease-snap group-hover:rotate-45' />
-                  </span>
-                </span>
-              </Link>
-            </li>
+              )}
+              {genre.label}
+            </span>
           ))}
-        </ul>
+        </p>
+
+        <div
+          className='intro-rise relative z-10 mt-8 flex flex-col items-center sm:mt-10'
+          style={{ '--intro-at': '920ms' } as React.CSSProperties}
+        >
+          <p
+            aria-hidden
+            className='mb-3.5 animate-blink font-pixel text-[11px] tracking-[0.4em] text-theme uppercase'
+          >
+            Press start
+          </p>
+          <StartButton ref={startRef} onClick={onClick('studio')} />
+          <Link
+            href='/spotify'
+            onClick={onClick('spotify')}
+            className='group/spot mt-5 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-bone-muted transition-colors hover:text-bone'
+          >
+            <SiSpotify className='size-4 text-spotify' aria-hidden />
+            <span>
+              or{' '}
+              <span className='underline decoration-line-strong underline-offset-4 transition-colors group-hover/spot:decoration-spotify'>
+                discover my Spotify
+              </span>
+            </span>
+          </Link>
+        </div>
       </section>
+
+      {/* HUD, bottom */}
+      <div className='intro-fade relative z-10 mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 pb-3 font-pixel text-[10px] tracking-[0.22em] text-bone-dim uppercase sm:px-8 sm:text-[11px]'>
+        {/* prerendered at build time; don't fight the client over the year */}
+        <p suppressHydrationWarning>© {YEAR} GameOver</p>
+        <SfxToggle />
+      </div>
+
+      <Ticker items={TYPE_BEATS} />
     </main>
   )
 }
 
 /* ------------------------------------------------------------------------- */
 
-function HeroArt() {
+function StartButton({
+  ref,
+  onClick
+}: {
+  ref: React.Ref<HTMLAnchorElement>
+  onClick: (e: React.MouseEvent<HTMLAnchorElement>) => void
+}) {
+  const glow = useRef<HTMLSpanElement>(null)
+  useBeatPulse(glow)
   return (
-    <div className='relative aspect-square w-full'>
-      {/* HUD corner brackets */}
-      {[
-        'top-0 left-0 border-t border-l rounded-tl-lg',
-        'top-0 right-0 border-t border-r rounded-tr-lg',
-        'bottom-0 left-0 border-b border-l rounded-bl-lg',
-        'right-0 bottom-0 border-r border-b rounded-br-lg'
-      ].map(pos => (
-        <span
-          key={pos}
-          aria-hidden
-          className={cn('absolute hidden size-8 border-white/20 sm:block', pos)}
-        />
-      ))}
-      <div className='absolute inset-[4%] [mask-image:radial-gradient(closest-side,black_68%,transparent)]'>
-        <Image
-          src={sentinelImage}
-          alt='The GameOver Sentinel: a horned, armoured figure breaking into red and cyan pixels'
-          fill
-          priority
-          placeholder='blur'
-          sizes='(min-width: 1024px) 560px, (min-width: 640px) 480px, 90vw'
-          className='object-cover'
-        />
-      </div>
-      <span className='hud-label absolute bottom-3 left-1/2 hidden -translate-x-1/2 items-center gap-2 whitespace-nowrap sm:flex'>
-        <span aria-hidden className='size-1.5 rounded-[2px] bg-live shadow-[0_0_8px_var(--color-live)]' />
-        P1 · Sentinel
+    <Link
+      ref={ref}
+      href='/studio'
+      onClick={onClick}
+      className='group/start relative isolate inline-flex h-16 items-center gap-4 rounded-full bg-theme pr-7 pl-2.5 text-[17px] font-semibold text-ink-950 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.3),inset_0_-3px_0_rgb(0_0_0/0.18)] transition-[scale,background-color] duration-300 ease-snap hover:scale-[1.04] hover:bg-theme-hi active:scale-[0.97] sm:h-[68px] sm:pr-8 sm:text-lg'
+    >
+      {/* glow: breathes on its own, pumps with the kick when a beat plays */}
+      <span
+        ref={glow}
+        aria-hidden
+        className='start-glow absolute -inset-1 -z-10 rounded-full'
+        style={{ '--kick': 0 } as React.CSSProperties}
+      />
+      <span className='flex size-11 items-center justify-center rounded-full bg-ink-950 text-theme transition-transform duration-300 ease-snap group-hover/start:rotate-[-8deg] sm:size-12'>
+        <Play className='size-[18px] translate-x-[1.5px]' fill='currentColor' strokeWidth={0} />
       </span>
+      Enter the studio
+      <kbd
+        aria-hidden
+        className='ml-1 hidden h-7 items-center rounded-md border border-ink-950/25 px-2 font-mono text-[11px] font-medium text-ink-950/70 sm:inline-flex'
+      >
+        Enter ⏎
+      </kbd>
+      {/* sheen */}
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-0 overflow-hidden rounded-full'
+      >
+        <span className='absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent animate-[start-sheen_3.6s_ease-in-out_1.6s_infinite] motion-reduce:hidden' />
+      </span>
+    </Link>
+  )
+}
+
+function Sentinel() {
+  const ref = useRef<HTMLDivElement>(null)
+  useBeatPulse(ref)
+
+  // a little parallax against the pointer
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const fine = window.matchMedia('(pointer: fine)').matches
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!fine || reduce) return
+    let raf = 0
+    let x = 0
+    let y = 0
+    let tx = 0
+    let ty = 0
+    const tick = () => {
+      x += (tx - x) * 0.07
+      y += (ty - y) * 0.07
+      el.style.setProperty('--px', x.toFixed(4))
+      el.style.setProperty('--py', y.toFixed(4))
+      raf =
+        Math.abs(tx - x) + Math.abs(ty - y) > 0.0005 ? requestAnimationFrame(tick) : 0
+    }
+    const onMove = (e: PointerEvent) => {
+      tx = e.clientX / window.innerWidth - 0.5
+      ty = e.clientY / window.innerHeight - 0.5
+      if (!raf) raf = requestAnimationFrame(tick)
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      className='intro-fade pointer-events-none relative aspect-square h-(--sentinel) shrink-0'
+      style={
+        { '--kick': 0, '--px': 0, '--py': 0, '--intro-at': '120ms' } as React.CSSProperties
+      }
+    >
+      <div className='sentinel-float absolute inset-0'>
+        <div className='absolute inset-0 translate-x-[calc(var(--px)*-22px)] translate-y-[calc(var(--py)*-14px)] scale-[calc(1+var(--kick)*0.02)] [mask-composite:intersect] [mask-image:radial-gradient(closest-side,black_58%,transparent),linear-gradient(to_bottom,black_46%,transparent_71%)]'>
+          <Image
+            src={sentinelImage}
+            alt=''
+            fill
+            priority
+            placeholder='blur'
+            sizes='(min-width: 640px) 580px, 90vw'
+            className='object-cover'
+          />
+        </div>
+      </div>
     </div>
+  )
+}
+
+function SfxToggle() {
+  const on = useSyncExternalStore(subscribeSfx, readSfx, () => true)
+  return (
+    <button
+      type='button'
+      onClick={() => setSfxEnabled(!on)}
+      aria-pressed={on}
+      className='-mr-2 inline-flex items-center gap-2 rounded-md px-2 py-1.5 tracking-[0.22em] uppercase transition-colors hover:text-bone'
+    >
+      {on ? (
+        <Volume2 aria-hidden className='size-3.5' />
+      ) : (
+        <VolumeX aria-hidden className='size-3.5' />
+      )}
+      <span>
+        SFX <span className={on ? 'text-theme' : undefined}>{on ? 'On' : 'Off'}</span>
+      </span>
+    </button>
   )
 }
 
@@ -269,12 +319,12 @@ function Ticker({ items }: { items: string[] }) {
     >
       {items.map(name => (
         <li key={name} className='flex items-center gap-8 sm:gap-10'>
-          <span className='font-pixel text-[13px] tracking-[0.12em] whitespace-nowrap text-bone-muted uppercase sm:text-sm'>
+          <span className='font-pixel text-[12px] tracking-[0.12em] whitespace-nowrap text-bone-muted uppercase sm:text-[13px]'>
             {name} <span className='text-bone-dim'>type beat</span>
           </span>
           <span
             aria-hidden
-            className='size-1.5 rounded-[2px] bg-signal/80 shadow-[0_0_8px_var(--color-signal)]'
+            className='size-1.5 rounded-[2px] bg-theme/80 shadow-[0_0_8px_var(--color-theme)]'
           />
         </li>
       ))}
@@ -283,9 +333,9 @@ function Ticker({ items }: { items: string[] }) {
   return (
     <section
       aria-label='Type beats in the catalogue'
-      className='relative border-y border-line bg-ink-950/60 backdrop-blur-sm'
+      className='relative z-10 border-t border-line bg-ink-950/70 backdrop-blur-sm'
     >
-      <div className='overflow-hidden py-4 [mask-image:linear-gradient(to_right,transparent,black_8%,black_88%,transparent)]'>
+      <div className='overflow-hidden py-3.5 [mask-image:linear-gradient(to_right,transparent,black_8%,black_88%,transparent)]'>
         <div
           className={cn(
             'flex w-max animate-marquee hover:[animation-play-state:paused]',
@@ -310,102 +360,5 @@ function Ticker({ items }: { items: string[] }) {
         )}
       </button>
     </section>
-  )
-}
-
-function QuickPlay({ beats }: { beats: BeatTrack[] }) {
-  const { toggle, stateOf } = useBeatPlayback()
-  return (
-    <ul className='-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-6 [&::-webkit-scrollbar]:hidden'>
-      {beats.map(beat => {
-        const { current, playing } = stateOf(beat.id)
-        return (
-          <li
-            key={beat.id}
-            className={cn(
-              'group surface relative isolate flex w-[46%] shrink-0 snap-start flex-col gap-3 rounded-2xl p-2.5 transition-[border-color,translate,scale] duration-300 ease-snap has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-live hover:-translate-y-0.5 hover:border-white/15 sm:w-auto',
-              current && 'border-live/30'
-            )}
-          >
-            <div className='relative'>
-              <BeatCover
-                beat={beat}
-                detail
-                glow={current}
-                className='w-full rounded-xl'
-              />
-              {/* visual only: the title button below covers the whole tile */}
-              <span
-                aria-hidden
-                className={cn(
-                  'absolute right-2 bottom-2 flex size-10 items-center justify-center rounded-full shadow-[0_8px_24px_-6px_rgb(0_0_0/0.8)] transition-[translate,scale,background-color] duration-200 ease-snap group-hover:scale-105',
-                  current
-                    ? 'bg-signal text-ink-950'
-                    : 'bg-bone text-ink-950 group-hover:bg-white'
-                )}
-              >
-                {playing ? (
-                  <Pause className='size-4' fill='currentColor' strokeWidth={0} />
-                ) : (
-                  <Play
-                    className='size-4 translate-x-[1px]'
-                    fill='currentColor'
-                    strokeWidth={0}
-                  />
-                )}
-              </span>
-            </div>
-            <div className='min-w-0 px-1 pb-1'>
-              <button
-                type='button'
-                onClick={() => toggle(beat, beats)}
-                aria-label={`${playing ? 'Pause' : 'Play'} ${beat.title}`}
-                className={cn(
-                  'flex w-full min-w-0 items-center gap-2 text-left text-[15px] font-semibold after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none',
-                  current ? 'text-live' : 'text-bone'
-                )}
-              >
-                <span className='truncate'>{beat.title}</span>
-                {playing && <EqBars className='shrink-0' />}
-              </button>
-              <p className='mt-0.5 truncate text-[13px] text-bone-dim'>
-                {beatSubtitle(beat) ?? beat.genre}
-              </p>
-              <p className='tabular mt-2 font-mono text-[10.5px] tracking-[0.12em] text-bone-dim uppercase'>
-                {beat.bpm} BPM · {beat.genre}
-              </p>
-            </div>
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-function ModePads({ lit, color }: { lit: readonly number[]; color: string }) {
-  return (
-    <span aria-hidden className='grid grid-cols-3 gap-1'>
-      {Array.from({ length: 9 }, (_, i) => {
-        const on = lit.includes(i)
-        return (
-          <span
-            key={i}
-            className={cn(
-              'size-2.5 rounded-[3px] transition-[background-color,box-shadow,opacity] duration-300',
-              on ? 'opacity-40 group-hover:opacity-100' : 'bg-white/[0.06]'
-            )}
-            style={
-              on
-                ? {
-                    backgroundColor: color,
-                    boxShadow: `0 0 10px color-mix(in srgb, ${color} 60%, transparent)`,
-                    transitionDelay: `${i * 30}ms`
-                  }
-                : undefined
-            }
-          />
-        )
-      })}
-    </span>
   )
 }

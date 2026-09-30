@@ -469,6 +469,7 @@ export function NowPlayingOverlay({
                         glow
                         detail
                         priority
+                        live
                       />
                     </motion.div>
                   </AnimatePresence>
@@ -611,6 +612,7 @@ export function NowPlayingOverlay({
               sizes='372px'
               glow
               detail
+              live
             />
 
             <div className='mt-6'>

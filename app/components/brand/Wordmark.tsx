@@ -1,54 +1,37 @@
 import { cn } from '@/lib/utils'
 
-type WordmarkProps = {
-  className?: string
-  /** red/cyan chromatic offset behind the letters (brand signature) */
-  split?: boolean
-  /** jitter the split when an ancestor `group/wordmark` is hovered */
-  glitchOnHover?: boolean
-}
-
 /**
- * The GAMEOVER logotype, traced to vector from the original PNG so it stays
- * crisp at any size. Rendered as a CSS mask so it takes `currentColor`.
+ * The original GAMEOVER title, exactly as designed: its cyan → violet →
+ * magenta gradient over the letterforms, traced to vector from
+ * public/gameover-logo.png so it stays crisp at any size. The gradient
+ * stops are sampled from that PNG.
+ *
+ * `tone="mono"` takes `currentColor` instead (faint watermarks).
  */
+const BRAND_GRADIENT =
+  'linear-gradient(90deg, #17EEFD 0%, #1AE5FA 10%, #1ADFF7 16%, #26C9F2 22%, #33B4EB 31%, #3B9DE6 38%, #478AE2 47%, #5579DE 53%, #6669E0 62%, #7B61DD 69%, #8A58DD 75%, #A04FDE 81%, #B24BE4 87%, #C93AE3 94%, #DC32EE 100%)'
+
 export function Wordmark({
   className,
-  split = false,
-  glitchOnHover = false
-}: WordmarkProps) {
+  tone = 'brand',
+  label = 'GameOver'
+}: {
+  className?: string
+  tone?: 'brand' | 'mono'
+  /** null when the surrounding link or heading already names it */
+  label?: string | null
+}) {
   return (
     <span
-      role='img'
-      aria-label='GameOver'
-      className={cn(
-        'relative inline-block aspect-[769/90] text-bone',
-        className
-      )}
+      role={label ? 'img' : undefined}
+      aria-label={label ?? undefined}
+      aria-hidden={label ? undefined : true}
+      className={cn('relative inline-block aspect-[769/90]', className)}
     >
-      {split && (
-        <>
-          <span
-            aria-hidden
-            className={cn(
-              'wordmark-mask absolute inset-0 translate-x-[-0.55%] bg-signal opacity-90 mix-blend-screen',
-              glitchOnHover &&
-                'transition-transform duration-200 group-hover/wordmark:translate-x-[-1.2%] group-hover/wordmark:animate-[glitch-x_240ms_steps(2,end)_2]'
-            )}
-          />
-          <span
-            aria-hidden
-            className={cn(
-              'wordmark-mask absolute inset-0 translate-x-[0.55%] bg-live opacity-80 mix-blend-screen',
-              glitchOnHover &&
-                'transition-transform duration-200 group-hover/wordmark:translate-x-[1.2%]'
-            )}
-          />
-        </>
-      )}
       <span
         aria-hidden
-        className='wordmark-mask absolute inset-0 bg-current'
+        className={cn('wordmark-mask absolute inset-0', tone === 'mono' && 'bg-current')}
+        style={tone === 'brand' ? { backgroundImage: BRAND_GRADIENT } : undefined}
       />
     </span>
   )

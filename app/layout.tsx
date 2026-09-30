@@ -6,9 +6,13 @@ import MotionProvider from './providers/MotionProvider'
 import { Analytics } from '@vercel/analytics/next'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
 import { Backdrop } from './components/Backdrop'
-import { TransitionOverlay } from './components/TransitionOverlay'
+import { StageTransition } from './components/StageTransition'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
+import { HiddenOnHome } from './components/HiddenOnHome'
+import { CheatCodes } from './components/CheatCodes'
+import { RouteTheme } from './components/RouteTheme'
+import { THEME_SCRIPT } from '@/lib/theme'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,21 +45,21 @@ export const metadata: Metadata = {
     template: '%s · GameOver'
   },
   description:
-    'Trap, drill and afrobeats by GameOver. Stream original beats and curated Spotify playlists, right in the browser.',
+    'Trap, drill and hip-hop beats by GameOver. Stream original beats and curated Spotify playlists, right in the browser.',
   applicationName: 'GameOver',
   openGraph: {
     type: 'website',
     siteName: 'GameOver',
     title: 'GameOver — Next Level Beats',
     description:
-      'Trap, drill and afrobeats by GameOver. Stream original beats and curated playlists in the studio.',
+      'Trap, drill and hip-hop beats by GameOver. Stream original beats and curated playlists in the studio.',
     url: '/'
   },
   twitter: {
     card: 'summary_large_image',
     title: 'GameOver — Next Level Beats',
     description:
-      'Trap, drill and afrobeats by GameOver. Stream original beats and curated playlists in the studio.'
+      'Trap, drill and hip-hop beats by GameOver. Stream original beats and curated playlists in the studio.'
   }
 }
 
@@ -73,26 +77,35 @@ export default function RootLayout({
     <html
       lang='en'
       className={`${geistSans.variable} ${geistMono.variable} ${archivo.variable} ${silkscreen.variable}`}
+      // data-theme is set by THEME_SCRIPT before React hydrates
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className='antialiased'>
+        <RouteTheme />
         <a
           href='#content'
           className='sr-only z-[100] rounded-lg bg-bone px-4 py-2 font-medium text-ink-950 focus:not-sr-only focus:fixed focus:top-3 focus:left-3'
         >
           Skip to content
         </a>
-        <TransitionOverlay />
         <MotionProvider>
           <PlayBarProvider>
+            <StageTransition />
             <Backdrop />
             <NavBar />
             <PlayerBar />
             {/* positioned (no z-index) so it paints above the backdrop without
                 trapping the nav / modals in a lower stacking context */}
-            <div id='content' className='relative'>
+            <div id='content' className='relative overflow-x-clip'>
               {children}
             </div>
-            <SiteFooter />
+            <HiddenOnHome>
+              <SiteFooter />
+            </HiddenOnHome>
+            <CheatCodes />
             <PlayerSpacer />
             <Analytics />
           </PlayBarProvider>
