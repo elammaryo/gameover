@@ -52,10 +52,10 @@ const STACK: Array<{
         color: '#FFFFFF',
         description: 'React framework + API routes'
       },
-      { name: 'React 19', icon: SiReact, color: '#61DAFB', description: 'Client UI + playback context' },
+      { name: 'React 19', icon: SiReact, color: '#61DAFB', description: 'Client UI + external stores' },
       { name: 'TypeScript', icon: SiTypescript, color: '#3178C6', description: 'Strict mode, app to API' },
       { name: 'Tailwind CSS', icon: SiTailwindcss, color: '#06B6D4', description: 'Design tokens + utilities' },
-      { name: 'Motion (Framer)', icon: SiFramer, color: '#FF0055', description: 'Menus, sheets and panels' }
+      { name: 'Motion (Framer)', icon: SiFramer, color: '#FF0055', description: 'Queue drags, sheets and panels' }
     ]
   },
   {
@@ -87,18 +87,21 @@ const STACK: Array<{
     icon: Database,
     technologies: [
       {
-        name: 'React Context API',
+        name: 'Player store',
         icon: Workflow,
-        description: 'Global playback state & queue management'
+        color: '#A78BFA',
+        description: 'One player for the visit, read with useSyncExternalStore'
       },
       {
-        name: 'In-memory caching',
+        name: 'Link caching',
         icon: DatabaseZap,
-        description: 'S3 URL caching with 55min expiration'
+        color: '#FFB547',
+        description: 'Signed S3 links reused for 40 min, refreshed on failure'
       },
       {
         name: 'Cookie-based sessions',
         icon: Cookie,
+        color: '#FF8A2A',
         description: 'Spotify OAuth token storage'
       }
     ]
@@ -113,22 +116,34 @@ const FEATURES = [
     color: 'var(--color-spotify)'
   },
   {
-    title: 'AWS S3 pre-signed URLs',
+    title: 'Signed audio that heals itself',
     description:
-      'Dynamic audio delivery with 55-minute URL expiration and intelligent caching. Server-side signing prevents credential exposure while maintaining performance.',
+      'Beats stream from a private S3 bucket through links signed per request. Links are reused for 40 minutes, requests give up after 10 seconds, and if a link lapses mid-track the player fetches a fresh one and carries on from the same second.',
     color: 'var(--color-live)'
   },
   {
     title: 'Dual audio sources',
     description:
-      'Unified playback interface supporting both HTML5 Audio API for beats and Spotify Web Playback SDK for streaming. Context-aware controls adapt to the active source.',
+      'One player drives both HTML5 audio for beats and the Spotify Web Playback SDK for streaming, so the queue, controls, lock screen and media keys work the same whichever is playing.',
     color: '#FF8A2A'
   },
   {
-    title: 'Persistent audio playback',
+    title: 'A real queue',
     description:
-      'Audio continues playing seamlessly across page navigation using React Context and root layout mounting. Smart state management prevents interruptions during route changes.',
+      'Play next, add to queue, drag to reorder, shuffle and repeat, kept in a pure reducer with its own tests. Every item has its own id, so the same beat can be queued twice and moves animate cleanly.',
     color: '#A78BFA'
+  },
+  {
+    title: 'Persistent playback',
+    description:
+      'The player lives outside React and is mounted once from the root layout, so music carries on across pages. Components subscribe to just the slices they need, so the progress bar ticking doesn’t re-render the page.',
+    color: '#FF4D8D'
+  },
+  {
+    title: 'Beat-synced visuals',
+    description:
+      'Every beat ships with its BPM, so the playhead gives the beat position directly. The LED wall pumps with the kick, the logo flips on the downbeat, and covers pulse in time, without a Web Audio graph.',
+    color: '#C6F432'
   }
 ]
 
@@ -200,23 +215,36 @@ const ROUTES: Array<{
   }
 ]
 
-// Real code from app/providers/PlayBarProvider.tsx
-const SNIPPET = `// Reuse a signed S3 URL until it's about to expire
-const cached = urlCache.get(track.id)
-const now = Date.now()
-let audioUrl: string
+// Real code from app/providers/beatEngine.ts
+const SNIPPET = `// A signed S3 link: reused for 40 minutes, shared while it's being
+// fetched, and never allowed to hang the player
+private linkFor(track: BeatTrack, fresh = false): Promise<string> {
+  const hit = this.links.get(track.id)
+  if (!fresh && hit && Date.now() - hit.at < LINK_TTL) return Promise.resolve(hit.url)
+  const inFlight = this.pending.get(track.id)
+  if (!fresh && inFlight) return inFlight
+  const abort = new AbortController()
+  const timer = window.setTimeout(() => abort.abort(), LINK_TIMEOUT)
+  const request = getBeatSignedUrl(track.id, abort.signal)
+    .then(url => {
+      if (!url) throw new Error('No audio link')
+      this.links.set(track.id, { url, at: Date.now() })
+      return url
+    })
+    .finally(() => {
+      window.clearTimeout(timer)
+      if (this.pending.get(track.id) === request) this.pending.delete(track.id)
+    })
+  this.pending.set(track.id, request)
+  return request
+}`
 
-if (cached && cached.expiresAt > now) {
-  audioUrl = cached.url
-} else {
-  const url = await getBeatSignedUrl(track.id)
-  const expiresAt = now + 55 * 60 * 1000
-  audioUrl = url
-  setUrlCache(prev => new Map(prev).set(track.id, { url, expiresAt }))
-}
-
-setSelectedTrack({ ...track, audioUrl })
-setIsPlaying(true)`
+const SECURITY_COLORS = [
+  'var(--color-live)',
+  'var(--color-theme-3)',
+  'var(--color-warn)',
+  'var(--color-spotify)'
+]
 
 const SECURITY = [
   {
@@ -230,9 +258,9 @@ const SECURITY = [
   {
     title: 'Signed URL access control',
     points: [
-      'S3 pre-signed URLs generated per request with 55-minute expiry',
+      'S3 pre-signed URLs generated per request, valid for one hour',
       'Bucket kept private; audio is never publicly exposed',
-      'URLs cached with TTL to avoid stale or reused links'
+      'Links reused for 40 minutes at most, then signed again'
     ]
   },
   {
@@ -246,16 +274,16 @@ const SECURITY = [
   {
     title: 'Resilience & error handling',
     points: [
-      'Graceful fallbacks between Spotify SDK and HTML5 Audio playback',
+      'Stalls, expired links and dropped connections retried from the same second',
       'Ad-block detection with user-facing guidance instead of silent failure',
-      'Consistent try/catch with user-friendly error states in the UI'
+      'A lost connection waits it out instead of skipping through the queue'
     ]
   }
 ]
 
 /* Tiny highlighter: enough for one TypeScript snippet, no dependency. */
 const TOKEN =
-  /(\/\/[^\n]*)|('(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(const|let|if|else|await|new|return|async)\b|\b(\d+)\b|([A-Za-z_$][\w$]*)(?=\()|(:\s*string)\b/g
+  /(\/\/[^\n]*)|('(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(const|let|if|else|await|new|return|async|private|this|throw)\b|\b(\d+)\b|([A-Za-z_$][\w$]*)(?=\()|(:\s*string)\b/g
 
 function highlight(code: string) {
   const out: React.ReactNode[] = []
@@ -305,10 +333,10 @@ export default function TechPage() {
             return (
               <div
                 key={group.category}
-                className='surface grid gap-5 rounded-3xl p-4 sm:p-6 lg:grid-cols-[15rem_1fr] lg:gap-8'
+                className='group/stack surface grid gap-5 rounded-3xl p-4 transition-[border-color] duration-300 hover:border-line-strong sm:p-6 lg:grid-cols-[15rem_1fr] lg:gap-8'
               >
                 <div className='flex items-center gap-3 px-1 lg:flex-col lg:items-start lg:gap-4 lg:px-2 lg:pt-2'>
-                  <span className='flex size-11 items-center justify-center rounded-xl bg-white/[0.05] text-bone ring-1 ring-white/10 ring-inset'>
+                  <span className='flex size-11 items-center justify-center rounded-xl bg-white/[0.05] text-bone ring-1 ring-white/10 transition-[color,background-color,box-shadow] duration-300 ring-inset group-hover/stack:bg-theme/10 group-hover/stack:text-theme group-hover/stack:ring-theme/30'>
                     <GroupIcon className='size-5' />
                   </span>
                   <h3 className='font-display-tight text-xl text-bone'>
@@ -321,10 +349,11 @@ export default function TechPage() {
                     return (
                       <li
                         key={tech.name}
-                        className='group flex items-center gap-3.5 rounded-2xl border border-line bg-white/[0.02] p-3 transition-colors hover:border-line-strong hover:bg-white/[0.04]'
+                        className='glow-card flex items-center gap-3.5 rounded-2xl border border-line bg-white/[0.02] p-3 [--glow-size:20rem] [--rim-size:12rem]'
+                        style={tech.color ? ({ '--glow': tech.color } as React.CSSProperties) : undefined}
                       >
                         <span
-                          className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-bone-muted transition-transform duration-300 ease-snap group-hover:scale-105'
+                          className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-bone-muted transition-[scale,rotate,background-color,box-shadow,filter] duration-300 ease-pad lit:scale-115 lit:-rotate-6 lit:bg-(--glow)/15 lit:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--glow)_35%,transparent),0_10px_26px_-10px_var(--glow)] lit:drop-shadow-[0_0_10px_color-mix(in_srgb,var(--glow)_55%,transparent)]'
                           style={tech.color ? { color: tech.color } : undefined}
                         >
                           <Icon className='size-[22px]' />
@@ -354,15 +383,18 @@ export default function TechPage() {
           {FEATURES.map((feature, i) => (
             <li
               key={feature.title}
-              className='surface relative isolate flex flex-col gap-4 overflow-hidden rounded-3xl p-6 sm:p-8'
-              style={{
-                backgroundImage: `radial-gradient(60% 80% at 100% 0%, color-mix(in srgb, ${feature.color} 10%, transparent), transparent 70%)`
-              }}
+              className='glow-card surface flex flex-col gap-4 overflow-hidden rounded-3xl p-6 sm:p-8'
+              style={
+                {
+                  '--glow': feature.color,
+                  backgroundImage: `radial-gradient(60% 80% at 100% 0%, color-mix(in srgb, ${feature.color} 10%, transparent), transparent 70%)`
+                } as React.CSSProperties
+              }
             >
               <span className='flex items-center gap-3'>
                 <span
                   aria-hidden
-                  className='size-2 rounded-[2px]'
+                  className='size-2 rounded-[2px] transition-[scale,rotate] duration-300 ease-pad lit:scale-150 lit:rotate-45'
                   style={{
                     backgroundColor: feature.color,
                     boxShadow: `0 0 10px ${feature.color}`
@@ -401,7 +433,12 @@ export default function TechPage() {
                 {group.routes.map(route => (
                   <li
                     key={route.endpoint}
-                    className='grid grid-cols-[3.75rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 border-t border-line px-5 py-3.5 sm:px-6 md:grid-cols-[3.75rem_minmax(0,19rem)_1fr]'
+                    className='glow-card glow-flat grid grid-cols-[3.75rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 border-t border-line px-5 py-3.5 [--glow-size:26rem] sm:px-6 md:grid-cols-[3.75rem_minmax(0,19rem)_1fr]'
+                    style={
+                      {
+                        '--glow': route.method === 'GET' ? 'var(--color-live)' : 'var(--color-warn)'
+                      } as React.CSSProperties
+                    }
                   >
                     <span
                       className={cn(
@@ -413,7 +450,7 @@ export default function TechPage() {
                     >
                       {route.method}
                     </span>
-                    <code className='truncate font-mono text-[13px] text-bone sm:text-sm'>
+                    <code className='truncate font-mono text-[13px] text-bone transition-[color,translate] duration-300 ease-snap lit:translate-x-1 lit:text-(--glow) sm:text-sm'>
                       {route.endpoint}
                     </code>
                     <span className='col-start-2 text-sm text-bone-muted md:col-start-auto'>
@@ -430,15 +467,22 @@ export default function TechPage() {
       {/* CODE */}
       <section aria-labelledby='code' className='mt-20 sm:mt-28'>
         <SectionHeader id='code' eyebrow='Under the hood' title='Signed audio, cached' />
-        <figure className='overflow-hidden rounded-3xl border border-line-strong bg-ink-950/80 shadow-[0_40px_90px_-50px_rgb(0_0_0/0.9)]'>
+        <figure className='glow-card overflow-hidden rounded-3xl border border-line-strong bg-ink-950/80 shadow-[0_40px_90px_-50px_rgb(0_0_0/0.9)] [--glow-size:40rem] [--glow:var(--color-live)] [--glow-tint:color-mix(in_srgb,var(--color-live)_9%,transparent)]'>
           <figcaption className='flex items-center gap-4 border-b border-line bg-white/[0.03] px-5 py-3'>
             <span aria-hidden className='flex gap-1.5'>
-              <span className='size-2.5 rounded-[3px] bg-signal' />
-              <span className='size-2.5 rounded-[3px] bg-warn' />
-              <span className='size-2.5 rounded-[3px] bg-live' />
+              {['bg-signal', 'bg-warn', 'bg-live'].map((color, i) => (
+                <span
+                  key={color}
+                  className={cn(
+                    'size-2.5 rounded-[3px] transition-[scale] duration-300 ease-pad lit:scale-125',
+                    color
+                  )}
+                  style={{ transitionDelay: `${i * 50}ms` }}
+                />
+              ))}
             </span>
             <span className='font-mono text-xs text-bone-muted'>
-              providers/PlayBarProvider.tsx
+              providers/beatEngine.ts
             </span>
           </figcaption>
           <pre className='overflow-x-auto p-5 text-[13px] leading-[1.75] sm:p-6 sm:text-sm'>
@@ -467,8 +511,12 @@ export default function TechPage() {
           title='Locked down'
         />
         <div className='grid gap-3 sm:gap-4 md:grid-cols-2'>
-          {SECURITY.map(item => (
-            <article key={item.title} className='surface rounded-3xl p-6 sm:p-7'>
+          {SECURITY.map((item, i) => (
+            <article
+              key={item.title}
+              className='glow-card surface rounded-3xl p-6 sm:p-7'
+              style={{ '--glow': SECURITY_COLORS[i % SECURITY_COLORS.length] } as React.CSSProperties}
+            >
               <h3 className='font-display-tight text-lg text-bone sm:text-xl'>
                 {item.title}
               </h3>
@@ -480,7 +528,7 @@ export default function TechPage() {
                   >
                     <span
                       aria-hidden
-                      className='mt-[0.6em] size-1.5 shrink-0 rounded-[2px] bg-live'
+                      className='mt-[0.6em] size-1.5 shrink-0 rounded-[2px] bg-live transition-[background-color,box-shadow] duration-300 lit:bg-(--glow) lit:shadow-[0_0_8px_var(--glow)]'
                     />
                     {point}
                   </li>

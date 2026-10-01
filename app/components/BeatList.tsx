@@ -68,20 +68,19 @@ export function BeatList({
           return (
             <li
               key={beat.id}
-              style={
-                intro
-                  ? ({
-                      '--i': Math.min(i, 14),
-                      '--intro-at': '620ms'
-                    } as React.CSSProperties)
-                  : undefined
-              }
               className={cn(
-                'group/row relative isolate grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 has-[[data-row-play]:focus-visible]:ring-2 has-[[data-row-play]:focus-visible]:ring-live md:gap-4 md:px-3',
+                'group/row glow-card glow-flat grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 transition-colors duration-150 [--glow-size:22rem] has-[[data-row-play]:focus-visible]:ring-2 has-[[data-row-play]:focus-visible]:ring-live md:gap-4 md:px-3',
                 COLS,
                 intro && 'intro-rise',
-                !current && 'hover:bg-white/[0.04]'
+                !current && 'hover:bg-white/[0.03]'
               )}
+              // the row lights up in the beat's colour
+              style={
+                {
+                  '--glow': accentFor(beat),
+                  ...(intro ? { '--i': Math.min(i, 14), '--intro-at': '620ms' } : null)
+                } as React.CSSProperties
+              }
             >
               {current && (
                 <motion.span

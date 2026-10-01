@@ -3,6 +3,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* inside a lit glow card (hovered, pressed on touch, or holding keyboard
+   focus): lit:text-(--glow), lit:scale-110 ... see "Glow cards" below */
+@custom-variant lit {
+  @media (hover: hover) {
+    &:is(:where(.glow-card):hover *) {
+      @slot;
+    }
+  }
+  &:is(
+      :where(.glow-card):is([data-glow-press], :focus-visible, :has(:focus-visible))
+        *
+    ) {
+    @slot;
+  }
+}
+
 /* ---------------------------------------------------------------------------
    GameOver design tokens
    Ink surfaces, bone text, one signal red for actions, one live cyan for
@@ -247,6 +263,143 @@
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.06),
     0 24px 60px -24px rgb(0 0 0 / 0.8);
+}
+
+/* ---------------------------------------------------------------------------
+   Glow cards. Point at a card (press it, on a touch screen) and its glass
+   lights up in the card's colour: a pool of tint under the pointer, the rim
+   catching the light nearest it, a sheen sliding across and a coloured
+   shadow underneath.
+     --glow    the colour (the page accent unless the card sets its own)
+     --mx/--my the pointer inside the card, kept up to date by
+               app/components/arcade/useGlowTracker.ts
+     --lit     0 → 1 while lit; children key their pops off it, or use the
+               `lit:` variant (lit:text-(--glow), lit:scale-110 ...)
+   `glow-flat` keeps just the tint (rows, strips). Cards don't nest.
+--------------------------------------------------------------------------- */
+@layer components {
+  .glow-card {
+    --lit: 0;
+    --glow: var(--color-theme);
+    --glow-edge: color-mix(in srgb, var(--glow) 40%, var(--color-line-strong));
+    --glow-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      0 26px 64px -30px color-mix(in srgb, var(--glow) 62%, transparent);
+    /* lit, the card keeps its own Tailwind shadow and focus ring */
+    --glow-shadows:
+      var(--glow-shadow), var(--tw-ring-offset-shadow, 0 0 #0000),
+      var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000);
+    position: relative;
+    isolation: isolate;
+    transition:
+      border-color 320ms ease,
+      box-shadow 420ms var(--ease-snap),
+      translate 420ms var(--ease-snap),
+      scale 420ms var(--ease-snap);
+  }
+}
+
+@media (hover: hover) {
+  .glow-card:hover {
+    --lit: 1;
+  }
+  .glow-card:not(.glow-flat):hover {
+    border-color: var(--glow-edge);
+    box-shadow: var(--glow-shadows);
+  }
+}
+.glow-card:is([data-glow-press], :focus-visible, :has(:focus-visible)) {
+  --lit: 1;
+}
+.glow-card:not(.glow-flat):is(
+    [data-glow-press],
+    :focus-visible,
+    :has(:focus-visible)
+  ) {
+  border-color: var(--glow-edge);
+  box-shadow: var(--glow-shadows);
+}
+
+.glow-card::before,
+.glow-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--lit);
+  transition: opacity 420ms var(--ease-snap);
+}
+
+/* the tint under the pointer, and a sheen that slides across as it lights */
+.glow-card::before {
+  background:
+    linear-gradient(
+        112deg,
+        transparent 38%,
+        rgb(255 255 255 / 0.06) 48%,
+        transparent 58%
+      )
+      calc(100% - var(--lit) * 100%) 0 / 260% 100% no-repeat,
+    radial-gradient(
+      var(--glow-size, 34rem) circle at var(--mx, 50%) var(--my, 0%),
+      var(--glow-tint, color-mix(in srgb, var(--glow) 17%, transparent)),
+      transparent 72%
+    );
+  transition:
+    opacity 420ms var(--ease-snap),
+    background-position 1200ms var(--ease-snap);
+}
+
+/* the rim: a hairline inside the border, brightest nearest the pointer */
+.glow-card::after {
+  padding: 1px;
+  background:
+    radial-gradient(
+      var(--rim-size, 18rem) circle at var(--mx, 50%) var(--my, 0%),
+      color-mix(in srgb, var(--glow) 80%, white),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--glow) 24%, transparent);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.glow-flat::after {
+  content: none;
+}
+/* just the light (--lit, --mx/--my) for a child to use; no tint or rim */
+.glow-bare::before,
+.glow-bare::after {
+  content: none;
+}
+
+/* the footer's giant GAMEOVER: the title's own colours, lit as LEDs
+   around the pointer (app/components/arcade/FooterWordmark.tsx) */
+.wordmark-leds {
+  -webkit-mask:
+    url('/brand/gameover-wordmark.svg') center / contain no-repeat,
+    radial-gradient(circle, #000 0 1.6px, transparent 2.1px) 0 0 / 6px 6px,
+    radial-gradient(
+      var(--led-size, 16rem) circle at var(--mx, 50%) var(--my, 50%),
+      #000 25%,
+      transparent 72%
+    );
+  -webkit-mask-composite: source-in;
+  mask:
+    url('/brand/gameover-wordmark.svg') center / contain no-repeat,
+    radial-gradient(circle, #000 0 1.6px, transparent 2.1px) 0 0 / 6px 6px,
+    radial-gradient(
+      var(--led-size, 16rem) circle at var(--mx, 50%) var(--my, 50%),
+      #000 25%,
+      transparent 72%
+    );
+  mask-composite: intersect;
 }
 
 /* ---------------------------------------------------------------------------
@@ -507,6 +660,243 @@
     opacity: 0;
     scale: 0.8;
     translate: 0 -10px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The arcade layer (app/components/arcade)
+--------------------------------------------------------------------------- */
+
+/* a long combo: the LED wall cycles colours for a few bars */
+:root[data-fever] [data-backdrop] {
+  animation: cheat-hue 2.4s linear infinite;
+}
+
+/* tap-along judgements, centred on the tap and floating up */
+.rhythm-pop {
+  translate: -50% -50%;
+  animation: rhythm-pop 900ms var(--ease-snap) both;
+}
+@keyframes rhythm-pop {
+  0% {
+    opacity: 0;
+    scale: 0.35;
+    translate: -50% -40%;
+  }
+  14% {
+    opacity: 1;
+    scale: 1.2;
+    translate: -50% -85%;
+  }
+  28% {
+    scale: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+    translate: -50% -210%;
+  }
+}
+.rhythm-miss {
+  translate: -50% -50%;
+  animation: rhythm-miss 700ms ease-in both;
+}
+@keyframes rhythm-miss {
+  0% {
+    opacity: 0;
+    translate: -50% -80%;
+  }
+  18% {
+    opacity: 1;
+    translate: -50% -60%;
+    rotate: -4deg;
+  }
+  100% {
+    opacity: 0;
+    translate: -50% 40%;
+    rotate: 6deg;
+  }
+}
+/* reduced motion: the grades just appear where you tapped, and go */
+@media (prefers-reduced-motion: reduce) {
+  .rhythm-pop,
+  .rhythm-miss {
+    animation: none;
+  }
+}
+.rhythm-perfect {
+  text-shadow:
+    -0.06em 0 0 color-mix(in srgb, var(--color-theme-2) 80%, transparent),
+    0.06em 0 0 color-mix(in srgb, var(--color-theme-3) 80%, transparent),
+    0 0 18px color-mix(in srgb, var(--color-theme) 70%, transparent);
+}
+
+/* trophy toast: a glint crosses the trophy as it lands */
+.trophy-glint {
+  animation: trophy-glint 1.4s var(--ease-snap) 250ms both;
+}
+@keyframes trophy-glint {
+  from {
+    translate: -140% 0;
+  }
+  to {
+    translate: 260% 0;
+  }
+}
+.trophy-type {
+  animation: stage-type 520ms steps(12, end) 120ms both;
+}
+
+/* GAME OVER: the CRT switches off (lids close to a line, the line to a
+   dot), the letters drop in, and it all runs backwards to switch on */
+.crt-lid {
+  position: absolute;
+  inset-inline: 0;
+  height: 50.5%;
+  background: var(--color-ink-950);
+}
+.crt-lid[data-edge='top'] {
+  top: 0;
+  transform-origin: top;
+}
+.crt-lid[data-edge='bottom'] {
+  bottom: 0;
+  transform-origin: bottom;
+}
+.crt-off .crt-lid {
+  animation: crt-close 360ms cubic-bezier(0.7, 0, 0.84, 0) both;
+}
+.crt-on .crt-lid {
+  animation: crt-open 420ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+}
+@keyframes crt-close {
+  from {
+    scale: 1 0;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes crt-open {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 1 0;
+  }
+}
+.crt-line {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  background: #fff;
+  box-shadow:
+    0 0 12px 2px color-mix(in srgb, var(--color-theme) 90%, white),
+    0 0 40px 8px color-mix(in srgb, var(--color-theme) 45%, transparent);
+  opacity: 0;
+}
+.crt-off .crt-line {
+  /* (no backwards fill: it stays dark until the lids have met) */
+  animation: crt-line-off 520ms ease-in 300ms forwards;
+}
+.crt-on .crt-line {
+  animation: crt-line-on 420ms ease-out both;
+}
+@keyframes crt-line-off {
+  0% {
+    opacity: 1;
+    scale: 1 1;
+  }
+  55% {
+    opacity: 1;
+    scale: 0.004 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.004 0.2;
+  }
+}
+@keyframes crt-line-on {
+  0% {
+    opacity: 0;
+    scale: 0.004 1;
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+    scale: 1 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1 1;
+  }
+}
+.go-letter {
+  display: inline-block;
+  animation: go-drop 620ms var(--ease-pad) both;
+  animation-delay: calc(var(--i) * 75ms);
+}
+@keyframes go-drop {
+  0% {
+    opacity: 0;
+    translate: 0 -70vh;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.go-tick {
+  animation: go-tick 520ms var(--ease-pad) both;
+}
+@keyframes go-tick {
+  from {
+    opacity: 0.35;
+    scale: 1.6;
+  }
+}
+.go-fade {
+  animation: intro-fade 500ms ease-out both;
+}
+
+/* typing "808": the number hits the screen with the drop */
+.drop-808 {
+  animation: drop-808 860ms var(--ease-snap) both;
+}
+@keyframes drop-808 {
+  0% {
+    opacity: 0;
+    scale: 0.35;
+    filter: blur(10px);
+  }
+  12% {
+    opacity: 0.95;
+    scale: 1.08;
+    filter: blur(0);
+  }
+  30% {
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.4;
+    filter: blur(6px);
+  }
+}
+
+/* the footer wordmark flashes when it's tapped */
+.wordmark-hit {
+  animation: wordmark-hit 380ms ease-out;
+}
+@keyframes wordmark-hit {
+  0% {
+    filter: brightness(2.2);
   }
 }
 

@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { NAV_LINKS, SOCIAL_LINKS } from '@/lib/site'
+import { FooterWordmark } from './arcade/FooterWordmark'
+import { TrophyLink } from './arcade/TrophyLink'
 import { Wordmark } from './brand/Wordmark'
 
 /** Site footer, mounted once in the root layout. */
@@ -51,15 +53,20 @@ export function SiteFooter() {
         <div>
           <p className='hud-label mb-4'>Listen</p>
           <ul className='flex flex-col gap-1'>
-            {SOCIAL_LINKS.map(({ name, href, icon: Icon }) => (
+            {SOCIAL_LINKS.map(({ name, href, icon: Icon, color }) => (
               <li key={name}>
                 <a
                   href={href}
                   target='_blank'
                   rel='noopener noreferrer'
+                  style={{ '--brand': color } as React.CSSProperties}
                   className='group/social inline-flex items-center gap-2.5 py-1 text-sm text-bone-muted transition-colors hover:text-bone'
                 >
-                  <Icon className='size-3.5' aria-hidden />
+                  {/* the icon lights up in the platform's colour */}
+                  <Icon
+                    className='size-3.5 transition-[color,scale,filter] duration-300 ease-pad group-hover/social:scale-125 group-hover/social:text-(--brand) group-hover/social:drop-shadow-[0_0_6px_var(--brand)]'
+                    aria-hidden
+                  />
                   {name}
                   <ArrowUpRight
                     aria-hidden
@@ -72,16 +79,14 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div
-        aria-hidden
-        className='mx-auto max-w-[1240px] overflow-hidden px-5 sm:px-8'
-      >
-        <Wordmark tone='mono' label={null} className='w-full text-white/[0.035]' />
-      </div>
+      <FooterWordmark />
 
       <div className='border-t border-line'>
         <div className='mx-auto flex max-w-[1240px] flex-col gap-2 px-5 py-6 font-mono text-[11px] text-bone-dim sm:flex-row sm:items-center sm:justify-between sm:px-8'>
-          <p>© {year} GameOver. All rights reserved.</p>
+          <p className='flex flex-wrap items-center gap-x-4 gap-y-1'>
+            <span>© {year} GameOver. All rights reserved.</span>
+            <TrophyLink />
+          </p>
           <p>
             Designed & built by{' '}
             <a

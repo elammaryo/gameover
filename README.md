@@ -170,8 +170,34 @@ about purple, tech indigo/cyan), set on `<html data-theme>` by
   packs spell their initial on the pad grid
 - **Backdrop**: the original aurora shader sampled per cell and drawn as LEDs,
   mounted once in the layout and cross-faded per route
+- **Glow cards**: hover a card (press it, on a phone) and its glass lights up
+  in the card's own colour: a pool of tint under the pointer, a lit rim, a
+  sheen and a coloured shadow. Add `glow-card` and set `--glow`; children
+  pop with the `lit:` variant (`lit:scale-110`, `lit:text-(--glow)`). One
+  listener keeps the light under the pointer
+  (`app/components/arcade/useGlowTracker.ts`). Socials light up in their
+  platform's colours (`lib/site.ts`).
 - Tailwind CSS v4, Motion for sheets and menus; everything respects
   `prefers-reduced-motion`
+
+## 🕹️ Arcade layer
+
+Small game touches that answer what you do (`app/components/arcade`,
+`lib/arcade.ts`, mounted once in the layout). Spoilers:
+
+- **Trophies** (`lib/trophies.ts`): 13 achievements, saved on the device.
+  An "Achievement unlocked" toast pops for each; the About page has the
+  trophy case (with hints) and the footer keeps count.
+- **Tap along**: while a beat plays, tap on any empty part of a page. After
+  three taps in time it says GO, then grades each tap (PERFECT / GREAT /
+  GOOD / MISS) against your own groove and counts the combo; every 8 is a
+  milestone, 32 sets the LED wall off.
+- **Typed codes**: `gameover` switches the screen off like a CRT, winds the
+  beat down like a tape and counts down CONTINUE? (any key or tap brings it
+  all back); `808` drops an 808; the Konami code still works. On phones,
+  tap the giant GAMEOVER at the bottom of a page three times.
+- Pixel bursts come from one canvas (`Particles.tsx`) that only runs while
+  something is flying. Sounds only ever answer a click or key press.
 
 ## 👤 Author
 

@@ -84,13 +84,16 @@ function HeroCard({ beat, current, playing, loading, onPlay, className, style }:
   return (
     <article
       className={cn(
-        'group surface relative isolate flex min-h-[380px] flex-col justify-between overflow-hidden rounded-3xl p-6 transition-[border-color] duration-300 hover:border-white/15 sm:p-8 lg:min-h-[480px]',
+        'group glow-card surface flex min-h-[380px] flex-col justify-between overflow-hidden rounded-3xl p-6 [--glow-size:46rem] sm:p-8 lg:min-h-[480px]',
         className
       )}
-      style={{
-        ...style,
-        backgroundImage: `radial-gradient(70% 90% at 85% 40%, ${accent}24, transparent 65%)`
-      }}
+      style={
+        {
+          ...style,
+          '--glow': accent,
+          backgroundImage: `radial-gradient(70% 90% at 85% 40%, ${accent}24, transparent 65%)`
+        } as React.CSSProperties
+      }
     >
       {/* z-10 without `relative`: flex items can stack, and the play
           button's stretched ::after must resolve against the article */}
@@ -110,7 +113,7 @@ function HeroCard({ beat, current, playing, loading, onPlay, className, style }:
         glow
         detail
         live={current}
-        className='pointer-events-none absolute top-1/2 right-[-10%] w-[62%] max-w-[380px] -translate-y-[46%] rotate-[-6deg] rounded-[28px] opacity-90 transition-transform duration-500 ease-snap group-hover:rotate-[-3deg] sm:right-[-4%] sm:w-[48%]'
+        className='pointer-events-none absolute top-1/2 right-[-10%] w-[62%] max-w-[380px] -translate-y-[46%] rotate-[-6deg] rounded-[28px] opacity-90 transition-[rotate,scale] duration-500 ease-snap lit:scale-[1.03] lit:rotate-[-2deg] sm:right-[-4%] sm:w-[48%]'
       />
 
       <div className='z-10 max-w-[62%] sm:max-w-[58%]'>
@@ -152,20 +155,23 @@ function MiniCard({ beat, current, playing, loading, onPlay, className, style }:
   return (
     <article
       className={cn(
-        'group surface relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-3 pr-4 transition-[border-color,translate,scale] duration-300 hover:border-white/15 sm:p-4 lg:flex-col lg:items-stretch lg:justify-between lg:gap-5 lg:p-5',
+        'group glow-card surface flex items-center gap-4 overflow-hidden rounded-2xl p-3 pr-4 sm:p-4 lg:flex-col lg:items-stretch lg:justify-between lg:gap-5 lg:p-5',
         current && 'border-live/30',
         className
       )}
-      style={{
-        ...style,
-        backgroundImage: `radial-gradient(80% 70% at 0% 0%, ${accent}1a, transparent 70%)`
-      }}
+      style={
+        {
+          ...style,
+          '--glow': accent,
+          backgroundImage: `radial-gradient(80% 70% at 0% 0%, ${accent}1a, transparent 70%)`
+        } as React.CSSProperties
+      }
     >
       <div className='flex items-start justify-between gap-3'>
         <BeatCover
           beat={beat}
           live={current}
-          className='size-16 rounded-xl transition-transform duration-500 ease-snap group-hover:scale-[1.04] sm:size-[72px]'
+          className='size-16 rounded-xl transition-[scale,rotate] duration-500 ease-pad lit:scale-[1.08] lit:-rotate-3 sm:size-[72px]'
         />
         <div className='hidden lg:block'>
           {current ? (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { readSfx, sfx } from '@/lib/sfx'
 import { HIT_EVENT, LOGO_GLITCH_EVENT } from '@/lib/stage'
+import { unlock } from '@/lib/trophies'
 
 // ↑ ↑ ↓ ↓ ← → ← → B A
 const CODE = [
@@ -43,6 +44,7 @@ export function CheatCodes() {
       timers.forEach(clearTimeout)
       timers = []
       setActive(true)
+      unlock('cheat-code')
       document.documentElement.dataset.cheat = ''
       window.dispatchEvent(new Event(LOGO_GLITCH_EVENT))
       if (readSfx()) sfx()?.start(0)

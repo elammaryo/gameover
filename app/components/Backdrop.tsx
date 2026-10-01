@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { THEMES, themeFor } from '@/lib/theme'
 import { readBeat } from '@/lib/beatClock'
 import { HIT_EVENT } from '@/lib/stage'
+import { KICK_EVENT } from '@/lib/arcade'
 
 /**
  * LED-matrix aurora. The original aurora shader, sampled once per cell and
@@ -260,6 +261,14 @@ export function Backdrop() {
     }
     window.addEventListener('click', onClick, { capture: true, passive: true })
     window.addEventListener(HIT_EVENT, onHit)
+    // a kick from outside the beat (the arcade layer: an 808, a combo)
+    let impulse = 0
+    const onKick = (e: Event) => {
+      if (reduce.matches) return
+      const power = (e as CustomEvent<{ power?: number }>).detail?.power ?? 1
+      impulse = Math.max(impulse, Math.min(1.6, power))
+    }
+    window.addEventListener(KICK_EVENT, onKick)
 
     const frame = (t: number) => {
       raf = requestAnimationFrame(frame)
@@ -268,8 +277,9 @@ export function Backdrop() {
       const dt = Math.min((t - (last || t)) / 1000, 0.1)
       last = t
 
-      // the Konami code (CheatCodes) turns the wall up to full
-      const party = document.documentElement.dataset.cheat !== undefined
+      // the Konami code (CheatCodes) or a long combo turns the wall up to full
+      const root = document.documentElement
+      const party = root.dataset.cheat !== undefined || root.dataset.fever !== undefined
       energy += ((playing.current || party ? 1 : 0) - energy) * 0.06
       if (!reduce.matches) clock += dt * (0.32 + energy * 0.38)
 
@@ -289,7 +299,9 @@ export function Backdrop() {
 
       // the beat that's playing (silent while paused or on Spotify tracks)
       const beat = reduce.matches ? null : readBeat()
-      program.uniforms.uKick.value = beat?.playing ? beat.kick : 0
+      impulse *= Math.exp(-dt * 6)
+      if (impulse < 0.01) impulse = 0
+      program.uniforms.uKick.value = Math.max(beat?.playing ? beat.kick : 0, impulse)
       program.uniforms.uHat.value = beat?.playing ? beat.hat : 0
 
       for (let i = ripples.length - 1; i >= 0; i--) {
@@ -326,6 +338,7 @@ export function Backdrop() {
       window.removeEventListener('resize', resize)
       window.removeEventListener('click', onClick, { capture: true })
       window.removeEventListener(HIT_EVENT, onHit)
+      window.removeEventListener(KICK_EVENT, onKick)
       if (gl.canvas.parentNode === el) el.removeChild(gl.canvas)
       gl.getExtension('WEBGL_lose_context')?.loseContext()
     }

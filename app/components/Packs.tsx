@@ -5,7 +5,7 @@ import type { BeatTrack } from '../models/Track'
 import { PackCover } from './Covers'
 import { PlayButton } from './ui'
 import { useBeatPlayback } from './usePlayback'
-import { averageBpm, packBeats } from '@/lib/beats'
+import { averageBpm, packAccent, packBeats } from '@/lib/beats'
 import { cn } from '@/lib/utils'
 
 export type BeatPack = {
@@ -42,18 +42,19 @@ export function PackCard({
   return (
     <article
       className={cn(
-        'group surface relative isolate flex items-center gap-4 rounded-2xl p-2.5 transition-[border-color,translate,scale] duration-300 ease-snap hover:border-white/15',
+        'group glow-card surface flex items-center gap-4 rounded-2xl p-2.5',
         tile && 'sm:flex-col sm:items-stretch sm:p-3 sm:hover:-translate-y-0.5',
         current && 'border-live/30',
         className
       )}
+      style={{ '--glow': packAccent(pack.name) } as React.CSSProperties}
     >
       <PackCover
         name={pack.name}
         detail
         glow
         className={cn(
-          'size-20 rounded-xl transition-transform duration-500 ease-snap group-hover:scale-[1.015]',
+          'size-20 rounded-xl transition-[scale] duration-500 ease-snap lit:scale-[1.025]',
           tile && 'sm:size-auto sm:w-full'
         )}
       />

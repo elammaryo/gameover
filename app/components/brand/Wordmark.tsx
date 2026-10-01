@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
  *
  * `tone="mono"` takes `currentColor` instead (faint watermarks).
  */
-const BRAND_GRADIENT =
+export const BRAND_GRADIENT =
   'linear-gradient(90deg, #17EEFD 0%, #1AE5FA 10%, #1ADFF7 16%, #26C9F2 22%, #33B4EB 31%, #3B9DE6 38%, #478AE2 47%, #5579DE 53%, #6669E0 62%, #7B61DD 69%, #8A58DD 75%, #A04FDE 81%, #B24BE4 87%, #C93AE3 94%, #DC32EE 100%)'
 
 export function Wordmark({

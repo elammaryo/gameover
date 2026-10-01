@@ -84,6 +84,8 @@ export function PlayerBar() {
           >
             <section
               aria-label='Player'
+              // taps here are controls, not taps along to the beat
+              data-no-rhythm
               className='surface-raised pointer-events-auto relative mx-auto max-w-[1240px] overflow-hidden rounded-2xl bg-ink-900/85! backdrop-blur-2xl backdrop-saturate-150'
             >
               {/* phones: progress along the bottom edge */}
