@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils'
 
 /* ---------------------------------------------------------------------------
    A rhythm game hiding in the empty space of every page. While a beat
-   plays, tap along on anything that isn't a control: after three taps in
-   time it says GO, then grades every tap (PERFECT, GREAT, GOOD or MISS)
-   and counts the combo. Long combos light the place up.
+   plays, tap along on anything that isn't a control: each tap shows a note,
+   after three in time it says GO, then it grades every tap (PERFECT, GREAT,
+   GOOD or MISS) and counts the combo. Long combos light the place up.
 
    Taps are graded against your own groove, not the file's grid: the first
    taps set where "on the beat" is for you (which absorbs speaker latency,
@@ -27,10 +27,12 @@ type Pop = { id: number; x: number; y: number; text: string; sub?: string; tone:
 
 /** ms either side of your beat, and never more than that share of a beat */
 const WINDOWS: Array<[Grade, number, number]> = [
-  ['perfect', 34, 0.09],
-  ['great', 68, 0.16],
-  ['good', 100, 0.23]
+  ['perfect', 35, 0.09],
+  ['great', 70, 0.17],
+  ['good', 115, 0.26]
 ]
+/** how close the first taps have to agree to count as finding the groove */
+const SYNC: [number, number] = [115, 0.26]
 const SYNC_TAPS = 3
 /** beats without a tap: start again */
 const MAX_GAP = 4.5
@@ -55,7 +57,7 @@ const TONES: Record<Tone, string> = {
   good: 'text-[17px] text-bone',
   miss: 'text-[15px] text-bone-dim',
   go: 'rhythm-perfect text-[26px] text-live',
-  note: 'text-[26px] text-theme',
+  note: 'text-[22px] text-theme',
   combo: 'rhythm-perfect text-[28px] text-warn',
   fever: 'rhythm-perfect text-[32px] text-theme-3'
 }
@@ -126,25 +128,28 @@ export function RhythmTap() {
       const off = Math.abs(fold(phase - ref)) * beatMs
       const within = (ms: number, share: number) => off <= Math.min(ms, share * beatMs)
 
-      // finding your groove: quiet until the taps agree
+      // finding your groove: a note for each tap until three agree, then GO
       if (synced === 0) {
         ref = phase
         synced = 1
+        show({ x, y, text: '♪', tone: 'note' })
         return
       }
       if (synced < SYNC_TAPS) {
-        if (within(100, 0.23)) {
+        if (within(...SYNC)) {
           ref = mixPhase(ref, phase, 0.5)
           synced++
           if (synced === SYNC_TAPS) {
             combo = 0
             show({ x, y, text: 'Go!', tone: 'go' })
           } else {
-            show({ x, y, text: '♪', tone: 'note' })
+            show({ x, y, text: '♪♪', tone: 'note' })
           }
         } else {
+          // not in time with the last one: start counting from this tap
           ref = phase
           synced = 1
+          show({ x, y, text: '♪', tone: 'note' })
         }
         return
       }

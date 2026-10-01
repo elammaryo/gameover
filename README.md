@@ -188,14 +188,17 @@ Small game touches that answer what you do (`app/components/arcade`,
 - **Trophies** (`lib/trophies.ts`): 13 achievements, saved on the device.
   An "Achievement unlocked" toast pops for each; the About page has the
   trophy case (with hints) and the footer keeps count.
-- **Tap along**: while a beat plays, tap on any empty part of a page. After
-  three taps in time it says GO, then grades each tap (PERFECT / GREAT /
+- **Tap along**: while a beat plays, tap on any empty part of a page (not
+  the footer's GAMEOVER, which has its own thing). Each tap shows a note;
+  after three in time it says GO, then grades each tap (PERFECT / GREAT /
   GOOD / MISS) against your own groove and counts the combo; every 8 is a
   milestone, 32 sets the LED wall off.
 - **Typed codes**: `gameover` switches the screen off like a CRT, winds the
   beat down like a tape and counts down CONTINUE? (any key or tap brings it
-  all back); `808` drops an 808; the Konami code still works. On phones,
-  tap the giant GAMEOVER at the bottom of a page three times.
+  all back); `808` drops an 808; the Konami code still works. On phones:
+  search for either in the studio, swipe the Konami code (↑ ↑ ↓ ↓ ← → ← →,
+  then two taps), or tap the giant GAMEOVER at the bottom of a page until
+  it fills up (each tap lights more of it).
 - Pixel bursts come from one canvas (`Particles.tsx`) that only runs while
   something is flying. Sounds only ever answer a click or key press.
 

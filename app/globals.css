@@ -890,6 +890,18 @@
   }
 }
 
+/* ...and charges up, all its LEDs lit, as it's tapped */
+.wordmark-leds-full {
+  -webkit-mask:
+    url('/brand/gameover-wordmark.svg') center / contain no-repeat,
+    radial-gradient(circle, #000 0 1.6px, transparent 2.1px) 0 0 / 6px 6px;
+  -webkit-mask-composite: source-in;
+  mask:
+    url('/brand/gameover-wordmark.svg') center / contain no-repeat,
+    radial-gradient(circle, #000 0 1.6px, transparent 2.1px) 0 0 / 6px 6px;
+  mask-composite: intersect;
+}
+
 /* the footer wordmark flashes when it's tapped */
 .wordmark-hit {
   animation: wordmark-hit 380ms ease-out;

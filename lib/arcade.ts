@@ -12,6 +12,8 @@ export const BURST_EVENT = 'gameover:burst'
 export const KICK_EVENT = 'gameover:kick'
 /** the GAME OVER screen: detail { x, y } (where it came from) */
 export const GAME_OVER_EVENT = 'gameover:game-over'
+/** the 808 drop (typing "808", or searching for it) */
+export const DROP_EVENT = 'gameover:drop'
 
 export type BurstDetail = {
   x: number
@@ -33,6 +35,18 @@ const send = (name: string, detail?: unknown) => {
 export const burst = (detail: BurstDetail) => send(BURST_EVENT, detail)
 export const kick = (power = 1) => send(KICK_EVENT, { power })
 export const gameOver = (x?: number, y?: number) => send(GAME_OVER_EVENT, { x, y })
+export const drop = () => send(DROP_EVENT)
+
+/**
+ * The typed codes, for text fields (where typing is just typing): a field
+ * whose whole value is a code sets it off. Phones have no other keyboard.
+ */
+export function codeFromText(value: string): 'gameover' | '808' | null {
+  const text = value.trim().toLowerCase().replace(/\s+/g, '')
+  if (text === 'gameover') return 'gameover'
+  if (text === '808') return '808'
+  return null
+}
 
 export const reducedMotion = () =>
   typeof window !== 'undefined' &&
