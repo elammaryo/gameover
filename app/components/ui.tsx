@@ -196,17 +196,20 @@ export function CtaBand({
   return (
     <section
       className={cn(
-        'surface relative isolate overflow-hidden rounded-3xl p-6 sm:p-10',
+        'glow-card surface overflow-hidden rounded-3xl p-6 sm:p-10 [--glow-size:44rem]',
         className
       )}
-      style={{
-        backgroundImage: `radial-gradient(60% 120% at 100% 50%, color-mix(in srgb, ${accent} 16%, transparent), transparent 70%)`
-      }}
+      style={
+        {
+          '--glow': accent,
+          backgroundImage: `radial-gradient(60% 120% at 100% 50%, color-mix(in srgb, ${accent} 16%, transparent), transparent 70%)`
+        } as React.CSSProperties
+      }
     >
       <div className='flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-10'>
         <div className='flex items-start gap-4 sm:gap-5'>
           <span
-            className='flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset [&_svg]:size-[22px]'
+            className='flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-[scale,rotate] duration-300 ease-pad lit:scale-110 lit:-rotate-6 [&_svg]:size-[22px]'
             style={{
               color: accent,
               backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)`,
@@ -430,10 +433,15 @@ export function StatStrip({
       {items.map((item, i) => (
         <div
           key={item.label}
-          style={{ '--i': i + 3 } as React.CSSProperties}
+          style={
+            {
+              '--i': i + 3,
+              ...(item.accent ? { '--glow': item.accent } : null)
+            } as React.CSSProperties
+          }
           className={cn(
             // values share a baseline even when a label wraps
-            'intro-rise relative flex min-w-0 flex-col justify-between gap-2 px-4 py-4 sm:px-6 sm:py-5',
+            'intro-rise glow-card glow-flat flex min-w-0 flex-col justify-between gap-2 px-4 py-4 [--glow-size:18rem] sm:px-6 sm:py-5',
             three
               ? i > 0 && 'border-l border-line'
               : [
@@ -443,9 +451,11 @@ export function StatStrip({
                 ]
           )}
         >
-          <dt className='hud-label'>{item.label}</dt>
+          <dt className='hud-label transition-colors duration-300 lit:text-bone-muted'>
+            {item.label}
+          </dt>
           <dd
-            className='tabular font-mono text-2xl font-medium tracking-tight text-bone sm:text-[1.75rem]'
+            className='tabular origin-left font-mono text-2xl font-medium tracking-tight text-bone transition-[scale,text-shadow] duration-300 ease-pad lit:scale-105 lit:[text-shadow:0_0_18px_var(--glow)] sm:text-[1.75rem]'
             style={item.accent ? { color: item.accent } : undefined}
           >
             {item.value}

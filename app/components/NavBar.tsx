@@ -270,16 +270,17 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
             )}
 
             <div className='hidden items-center md:flex'>
-              {SOCIAL_LINKS.map(({ name, href, icon: Icon }) => (
+              {SOCIAL_LINKS.map(({ name, href, icon: Icon, color }) => (
                 <a
                   key={name}
                   href={href}
                   target='_blank'
                   rel='noopener noreferrer'
                   aria-label={`GameOver on ${name}`}
-                  className='flex size-9 items-center justify-center rounded-lg text-bone-dim transition-colors hover:bg-white/[0.05] hover:text-bone'
+                  style={{ '--brand': color } as React.CSSProperties}
+                  className='group/social flex size-9 items-center justify-center rounded-lg text-bone-dim transition-[color,background-color] duration-200 hover:bg-(--brand)/12 hover:text-(--brand)'
                 >
-                  <Icon className='size-[15px]' />
+                  <Icon className='size-[15px] transition-[scale,filter] duration-300 ease-pad group-hover/social:scale-115 group-hover/social:drop-shadow-[0_0_6px_var(--brand)]' />
                 </a>
               ))}
             </div>
@@ -378,14 +379,15 @@ export function NavBar({ selectedTab }: { selectedTab?: string } = {}) {
                 © {new Date().getFullYear()} GameOver
               </p>
               <div className='flex items-center gap-1'>
-                {SOCIAL_LINKS.map(({ name, href, icon: Icon }) => (
+                {SOCIAL_LINKS.map(({ name, href, icon: Icon, color }) => (
                   <a
                     key={name}
                     href={href}
                     target='_blank'
                     rel='noopener noreferrer'
                     aria-label={`GameOver on ${name}`}
-                    className='flex size-10 items-center justify-center rounded-lg text-bone-muted transition-colors hover:text-bone'
+                    style={{ '--brand': color } as React.CSSProperties}
+                    className='flex size-10 items-center justify-center rounded-lg text-bone-muted transition-[color,background-color,scale] duration-200 hover:text-(--brand) active:scale-90 active:bg-(--brand)/15 active:text-(--brand)'
                   >
                     <Icon className='size-4' />
                   </a>

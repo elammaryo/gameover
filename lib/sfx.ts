@@ -219,6 +219,121 @@ export function sfx() {
       click.connect(cg).connect(out)
       click.start(t)
       click.stop(t + 0.05)
+    },
+
+    /** a coin: the classic two-note pickup */
+    coin(offset = 0) {
+      const t = at(offset)
+      const osc = ctx.createOscillator()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(988, t)
+      osc.frequency.setValueAtTime(1319, t + 0.075)
+      const lp = ctx.createBiquadFilter()
+      lp.type = 'lowpass'
+      lp.frequency.value = 6000
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.13, t + 0.004)
+      g.gain.setValueAtTime(0.13, t + 0.075)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55)
+      osc.connect(lp).connect(g).connect(out)
+      osc.start(t)
+      osc.stop(t + 0.6)
+    },
+
+    /** a trophy: a bright arpeggio with a shimmer an octave up */
+    trophy(offset = 0) {
+      const t = at(offset)
+      ;[1047, 1319, 1568, 2093].forEach((f, i) => {
+        const start = t + i * 0.065
+        ;(['triangle', 'square'] as const).forEach((type, layer) => {
+          const osc = ctx.createOscillator()
+          osc.type = type
+          osc.frequency.value = layer ? f * 2 : f
+          const g = ctx.createGain()
+          envelope(g, start, layer ? 0.025 : 0.12, 0.006, i === 3 ? 0.7 : 0.26)
+          osc.connect(g).connect(out)
+          osc.start(start)
+          osc.stop(start + (i === 3 ? 0.8 : 0.32))
+        })
+      })
+    },
+
+    /** one tick of a countdown */
+    blip(offset = 0, freq = 880) {
+      const t = at(offset)
+      const osc = ctx.createOscillator()
+      osc.type = 'square'
+      osc.frequency.value = freq
+      const lp = ctx.createBiquadFilter()
+      lp.type = 'lowpass'
+      lp.frequency.value = 4200
+      const g = ctx.createGain()
+      envelope(g, t, 0.1, 0.003, 0.09)
+      osc.connect(lp).connect(g).connect(out)
+      osc.start(t)
+      osc.stop(t + 0.12)
+    },
+
+    /** a CRT switching off: a falling whine and a thump */
+    powerDown(offset = 0) {
+      const t = at(offset)
+      const osc = ctx.createOscillator()
+      osc.type = 'sawtooth'
+      osc.frequency.setValueAtTime(1400, t)
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.55)
+      const lp = ctx.createBiquadFilter()
+      lp.type = 'lowpass'
+      lp.frequency.setValueAtTime(3000, t)
+      lp.frequency.exponentialRampToValueAtTime(200, t + 0.55)
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.09, t + 0.01)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6)
+      osc.connect(lp).connect(g).connect(out)
+      osc.start(t)
+      osc.stop(t + 0.62)
+    },
+
+    /** the game over jingle: down it goes, with a wobble on the last note */
+    gameOver(offset = 0) {
+      const t = at(offset)
+      const notes: Array<[number, number]> = [
+        [784, 0.17],
+        [740, 0.17],
+        [698, 0.17],
+        [659, 0.85]
+      ]
+      let when = t
+      notes.forEach(([f, d], i) => {
+        const osc = ctx.createOscillator()
+        osc.type = 'square'
+        osc.frequency.setValueAtTime(f, when)
+        const last = i === notes.length - 1
+        if (last) {
+          // the sad wobble
+          const lfo = ctx.createOscillator()
+          lfo.frequency.value = 6
+          const depth = ctx.createGain()
+          depth.gain.value = 14
+          lfo.connect(depth).connect(osc.frequency)
+          lfo.start(when)
+          lfo.stop(when + d)
+          osc.frequency.exponentialRampToValueAtTime(f * 0.94, when + d)
+        }
+        const lp = ctx.createBiquadFilter()
+        lp.type = 'lowpass'
+        lp.frequency.value = 3200
+        const g = ctx.createGain()
+        g.gain.setValueAtTime(0.0001, when)
+        g.gain.exponentialRampToValueAtTime(0.12, when + 0.01)
+        g.gain.setValueAtTime(0.12, when + d * 0.7)
+        g.gain.exponentialRampToValueAtTime(0.0001, when + d)
+        osc.connect(lp).connect(g).connect(out)
+        osc.start(when)
+        osc.stop(when + d + 0.02)
+        when += d
+      })
     }
   }
 }
