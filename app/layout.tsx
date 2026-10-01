@@ -10,7 +10,6 @@ import { StageTransition } from './components/StageTransition'
 import { NavBar } from './components/NavBar'
 import { SiteFooter } from './components/SiteFooter'
 import { HiddenOnHome } from './components/HiddenOnHome'
-import { CheatCodes } from './components/CheatCodes'
 import { Arcade } from './components/arcade/Arcade'
 import { RouteTheme } from './components/RouteTheme'
 import { THEME_SCRIPT } from '@/lib/theme'
@@ -106,7 +105,6 @@ export default function RootLayout({
             <HiddenOnHome>
               <SiteFooter />
             </HiddenOnHome>
-            <CheatCodes />
             <Arcade />
             <PlayerSpacer />
             <Analytics />

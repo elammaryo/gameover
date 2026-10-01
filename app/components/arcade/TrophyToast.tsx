@@ -39,12 +39,6 @@ export function TrophyToast() {
       }
       busy = true
       const top = window.matchMedia('(max-width: 639px)').matches
-      // on small screens it would sit on the cheat code's toast: wait
-      if (top && document.documentElement.dataset.cheat !== undefined) {
-        queue.unshift(id)
-        timer = window.setTimeout(next, 700)
-        return
-      }
       setShown({ key: ++key, id, top })
       if (readSfx() && recentGesture()) sfx()?.trophy()
       timer = window.setTimeout(() => {

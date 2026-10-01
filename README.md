@@ -185,7 +185,7 @@ about purple, tech indigo/cyan), set on `<html data-theme>` by
 Small game touches that answer what you do (`app/components/arcade`,
 `lib/arcade.ts`, mounted once in the layout). Spoilers:
 
-- **Trophies** (`lib/trophies.ts`): 13 achievements, saved on the device.
+- **Trophies** (`lib/trophies.ts`): 12 achievements, saved on the device.
   An "Achievement unlocked" toast pops for each; the About page has the
   trophy case (with hints) and the footer keeps count.
 - **Tap along**: while a beat plays, tap on any empty part of a page (not
@@ -195,10 +195,9 @@ Small game touches that answer what you do (`app/components/arcade`,
   milestone, 32 sets the LED wall off.
 - **Typed codes**: `gameover` switches the screen off like a CRT, winds the
   beat down like a tape and counts down CONTINUE? (any key or tap brings it
-  all back); `808` drops an 808; the Konami code still works. On phones:
-  search for either in the studio, swipe the Konami code (↑ ↑ ↓ ↓ ← → ← →,
-  then two taps), or tap the giant GAMEOVER at the bottom of a page until
-  it fills up (each tap lights more of it).
+  all back); `808` drops an 808. On phones: search for either in the
+  studio, or tap the giant GAMEOVER at the bottom of a page until it fills
+  up (each tap lights more of it).
 - Pixel bursts come from one canvas (`Particles.tsx`) that only runs while
   something is flying. Sounds only ever answer a click or key press.
 

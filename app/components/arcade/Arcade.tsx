@@ -18,6 +18,7 @@ import { HIT_EVENT, LOGO_GLITCH_EVENT, STAGE_REVEAL_EVENT } from '@/lib/stage'
 import { themeFor } from '@/lib/theme'
 import {
   STAGES_TO_VISIT,
+  checkComplete,
   notePack,
   notePage,
   noteQueued,
@@ -69,6 +70,9 @@ export function Arcade() {
     }
     return player.subscribe(check)
   }, [])
+
+  // a save that's already got everything else (there used to be more)
+  useEffect(() => checkComplete(), [])
 
   // pressing start on the title screen
   useEffect(() => {

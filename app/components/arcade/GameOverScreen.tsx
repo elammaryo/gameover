@@ -349,7 +349,7 @@ export function GameOverScreen() {
                 </p>
               )}
               {phase === 'resume' && (
-                <p className='cheat-toast mt-8 font-pixel text-2xl tracking-[0.2em] text-live uppercase sm:text-3xl'>
+                <p className='pop-in mt-8 font-pixel text-2xl tracking-[0.2em] text-live uppercase sm:text-3xl'>
                   Continue!
                 </p>
               )}
