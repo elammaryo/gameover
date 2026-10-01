@@ -4,7 +4,6 @@ import {
   Flag,
   Flame,
   Gamepad2,
-  Keyboard,
   ListMusic,
   Map as MapIcon,
   Moon,
@@ -25,7 +24,6 @@ const ICONS: Record<TrophyId, React.ComponentType<{ className?: string }>> = {
   'night-owl': Moon,
   'on-beat': Target,
   combo: Flame,
-  'cheat-code': Keyboard,
   continue: RotateCcw,
   'big-808': Speaker,
   completionist: Crown

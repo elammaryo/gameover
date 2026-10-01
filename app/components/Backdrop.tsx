@@ -277,9 +277,8 @@ export function Backdrop() {
       const dt = Math.min((t - (last || t)) / 1000, 0.1)
       last = t
 
-      // the Konami code (CheatCodes) or a long combo turns the wall up to full
-      const root = document.documentElement
-      const party = root.dataset.cheat !== undefined || root.dataset.fever !== undefined
+      // a long combo in the rhythm game turns the wall up to full
+      const party = document.documentElement.dataset.fever !== undefined
       energy += ((playing.current || party ? 1 : 0) - energy) * 0.06
       if (!reduce.matches) clock += dt * (0.32 + energy * 0.38)
 

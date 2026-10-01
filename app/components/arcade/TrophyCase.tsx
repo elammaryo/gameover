@@ -130,8 +130,7 @@ function TrophyCard({
         'glow-card flex items-center gap-4 rounded-2xl p-4',
         unlocked
           ? 'surface'
-          : 'border border-dashed border-line-strong bg-white/[0.015]',
-        final && 'sm:col-span-2 lg:col-span-3'
+          : 'border border-dashed border-line-strong bg-white/[0.015]'
       )}
       style={
         {

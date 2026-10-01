@@ -640,11 +640,7 @@
   }
 }
 
-/* the Konami code (app/components/CheatCodes.tsx) */
-:root[data-cheat] [data-backdrop] {
-  animation: cheat-hue 1.6s linear infinite;
-}
-@keyframes cheat-hue {
+@keyframes hue-cycle {
   from {
     filter: hue-rotate(0deg) saturate(1.5);
   }
@@ -652,10 +648,11 @@
     filter: hue-rotate(360deg) saturate(1.5);
   }
 }
-.cheat-toast {
-  animation: cheat-pop 460ms var(--ease-pad) both;
+/* a quick pop in (GAME OVER's CONTINUE!) */
+.pop-in {
+  animation: pop-in 460ms var(--ease-pad) both;
 }
-@keyframes cheat-pop {
+@keyframes pop-in {
   from {
     opacity: 0;
     scale: 0.8;
@@ -669,7 +666,7 @@
 
 /* a long combo: the LED wall cycles colours for a few bars */
 :root[data-fever] [data-backdrop] {
-  animation: cheat-hue 2.4s linear infinite;
+  animation: hue-cycle 2.4s linear infinite;
 }
 
 /* tap-along judgements, centred on the tap and floating up */

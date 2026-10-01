@@ -15,7 +15,6 @@ export type TrophyId =
   | 'night-owl'
   | 'on-beat'
   | 'combo'
-  | 'cheat-code'
   | 'continue'
   | 'big-808'
   | 'completionist'
@@ -99,19 +98,11 @@ export const TROPHIES: Trophy[] = [
     secret: true
   },
   {
-    id: 'cheat-code',
-    name: 'Cheat Code',
-    done: '↑ ↑ ↓ ↓ ← → ← → B A',
-    hint: 'An old code still works here (on a phone, swipe it, then tap twice)',
-    points: 25,
-    secret: true
-  },
-  {
     id: 'continue',
     name: 'Continue?',
     done: 'Saw the game over screen, and came back',
     hint: 'Type the name of the game, or fill up the big one at the bottom of a page',
-    points: 25,
+    points: 30,
     secret: true
   },
   {
@@ -119,7 +110,7 @@ export const TROPHIES: Trophy[] = [
     name: 'Big 808',
     done: 'Dropped the 808',
     hint: 'Type the name of a famous drum machine (the studio search counts)',
-    points: 15,
+    points: 25,
     secret: true
   },
   {
@@ -127,7 +118,7 @@ export const TROPHIES: Trophy[] = [
     name: 'Game Complete',
     done: 'Unlocked every trophy. Thanks for playing',
     hint: 'Unlock every other trophy',
-    points: 80
+    points: 90
   }
 ]
 
@@ -211,13 +202,18 @@ export function unlock(id: TrophyId): boolean {
   if (current.unlocked[id]) return false
   commit({ ...current, unlocked: { ...current.unlocked, [id]: Date.now() } })
   window.dispatchEvent(new CustomEvent(TROPHY_EVENT, { detail: { id } }))
-  if (
-    id !== 'completionist' &&
-    TROPHIES.every(t => t.id === 'completionist' || readSave().unlocked[t.id])
-  ) {
+  if (id !== 'completionist') checkComplete()
+  return true
+}
+
+/**
+ * Everything else unlocked: the last one. (Also run on load, for saves
+ * from when there were more trophies to get.)
+ */
+export function checkComplete() {
+  if (TROPHIES.every(t => t.id === 'completionist' || readSave().unlocked[t.id])) {
     unlock('completionist')
   }
-  return true
 }
 
 export function notePage(section: string) {
