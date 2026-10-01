@@ -36,6 +36,7 @@ import {
   pickFeatured,
   type GenreFamilyId
 } from '@/lib/beats'
+import { codeFromText, drop, gameOver } from '@/lib/arcade'
 import { STAGE_REVEAL_EVENT, stageActive } from '@/lib/stage'
 import { SOUNDCLOUD_URL } from '@/lib/site'
 
@@ -262,7 +263,14 @@ export default function Studio() {
                       ref={searchRef}
                       type='search'
                       value={query}
-                      onChange={e => setQuery(e.target.value)}
+                      onChange={e => {
+                        setQuery(e.target.value)
+                        // searching for a code sets it off (the only
+                        // keyboard a phone has)
+                        const code = codeFromText(e.target.value)
+                        if (code === '808') drop()
+                        else if (code === 'gameover') gameOver()
+                      }}
                       onKeyDown={e => {
                         if (e.key === 'Escape') {
                           setQuery('')

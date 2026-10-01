@@ -4,7 +4,14 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import packs from '../../api/beats/playlists.json'
 import { player } from '../../providers/player'
-import { gameOver, isTyping, kick, markGesture, reducedMotion } from '@/lib/arcade'
+import {
+  DROP_EVENT,
+  gameOver,
+  isTyping,
+  kick,
+  markGesture,
+  reducedMotion
+} from '@/lib/arcade'
 import { currentItem } from '@/lib/queue'
 import { readSfx, sfx } from '@/lib/sfx'
 import { HIT_EVENT, LOGO_GLITCH_EVENT, STAGE_REVEAL_EVENT } from '@/lib/stage'
@@ -141,9 +148,11 @@ export function Arcade() {
     const onPointer = () => markGesture()
     window.addEventListener('keydown', onKey)
     window.addEventListener('pointerdown', onPointer, { capture: true, passive: true })
+    window.addEventListener(DROP_EVENT, drop808)
     return () => {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('pointerdown', onPointer, { capture: true })
+      window.removeEventListener(DROP_EVENT, drop808)
     }
   }, [])
 

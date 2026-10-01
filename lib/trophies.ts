@@ -102,7 +102,7 @@ export const TROPHIES: Trophy[] = [
     id: 'cheat-code',
     name: 'Cheat Code',
     done: '↑ ↑ ↓ ↓ ← → ← → B A',
-    hint: 'An old code still works here',
+    hint: 'An old code still works here (on a phone, swipe it, then tap twice)',
     points: 25,
     secret: true
   },
@@ -110,7 +110,7 @@ export const TROPHIES: Trophy[] = [
     id: 'continue',
     name: 'Continue?',
     done: 'Saw the game over screen, and came back',
-    hint: 'Type the name of the game (or tap the big one at the bottom of a page)',
+    hint: 'Type the name of the game, or fill up the big one at the bottom of a page',
     points: 25,
     secret: true
   },
@@ -118,7 +118,7 @@ export const TROPHIES: Trophy[] = [
     id: 'big-808',
     name: 'Big 808',
     done: 'Dropped the 808',
-    hint: 'Type the name of a famous drum machine',
+    hint: 'Type the name of a famous drum machine (the studio search counts)',
     points: 15,
     secret: true
   },
