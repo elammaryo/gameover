@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { AnimatePresence, motion, type PanInfo } from 'motion/react'
-import { AlertTriangle, ListMusic, Maximize2 } from 'lucide-react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { AlertTriangle, ListMusic, Maximize2, Shuffle } from 'lucide-react'
 import { usePlayer } from '../providers/PlayBarProvider'
 import { player } from '../providers/player'
 import type { BeatTrack } from '../models/Track'
 import { TrackArt } from './Covers'
 import { PlayerPanel, type PanelView } from './PlayerPanel'
 import { PlayerToasts } from './PlayerToasts'
+import { TrackPager } from './TrackPager'
 import { EqBars, PlayButton } from './ui'
 import {
   PlayerScrubber,
@@ -21,6 +22,7 @@ import {
   trackSubline,
   useIsMobile
 } from './playerParts'
+import type { QueueItem } from '@/lib/queue'
 import { cn } from '@/lib/utils'
 
 function isTypingTarget(el: EventTarget | null) {
@@ -41,8 +43,6 @@ export function PlayerBar() {
   const isMobile = useIsMobile()
   const track = p.selectedTrack
   const hasTrack = !!track
-  // a swipe on the phone dock shouldn't also count as a tap
-  const swiped = useRef(false)
 
   // Space plays / pauses anywhere on the site (unless you're typing)
   useEffect(() => {
@@ -61,11 +61,50 @@ export function PlayerBar() {
   const queued = p.upNext.filter(i => i.from === 'user').length
   const failed = p.status === 'error'
 
-  const onSwipe = (_: unknown, info: PanInfo) => {
-    const swipe = info.offset.x + info.velocity.x * 0.2
-    if (swipe < -70 && p.canNext) p.onNext()
-    else if (swipe > 70) p.onPrev()
-  }
+  // artwork + titles; on phones these are pages you swipe between
+  const page = (item: QueueItem | null, current: boolean) => (
+    <span className='flex min-w-0 items-center gap-3 p-1.5'>
+      {item ? (
+        <TrackArt
+          track={item.track as BeatTrack}
+          className='size-11 rounded-lg sm:size-12'
+          loading='eager'
+          live={current}
+        />
+      ) : (
+        <span className='flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-bone-dim ring-1 ring-white/8 ring-inset'>
+          <Shuffle className='size-4' />
+        </span>
+      )}
+      <span className='flex min-w-0 flex-col gap-0.5'>
+        <span className='flex min-w-0 items-center gap-2'>
+          <span className='truncate text-sm font-semibold text-bone'>
+            {item ? item.track.title : 'Shuffling'}
+          </span>
+          {current && p.isPlaying && !p.isLoading && (
+            <EqBars className='hidden sm:inline-flex' />
+          )}
+        </span>
+        <span
+          className={cn(
+            'flex min-w-0 items-center gap-1.5 truncate text-xs',
+            current && failed ? 'text-warn' : 'text-bone-dim'
+          )}
+        >
+          {current && failed && <AlertTriangle className='size-3 shrink-0' />}
+          <span className='truncate'>
+            {!item
+              ? 'Round again'
+              : !(current && failed)
+                ? trackSubline(item.track)
+                : p.offline
+                  ? 'Connection lost. Retrying…'
+                  : 'Couldn’t play. Press play to retry'}
+          </span>
+        </span>
+      </span>
+    </span>
+  )
 
   return (
     <>
@@ -92,68 +131,27 @@ export function PlayerBar() {
               <ProgressLine className='absolute inset-x-3 bottom-0 sm:hidden' />
 
               <div className='grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 sm:h-[78px] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1fr)] sm:gap-6 sm:px-3'>
-                {/* LEFT: artwork + titles. Opens Now Playing; swipe to skip on phones */}
-                <motion.div
-                  className='relative min-w-0'
-                  drag={isMobile ? 'x' : false}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.45}
-                  dragSnapToOrigin
-                  onPointerDown={() => {
-                    swiped.current = false
+                {/* LEFT: artwork + titles. Opens Now Playing; on phones, swipe
+                    sideways for the next or previous track, or up to open */}
+                <button
+                  type='button'
+                  data-shot='open-now-playing'
+                  onClick={e => {
+                    e.stopPropagation()
+                    toggleView('now')
                   }}
-                  // drag end is reported after the click, so mark it here
-                  onDragStart={() => {
-                    swiped.current = true
-                  }}
-                  onDragEnd={onSwipe}
+                  className='group/np block w-full min-w-0 overflow-hidden rounded-xl text-left transition-colors hover:bg-white/[0.04]'
+                  aria-label={`Now playing: ${track.title}. Open player`}
+                  aria-expanded={panel !== null}
                 >
-                  <button
-                    type='button'
-                    data-shot='open-now-playing'
-                    onClick={e => {
-                      e.stopPropagation()
-                      if (swiped.current) return
-                      toggleView('now')
-                    }}
-                    className='group/np flex w-full min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-white/[0.04]'
-                    aria-label={`Now playing: ${track.title}. Open player`}
-                    aria-expanded={panel !== null}
-                  >
-                    <TrackSwap id={p.current.uid} direction={p.direction} distance={18} className='flex min-w-0 items-center gap-3'>
-                      <TrackArt
-                        track={track as BeatTrack}
-                        className='size-11 rounded-lg sm:size-12'
-                        live
-                      />
-                      <span className='flex min-w-0 flex-col gap-0.5'>
-                        <span className='flex min-w-0 items-center gap-2'>
-                          <span className='truncate text-sm font-semibold text-bone'>
-                            {track.title}
-                          </span>
-                          {p.isPlaying && !p.isLoading && (
-                            <EqBars className='hidden sm:inline-flex' />
-                          )}
-                        </span>
-                        <span
-                          className={cn(
-                            'flex min-w-0 items-center gap-1.5 truncate text-xs',
-                            failed ? 'text-warn' : 'text-bone-dim'
-                          )}
-                        >
-                          {failed && <AlertTriangle className='size-3 shrink-0' />}
-                          <span className='truncate'>
-                            {!failed
-                              ? trackSubline(track)
-                              : p.offline
-                                ? 'Connection lost. Retrying…'
-                                : 'Couldn’t play. Press play to retry'}
-                          </span>
-                        </span>
-                      </span>
+                  {isMobile ? (
+                    <TrackPager gap={24} onSwipeUp={() => setPanel('now')} render={page} />
+                  ) : (
+                    <TrackSwap id={p.current.uid} direction={p.direction} distance={18}>
+                      {page(p.current, true)}
                     </TrackSwap>
-                  </button>
-                </motion.div>
+                  )}
+                </button>
 
                 {/* CENTER: transport + seek (desktop) */}
                 <div className='hidden min-w-0 flex-col items-center gap-1 sm:flex'>

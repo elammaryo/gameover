@@ -79,6 +79,33 @@ export const currentItem = (q: QueueState): QueueItem | null =>
 export const upcoming = (q: QueueState): QueueItem[] => q.items.slice(q.index + 1)
 
 /**
+ * What "next" will move to, for showing it ahead of time (a swipe brings it
+ * in from the side). Null at the end of the queue, and when going round
+ * again reshuffles the list (that isn't decided until it happens).
+ */
+export function peekNext(q: QueueState): QueueItem | null {
+  if (q.index < 0) return null
+  if (q.index + 1 < q.items.length) return q.items[q.index + 1]
+  if (q.repeat === 'off') return null
+  if (q.context?.tracks.length) {
+    // going round again rebuilds the list (new items, the same first track)
+    if (q.shuffle) return null
+    const track = q.context.tracks[0]
+    return { uid: `round:${track.id}`, track, from: 'context' }
+  }
+  return q.items[0] ?? null
+}
+
+/** What "previous" moves to; null when it would restart the current track. */
+export function peekPrev(q: QueueState): QueueItem | null {
+  if (q.index > 0) return q.items[q.index - 1]
+  if (q.index === 0 && q.repeat === 'all' && q.items.length > 1) {
+    return q.items[q.items.length - 1]
+  }
+  return null
+}
+
+/**
  * List items for `tracks`, reusing `existing` items of the same tracks
  * where there are some (same uid: their rows move rather than reappear).
  */

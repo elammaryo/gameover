@@ -163,6 +163,7 @@ export function TrackArt({
   glow,
   detail,
   priority,
+  loading,
   live
 }: {
   track: Pick<Track, 'id' | 'title' | 'artworkUrl'> & { mood?: string }
@@ -171,6 +172,8 @@ export function TrackArt({
   glow?: boolean
   detail?: boolean
   priority?: boolean
+  /** 'eager' for art that's just off screen but about to slide in */
+  loading?: 'eager' | 'lazy'
   /** the beat that's playing: pulse with it */
   live?: boolean
 }) {
@@ -189,6 +192,7 @@ export function TrackArt({
           sizes={sizes}
           className='object-cover'
           priority={priority}
+          loading={priority ? undefined : loading}
         />
       </div>
     )
