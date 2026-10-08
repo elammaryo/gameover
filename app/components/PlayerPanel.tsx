@@ -1,18 +1,15 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import {
-  AnimatePresence,
-  motion,
-  useDragControls,
-  type PanInfo
-} from 'motion/react'
-import { ChevronDown, ChevronRight, ListMusic, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'motion/react'
+import { ChevronDown, ChevronRight, ListMusic, Shuffle, X } from 'lucide-react'
 import type { BeatTrack, SpotifyTrack, Track } from '../models/Track'
 import { usePlayer } from '../providers/PlayBarProvider'
 import { TrackArt } from './Covers'
 import { QueueList } from './QueueList'
+import { TrackPager } from './TrackPager'
 import { useFocusTrap } from './useFocusTrap'
+import { useSheetDrag } from './useSheetDrag'
 import { EqBars, PlayButton, Tag } from './ui'
 import {
   PlayerScrubber,
@@ -25,6 +22,7 @@ import {
   useIsMobile
 } from './playerParts'
 import { accentFor, beatSubtitle } from '@/lib/beats'
+import type { QueueItem } from '@/lib/queue'
 import { cn } from '@/lib/utils'
 
 export type PanelView = 'now' | 'queue'
@@ -84,8 +82,8 @@ function AccentWash({ track, shape }: { track: Track; shape: string }) {
 
 /**
  * Now Playing + queue. Desktop: a floating panel on the right, clear of the
- * dock, with two tabs. Phones: a full-screen sheet you can drag down to
- * close; swipe the artwork to skip.
+ * dock, with two tabs. Phones: a full-screen sheet you pull down to close;
+ * swipe the artwork for the next or previous track.
  */
 export function PlayerPanel({
   view,
@@ -387,7 +385,6 @@ function MobileSheet({ open, view, onViewChange, onClose, closeRef }: ViewProps)
   const p = usePlayer()
   const track = p.selectedTrack
   const sheet = useRef<HTMLDivElement>(null)
-  const drag = useDragControls()
 
   // modal on phones: keep focus inside, the page from scrolling behind it,
   // and everything behind it out of reach of screen readers (inert)
@@ -413,108 +410,165 @@ function MobileSheet({ open, view, onViewChange, onClose, closeRef }: ViewProps)
     }
   }, [open])
 
-  const startDrag = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button, [role="slider"]')) return
-    drag.start(e)
-  }
-
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 140 || info.velocity.y > 650) onClose()
-  }
-
-  const queueOpen = view === 'queue'
-
   return (
     <AnimatePresence>
       {open && track && (
-        <motion.div
+        <Sheet
+          key='now-playing'
           ref={sheet}
-          role='dialog'
-          aria-modal='true'
-          aria-label={queueOpen ? 'Queue' : 'Now playing'}
-          drag='y'
-          dragListener={false}
-          dragControls={drag}
-          dragDirectionLock
-          dragConstraints={{ top: 0, bottom: 0 }}
-          dragElastic={{ top: 0, bottom: 0.85 }}
-          onDragEnd={onDragEnd}
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 36, stiffness: 340 }}
-          className='fixed inset-0 z-[61] isolate flex flex-col overflow-hidden rounded-t-[28px] bg-ink-950 shadow-[0_-30px_80px_-30px_rgb(0_0_0/0.9)]'
-        >
-          <AccentWash track={track} shape='120% 60% at 50% 0%' />
-
-          {/* header: drag it down to close */}
-          <div
-            onPointerDown={startDrag}
-            className='shrink-0 touch-none px-3 pt-[calc(0.5rem+var(--safe-area-inset-top))]'
-          >
-            <div className='mx-auto mb-2 h-1 w-10 rounded-full bg-white/25' aria-hidden />
-            <div className='flex items-center justify-between gap-2 pb-2'>
-              <button
-                ref={closeRef}
-                type='button'
-                onClick={onClose}
-                aria-label='Close player'
-                className='flex size-10 items-center justify-center rounded-full text-bone-muted transition-colors active:bg-white/10'
-              >
-                <ChevronDown className='size-6' />
-              </button>
-              <div className='min-w-0 text-center'>
-                <p className='hud-label'>{queueOpen ? 'Queue' : 'Now playing'}</p>
-                {p.contextName && (
-                  <p className='mt-0.5 truncate text-xs text-bone-muted'>{p.contextName}</p>
-                )}
-              </div>
-              <button
-                type='button'
-                onClick={() => onViewChange(queueOpen ? 'now' : 'queue')}
-                aria-label={queueOpen ? 'Back to now playing' : 'Open the queue'}
-                aria-pressed={queueOpen}
-                className={cn(
-                  'flex size-10 items-center justify-center rounded-full transition-colors active:bg-white/10',
-                  queueOpen ? 'text-live' : 'text-bone-muted'
-                )}
-              >
-                <ListMusic className='size-[22px]' />
-              </button>
-            </div>
-          </div>
-
-          <div className='relative flex-1 overflow-x-hidden overflow-y-auto overscroll-contain'>
-            <AnimatePresence mode='popLayout' initial={false} custom={queueOpen ? 1 : -1}>
-              <motion.div
-                key={view}
-                initial={{ opacity: 0, x: queueOpen ? 48 : -48 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: queueOpen ? -48 : 48 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 38 }}
-                className='min-h-full px-6 pb-[calc(1.5rem+var(--safe-area-inset-bottom))]'
-              >
-                {queueOpen ? (
-                  <QueueList className='pt-2' />
-                ) : (
-                  <MobileNow onPullStart={startDrag} onOpenQueue={() => onViewChange('queue')} />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </motion.div>
+          track={track}
+          view={view}
+          onViewChange={onViewChange}
+          onClose={onClose}
+          closeRef={closeRef}
+        />
       )}
     </AnimatePresence>
   )
 }
 
-function MobileNow({
-  onPullStart,
-  onOpenQueue
-}: {
-  onPullStart: (e: React.PointerEvent) => void
-  onOpenQueue: () => void
+/**
+ * The sheet itself (mounted while it's open, and while it slides away). Pull
+ * it down from anywhere to close it: it follows the finger, and the page
+ * behind brightens as it goes.
+ */
+function Sheet({
+  ref,
+  track,
+  view,
+  onViewChange,
+  onClose,
+  closeRef
+}: Omit<ViewProps, 'open'> & {
+  ref: React.RefObject<HTMLDivElement | null>
+  track: Track
 }) {
+  const p = usePlayer()
+  const scroller = useRef<HTMLDivElement>(null)
+  // how far it slides to be out of sight (only ever rendered in the browser)
+  const [height, setHeight] = useState(() => window.innerHeight)
+  useEffect(() => {
+    const onResize = () => setHeight(window.innerHeight)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  const y = useMotionValue(height)
+  const dim = useTransform(y, v => 0.5 * Math.min(1, Math.max(0, 1 - v / height)))
+  useSheetDrag({ sheet: ref, scroller, y, onClose })
+
+  const queueOpen = view === 'queue'
+
+  return (
+    <>
+      <motion.div
+        aria-hidden
+        style={{ opacity: dim }}
+        className='pointer-events-none fixed inset-0 z-[60] bg-ink-950'
+      />
+      <motion.div
+        ref={ref}
+        role='dialog'
+        aria-modal='true'
+        aria-label={queueOpen ? 'Queue' : 'Now playing'}
+        style={{ y }}
+        initial={{ y: height }}
+        animate={{ y: 0 }}
+        exit={{ y: height }}
+        transition={{ type: 'spring', damping: 36, stiffness: 340 }}
+        className='fixed inset-0 z-[61] isolate flex flex-col overflow-hidden rounded-t-[28px] bg-ink-950 shadow-[0_-30px_80px_-30px_rgb(0_0_0/0.9)] select-none'
+      >
+        <AccentWash track={track} shape='120% 60% at 50% 0%' />
+
+        <div className='shrink-0 px-3 pt-[calc(0.5rem+var(--safe-area-inset-top))]'>
+          {/* (the whole sheet pulls down; this is the hint) */}
+          <div className='mx-auto mb-2 h-1 w-10 rounded-full bg-white/25' aria-hidden />
+          <div className='flex items-center justify-between gap-2 pb-2'>
+            <button
+              ref={closeRef}
+              type='button'
+              onClick={onClose}
+              aria-label='Close player'
+              className='flex size-10 items-center justify-center rounded-full text-bone-muted transition-colors active:bg-white/10'
+            >
+              <ChevronDown className='size-6' />
+            </button>
+            <div className='min-w-0 text-center'>
+              <p className='hud-label'>{queueOpen ? 'Queue' : 'Now playing'}</p>
+              {p.contextName && (
+                <p className='mt-0.5 truncate text-xs text-bone-muted'>{p.contextName}</p>
+              )}
+            </div>
+            <button
+              type='button'
+              onClick={() => onViewChange(queueOpen ? 'now' : 'queue')}
+              aria-label={queueOpen ? 'Back to now playing' : 'Open the queue'}
+              aria-pressed={queueOpen}
+              className={cn(
+                'flex size-10 items-center justify-center rounded-full transition-colors active:bg-white/10',
+                queueOpen ? 'text-live' : 'text-bone-muted'
+              )}
+            >
+              <ListMusic className='size-[22px]' />
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref={scroller}
+          className='relative flex-1 overflow-x-hidden overflow-y-auto overscroll-contain'
+        >
+          <AnimatePresence mode='popLayout' initial={false} custom={queueOpen ? 1 : -1}>
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, x: queueOpen ? 48 : -48 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: queueOpen ? -48 : 48 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+              className='min-h-full px-6 pb-[calc(1.5rem+var(--safe-area-inset-bottom))]'
+            >
+              {queueOpen ? (
+                <QueueList className='pt-2' />
+              ) : (
+                <MobileNow onOpenQueue={() => onViewChange('queue')} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </>
+  )
+}
+
+/** The big artwork, as pages: swipe for the next or previous track. */
+function ArtPage({ item, current }: { item: QueueItem | null; current: boolean }) {
+  return (
+    // each page is the sheet's full width, so the next one comes in from
+    // the edge of the screen
+    <span className='block px-6'>
+      <span className='mx-auto block w-full max-w-[min(100%,calc(100svh-27.5rem))]'>
+        {item ? (
+          <TrackArt
+            track={item.track as BeatTrack}
+            className='w-full rounded-3xl shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9)]'
+            sizes='(max-width: 768px) 85vw, 400px'
+            glow
+            detail
+            priority={current}
+            loading='eager'
+            live={current}
+          />
+        ) : (
+          // going round a shuffled list again: not picked yet
+          <span className='flex aspect-square w-full items-center justify-center rounded-3xl bg-white/[0.03] text-bone-dim ring-1 ring-white/8 ring-inset'>
+            <Shuffle className='size-10' />
+          </span>
+        )}
+      </span>
+    </span>
+  )
+}
+
+function MobileNow({ onOpenQueue }: { onOpenQueue: () => void }) {
   const p = usePlayer()
   const item = p.current
   if (!item) return null
@@ -523,40 +577,11 @@ function MobileNow({
   const subtitle = beat ? (beatSubtitle(beat) ?? beat.artist) : track.artist
   const nextUp = p.upNext[0]
 
-  const onSwipe = (_: unknown, info: PanInfo) => {
-    const swipe = info.offset.x + info.velocity.x * 0.2
-    if (swipe < -80 && p.canNext) p.onNext()
-    else if (swipe > 80) p.onPrev()
-  }
-
   return (
     <div className='mx-auto flex min-h-full w-full max-w-[420px] flex-col items-center justify-center gap-6 py-3'>
-      {/* swipe sideways to skip; pull down to close */}
-      <div className='relative w-full max-w-[min(100%,calc(100svh-27.5rem))]'>
-        <TrackSwap id={item.uid} direction={p.direction} distance={120}>
-          <motion.div
-            drag='x'
-            dragDirectionLock
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.55}
-            dragSnapToOrigin
-            onDragEnd={onSwipe}
-            onPointerDown={onPullStart}
-            whileDrag={{ scale: 0.97 }}
-            data-shot='np-art'
-            className='touch-none'
-          >
-            <TrackArt
-              track={track as BeatTrack}
-              className='w-full rounded-3xl shadow-[0_30px_80px_-30px_rgb(0_0_0/0.9)]'
-              sizes='(max-width: 768px) 85vw, 400px'
-              glow
-              detail
-              priority
-              live
-            />
-          </motion.div>
-        </TrackSwap>
+      {/* swipe sideways for the next or previous track; pull down to close */}
+      <div data-shot='np-art' className='relative -mx-6 w-[calc(100%+3rem)]'>
+        <TrackPager render={(page, current) => <ArtPage item={page} current={current} />} />
       </div>
 
       <div className='relative w-full'>

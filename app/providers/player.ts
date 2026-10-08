@@ -7,6 +7,7 @@ import {
   EMPTY_QUEUE,
   currentItem,
   nextRepeat,
+  peekPrev,
   queueReducer,
   type QueueAction,
   type QueueItem,
@@ -314,6 +315,20 @@ class Player {
       return
     }
     this.gesture(q.items[q.index - 1]?.track ?? item.track)
+    this.apply({ type: 'prev' })
+  }
+
+  /**
+   * Straight to the previous track, however far into this one it is (a
+   * swipe back; the button restarts the track after a few seconds).
+   */
+  prevTrack = () => {
+    this.init()
+    const to = peekPrev(this.state.queue)
+    if (!this.current || !to) return
+    this.gesture(to.track)
+    this.wantPlay = true
+    this.fails = 0
     this.apply({ type: 'prev' })
   }
 

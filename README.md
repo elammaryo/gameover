@@ -129,14 +129,21 @@ re-render every row.
 - **Queue** (`lib/queue.ts`): what you started (a studio list, a pack, a
   playlist) plays in order or shuffled; *Play next* / *Add to queue* (the ⋯
   on a row) go ahead of it. Reorder by dragging the handle (or focus it and
-  use ↑ ↓), remove, clear, shuffle (turning it off restores the order),
-  repeat off / all / one. *Previous* restarts the track after 3 seconds.
+  use ↑ ↓), remove, clear, shuffle (the rest of the whole list, shuffled;
+  turning it off carries on in order), repeat off / all / one. The
+  *Previous* button restarts the track after 3 seconds.
 - **Spotify**: the Web Playback SDK plays the run of Spotify tracks from the
   current one; the queue follows Spotify as it moves on, and takes over at
   the next track change if you edited the queue or a beat comes next.
+- **Phones** (like Spotify): the dock and the Now Playing artwork are pages
+  of a carousel (`TrackPager.tsx`): they follow your finger with the
+  previous and next tracks either side; let go past halfway or flick to
+  change track (swiping back always goes to the previous track), otherwise
+  they spring back. Swipe up on the dock to open Now Playing; pull the sheet
+  down from anywhere to close it (`useSheetDrag.ts`): it follows the finger
+  and closes when pulled far enough or flicked.
 - **Motion**: track changes slide in the direction you skipped (dock, Now
-  Playing, the list's highlight); on phones swipe the dock or the artwork to
-  skip and drag the sheet down to close. Reduced motion keeps only fades.
+  Playing, the list's highlight). Reduced motion keeps only fades.
 - **Keys**: Space plays / pauses anywhere (outside inputs); media keys and
   lock-screen controls work through the Media Session API.
 

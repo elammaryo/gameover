@@ -1,7 +1,14 @@
 // Queue rules (lib/queue.ts). Run with: npm test
 // Plain JS; Node strips the types from the imported TypeScript module.
 import assert from 'node:assert/strict'
-import { EMPTY_QUEUE, queueReducer as R, currentItem, upcoming } from '../lib/queue.ts'
+import {
+  EMPTY_QUEUE,
+  queueReducer as R,
+  currentItem,
+  peekNext,
+  peekPrev,
+  upcoming
+} from '../lib/queue.ts'
 
 const T = id => ({ id, title: id, source: 'beat', audioUrl: '' })
 const list = ['a', 'b', 'c', 'd', 'e'].map(T)
@@ -116,5 +123,28 @@ assert.equal(cur(q), 'd'); assert.equal(q.index, 0); assert.equal([...up(q)].sor
   s = R(s, { type: 'next' }); assert.equal(cur(s), 'z')
   s = R(s, { type: 'setShuffle', on: true, random: rnd })
   assert.equal([...up(s)].sort().join(''), 'acde')
+}
+// peeking at what next / previous move to (what a swipe brings in)
+{
+  let s = R(EMPTY_QUEUE, { type: 'play', tracks: list, start: 0, context: { id: 'x', name: 'X' } })
+  assert.equal(peekPrev(s), null) // previous would restart: nothing to swipe to
+  assert.equal(peekNext(s).uid, R(s, { type: 'next' }).items[1].uid)
+  s = R(s, { type: 'next' })
+  assert.equal(peekPrev(s).uid, R(s, { type: 'prev' }).items[0].uid)
+  // the end: nothing next unless repeating
+  s = R(s, { type: 'jump', uid: s.items[4].uid })
+  assert.equal(peekNext(s), null)
+  s = R(s, { type: 'setRepeat', mode: 'all' })
+  assert.equal(peekNext(s).track.id, 'a') // round again (a new item, same track)
+  assert.equal(currentItem(R(s, { type: 'next' })).track.id, 'a')
+  // repeat all: previous from the first goes round to the last
+  s = R(s, { type: 'jump', uid: s.items[0].uid })
+  assert.equal(peekPrev(s).uid, currentItem(R(s, { type: 'prev' })).uid)
+  // round again while shuffling isn't known yet
+  s = R(s, { type: 'jump', uid: s.items[4].uid })
+  s = R(s, { type: 'setShuffle', on: true, random: rnd })
+  s = R(s, { type: 'jump', uid: s.items.at(-1).uid })
+  assert.equal(peekNext(s), null)
+  assert.equal(peekNext(EMPTY_QUEUE), null); assert.equal(peekPrev(EMPTY_QUEUE), null)
 }
 console.log('queue tests passed')

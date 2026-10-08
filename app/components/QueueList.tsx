@@ -263,6 +263,8 @@ function QueueRow({
           ref={handleRef}
           type='button'
           aria-label={`Reorder ${item.track.title}. Use the up and down arrow keys to move it`}
+          // (dragging this reorders; it doesn't pull the phone sheet down)
+          data-no-sheet-drag
           onPointerDown={e => {
             e.preventDefault()
             controls.start(e)
