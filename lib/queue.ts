@@ -78,6 +78,16 @@ export const currentItem = (q: QueueState): QueueItem | null =>
 
 export const upcoming = (q: QueueState): QueueItem[] => q.items.slice(q.index + 1)
 
+/**
+ * List items for `tracks`, reusing `existing` items of the same tracks
+ * where there are some (same uid: their rows move rather than reappear).
+ */
+function reuseItems(tracks: Track[], existing: QueueItem[]): QueueItem[] {
+  const spare = new Map<string, QueueItem[]>()
+  for (const i of existing) spare.set(i.track.id, [...(spare.get(i.track.id) ?? []), i])
+  return tracks.map(t => spare.get(t.id)?.shift() ?? item(t, 'context'))
+}
+
 /** How many user-added items sit right after the current one. */
 function userBlockEnd(q: QueueState): number {
   let i = q.index + 1
@@ -251,19 +261,28 @@ export function queueReducer(q: QueueState, a: QueueAction): QueueState {
       if (a.on === q.shuffle) return q
       const next = upcoming(q)
       const user = next.filter(i => i.from === 'user')
+      // where you are in the list: the last track played from it (the
+      // current one, unless you queued that yourself)
+      let anchor: QueueItem | null = null
+      for (let i = q.index; i >= 0 && !anchor; i--) {
+        if (q.items[i].from === 'context') anchor = q.items[i]
+      }
       let context: QueueItem[]
       if (a.on) {
-        context = shuffleList(
-          next.filter(i => i.from === 'context'),
-          a.random
+        // everything else in the list, from before where you started as
+        // well as after it (start on the last track and shuffle: the rest
+        // of the list is up next, not nothing)
+        const list = q.context
+          ? q.context.tracks
+          : q.items.filter(i => i.from === 'context').map(i => i.track)
+        const at = anchor ? list.findIndex(t => t.id === anchor.track.id) : -1
+        const rest = at < 0 ? list : [...list.slice(0, at), ...list.slice(at + 1)]
+        context = reuseItems(
+          shuffleList(rest, a.random),
+          next.filter(i => i.from === 'context')
         )
       } else if (q.context) {
-        // back to the list's own order, carrying on after the last track
-        // played from the list (the current one, unless you queued it)
-        let anchor: QueueItem | null = null
-        for (let i = q.index; i >= 0 && !anchor; i--) {
-          if (q.items[i].from === 'context') anchor = q.items[i]
-        }
+        // back to the list's own order, carrying on after where you are
         const pos = anchor
           ? q.context.tracks.findIndex(t => t.id === anchor.track.id)
           : -1

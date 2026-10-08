@@ -45,8 +45,9 @@ q = R(q, { type: 'next' }); assert.equal(cur(q), 'b')
 q = R(q, { type: 'setRepeat', mode: 'off' })
 q = R(q, { type: 'addToQueue', track: T('u') })
 q = R(q, { type: 'setShuffle', on: true, random: rnd })
-assert.equal(upcoming(q)[0].track.id, 'u'); assert.equal(up(q).length, 4)
-assert.deepEqual([...up(q).slice(1)].sort().join(''), 'cde')
+// (the whole list besides what's playing, from before it too)
+assert.equal(upcoming(q)[0].track.id, 'u'); assert.equal(up(q).length, 5)
+assert.deepEqual([...up(q).slice(1)].sort().join(''), 'acde')
 q = R(q, { type: 'setShuffle', on: false }); assert.equal(up(q), 'ucde')
 // starting something new keeps what you queued
 q = R(q, { type: 'play', tracks: ['x', 'y'].map(T), start: 0, context: { id: 'n', name: 'N' } })
@@ -78,4 +79,42 @@ q = R(EMPTY_QUEUE, { type: 'addToQueue', track: T('z') }); assert.equal(cur(q), 
 // play with shuffle puts the chosen track first
 q = R(EMPTY_QUEUE, { type: 'play', tracks: list, start: 3, context: null, shuffle: true, random: rnd })
 assert.equal(cur(q), 'd'); assert.equal(q.index, 0); assert.equal([...up(q)].sort().join(''), 'abce')
+// shuffle on after starting from the last track: the rest of the list is up next
+{
+  let s = R(EMPTY_QUEUE, { type: 'play', tracks: list, start: 4, context: { id: 'x', name: 'X' } })
+  assert.equal(up(s), '')
+  const history = s.items.slice(0, s.index).map(i => i.uid).join()
+  s = R(s, { type: 'setShuffle', on: true, random: rnd })
+  assert.equal(cur(s), 'e'); assert.equal([...up(s)].sort().join(''), 'abcd')
+  // "previous" still goes back through the list as it was
+  assert.equal(s.items.slice(0, s.index).map(i => i.uid).join(), history)
+  // no item twice
+  assert.equal(new Set(s.items.map(i => i.uid)).size, s.items.length)
+  s = R(s, { type: 'setShuffle', on: false }); assert.equal(up(s), '')
+}
+// from the middle: what was up next keeps its items (rows move, not reappear)
+{
+  let s = R(EMPTY_QUEUE, { type: 'play', tracks: list, start: 2, context: { id: 'x', name: 'X' } })
+  const after = new Set(upcoming(s).map(i => i.uid))
+  s = R(s, { type: 'addToQueue', track: T('u') })
+  s = R(s, { type: 'setShuffle', on: true, random: rnd })
+  assert.equal(up(s)[0], 'u'); assert.equal([...up(s).slice(1)].sort().join(''), 'abde')
+  assert.equal(upcoming(s).filter(i => after.has(i.uid)).length, 2)
+  assert.equal(new Set(s.items.map(i => i.uid)).size, s.items.length)
+}
+// without a context: everything else that came from the list
+{
+  let s = R(EMPTY_QUEUE, { type: 'play', tracks: list, start: 2, context: null })
+  s = R(s, { type: 'setShuffle', on: true, random: rnd })
+  assert.equal(cur(s), 'c'); assert.equal([...up(s)].sort().join(''), 'abde')
+  assert.equal(new Set(s.items.map(i => i.uid)).size, s.items.length)
+}
+// a queued track playing: the list's place is the last list track played
+{
+  let s = R(EMPTY_QUEUE, { type: 'play', tracks: list, start: 1, context: { id: 'x', name: 'X' } })
+  s = R(s, { type: 'playNext', track: T('z') })
+  s = R(s, { type: 'next' }); assert.equal(cur(s), 'z')
+  s = R(s, { type: 'setShuffle', on: true, random: rnd })
+  assert.equal([...up(s)].sort().join(''), 'acde')
+}
 console.log('queue tests passed')
