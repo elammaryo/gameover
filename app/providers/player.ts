@@ -992,7 +992,14 @@ class Player {
 
   /* --- OS media controls ------------------------------------------------------------------ */
 
-  private setupMediaSession() {
+  /**
+   * The lock screen, Control Center, headphones and media keys. Registered
+   * again every time playback starts (and when the page comes back into
+   * view): iOS drops the ones a page set before its "now playing" session
+   * existed, or before that session restarted (a new track loading), and
+   * then shows its own ±10s buttons instead of previous and next.
+   */
+  private registerMediaActions = () => {
     if (!('mediaSession' in navigator)) return
     const set = (
       action: MediaSessionAction,
@@ -1012,9 +1019,23 @@ class Player {
     set('seekto', d => {
       if (d.seekTime !== undefined) this.seek(d.seekTime)
     })
-    // left unset on purpose: with these, iOS shows ±10s instead of skip
+    // left unset on purpose: with these, iOS shows ±10s instead of
+    // previous and next (it only ever shows one pair)
     set('seekbackward', null)
     set('seekforward', null)
+  }
+
+  private setupMediaSession() {
+    if (!('mediaSession' in navigator)) return
+    this.registerMediaActions()
+    const audio = this.engine?.audio
+    for (const type of ['loadedmetadata', 'play', 'playing']) {
+      audio?.addEventListener(type, this.registerMediaActions)
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') this.registerMediaActions()
+    })
+    window.addEventListener('pageshow', this.registerMediaActions)
   }
 
   private syncMetadata() {
