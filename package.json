@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "spotify:renew-token": "node scripts/renew-spotify-token.mjs",
+    "stream-copies": "node --experimental-strip-types --no-warnings scripts/stream-copies.mjs",
     "test": "node --experimental-strip-types --no-warnings tests/queue.test.mjs"
   },
   "dependencies": {
