@@ -168,7 +168,10 @@ about purple, tech indigo/cyan), set on `<html data-theme>` by
   (`public/brand/gameover-wordmark.svg`, `app/components/brand/Wordmark.tsx`)
 - **Icon**: the title's G as a liquid-chrome slab (`public/brand/gameover-g*`,
   `public/gameover-icon.svg`, `app/favicon.ico`, `app/apple-icon.png`,
-  `public/icons/*`). Live on the site it's WebGL (`brand/GIcon.tsx`): it
+  `public/icons/*`). In the icon tiles the G sits 2 units left of and 1 up
+  from its box's centre (of 90 × 88): its flat right side outweighs the
+  curve, so centring the box made it look shifted right. Live on the site
+  it's WebGL (`brand/GIcon.tsx`): it
   leans toward the pointer, flips like a coin, bounces on the beat and
   glitches now and then. `scripts/build-g-icon.py` builds its distance field.
 - **Title screen → studio**: START plays a stage transition
