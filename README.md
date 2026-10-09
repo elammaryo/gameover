@@ -126,6 +126,14 @@ re-render every row.
   won't load are skipped with a note (three in a row and it stops and says
   so). Skips and pauses fade briefly, except where the browser can't (iOS,
   background tabs).
+- **Streaming copies** (`lib/streamCopy.ts`): beats whose masters are
+  lossless (WAV, AIFF, FLAC) stream from an MP3 copy at 320 kbps once
+  there is one (`Beats/stream/<id>.mp3`, next to the master): a quarter of
+  the data or less, so playback doesn't stutter on a slow or busy
+  connection (a phone's Wi-Fi shares its radio with Bluetooth headphones).
+  `npm run stream-copies` makes the missing ones (needs ffmpeg, and the S3
+  settings in `.env.local` for a key that can write to the bucket); the
+  site picks them up within a few minutes, with no deploy.
 - **Queue** (`lib/queue.ts`): what you started (a studio list, a pack, a
   playlist) plays in order or shuffled; *Play next* / *Add to queue* (the ⋯
   on a row) go ahead of it. Reorder by dragging the handle (or focus it and
@@ -167,7 +175,9 @@ about purple, tech indigo/cyan), set on `<html data-theme>` by
   (`StageTransition.tsx`): a portal into an LED warp, a "STAGE 01" card over a
   16-step sequencer, and an 808 drop that breaks the screen into pixels.
   Sound effects are synthesised with Web Audio (`lib/sfx.ts`) and can be
-  switched off on the title screen.
+  switched off on the title screen. Their audio engine closes a few seconds
+  after the last sound: while one is open, Safari runs all of the page's
+  audio, the beat included, on a tiny buffer, which can stutter.
 - **Beat sync**: `lib/beatClock.ts` turns the playing beat's BPM and position
   into kick / hi-hat envelopes; the LED backdrop, meters and cover playheads
   move in time. Clicks send ripples through the LED wall.

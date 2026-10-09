@@ -47,6 +47,36 @@ export const readSfx = () => memory ?? sfxEnabled()
 type Rig = { ctx: AudioContext; out: AudioNode; noise: AudioBuffer }
 let rig: Rig | null = null
 
+/*
+  The AudioContext is only open while effects are playing. While one is
+  open, Safari asks for a tiny audio buffer for the whole page, the beat
+  included (one 128-sample Web Audio block, about 3 ms), which leaves
+  playback little room for a hiccup. So it closes a little while after the
+  last sound ends, and the next sound opens a new one.
+*/
+const IDLE_MS = 8000
+/** the longest any one sound rings on after its start (s) */
+const TAIL_S = 2.5
+let idleAt = 0
+let idleTimer = 0
+
+function keepOpen(offsetS: number) {
+  idleAt = Math.max(idleAt, performance.now() + (offsetS + TAIL_S) * 1000 + IDLE_MS)
+  window.clearTimeout(idleTimer)
+  idleTimer = window.setTimeout(closeIfIdle, idleAt - performance.now())
+}
+
+function closeIfIdle() {
+  const wait = idleAt - performance.now()
+  if (wait > 0) {
+    idleTimer = window.setTimeout(closeIfIdle, wait)
+    return
+  }
+  const closing = rig
+  rig = null
+  closing?.ctx.close().catch(() => {})
+}
+
 function getRig(): Rig | null {
   if (typeof window === 'undefined') return null
   const AC =
@@ -54,6 +84,7 @@ function getRig(): Rig | null {
     (window as unknown as { webkitAudioContext?: typeof AudioContext })
       .webkitAudioContext
   if (!AC) return null
+  if (rig?.ctx.state === 'closed') rig = null
   if (!rig) {
     const ctx = new AC()
     // a little glue so stacked hits never clip
@@ -104,9 +135,13 @@ export function sfx() {
   const r = getRig()
   if (!r) return null
   const { ctx, out, noise } = r
-  const at = (offset: number) => ctx.currentTime + 0.01 + offset
+  keepOpen(0)
+  const at = (offset: number) => {
+    keepOpen(offset)
+    return ctx.currentTime + 0.01 + offset
+  }
 
-  return {
+  const sounds = {
     /** "credit in": a quick three-note square-wave chime */
     start(offset = 0) {
       const t = at(offset)
@@ -336,4 +371,21 @@ export function sfx() {
       })
     }
   }
+
+  // a sequence held onto past the idle close (the entrance drop) just
+  // doesn't sound, rather than throwing on a closed context
+  type Sounds = typeof sounds
+  const guarded = {} as Sounds
+  for (const name of Object.keys(sounds) as Array<keyof Sounds>) {
+    const play = sounds[name] as (...args: unknown[]) => void
+    ;(guarded[name] as (...args: unknown[]) => void) = (...args) => {
+      if (ctx.state === 'closed') return
+      try {
+        play(...args)
+      } catch {
+        // (an effect is never worth an error)
+      }
+    }
+  }
+  return guarded
 }
