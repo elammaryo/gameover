@@ -60,6 +60,8 @@ lib/
 ├── coverArt.ts       # Beat covers as PNGs for the lock screen
 ├── toast.ts          # Small confirmations shown above the player
 ├── site.ts           # Nav + social links shared by header and footer
+├── analytics.ts      # PostHog, started from instrumentation-client.ts
+├── visitor.ts        # The returning-visitor ID and Omer's ?me switch
 ├── spotify.ts        # Server-side Spotify token utilities
 └── spotify-auth.ts   # Browser login/logout helpers
 
@@ -81,6 +83,11 @@ public/               # Static assets
 
 - `GET /api/beats` - List all beats
 - `POST /api/beats/signedUrl` - Generate signed S3 URL
+
+### Analytics
+
+- `GET /api/hello` - Set this browser's visitor ID cookie (and the `?me`
+  switch); see Analytics below
 
 ### Spotify Auth
 
@@ -220,6 +227,42 @@ Small game touches that answer what you do (`app/components/arcade`,
   up (each tap lights more of it).
 - Pixel bursts come from one canvas (`Particles.tsx`) that only runs while
   something is flying. Sounds only ever answer a click or key press.
+
+## 📈 Analytics
+
+Two, for different depths, both counting gameover.studio only. Added on
+2026-10-13, the same setup as omerelammary.com.
+
+- **Vercel Web Analytics** (`app/components/SiteAnalytics.tsx`): page views,
+  visitors, countries, devices and referrers, without cookies. In the Vercel
+  dashboard.
+- **PostHog** (`lib/analytics.ts`, started from `instrumentation-client.ts`
+  before React hydrates): city-level location, device, referrers, page changes
+  (the music keeps playing between pages, so most moves never reload),
+  recordings of how people use the studio, and the same browser coming back
+  over weeks. Free tier. It shares a PostHog project with omerelammary.com
+  (us.posthog.com, project 150186) because PostHog's free plan allows one
+  project per organization; the two sites are told apart by domain. Recordings
+  are switched on in the project's settings.
+  - Everything goes through `/coin`, which `next.config.ts` rewrites to
+    PostHog's servers, so the browser only talks to gameover.studio and
+    blockers that filter by domain let it through. `skipTrailingSlashRedirect`
+    is on because PostHog's API paths end in a slash and the SDK's POSTs don't
+    survive a redirect; pages answer with or without the slash.
+  - A returning visitor is a returning browser, known by `go_id`: a random
+    UUID that the site's server sets for 400 days (`app/api/hello/route.ts`)
+    on a browser's first visit. It comes from the server because Safari
+    deletes what a page's script stores after seven days of Safari use without
+    the visitor interacting with the site, and a cookie set in an HTTP response
+    isn't covered by that. Each browser gets an anonymous profile in PostHog's
+    People tab. A phone and a laptop are still two visitors.
+  - Omer's own browsers: `gameover.studio/?me`, opened once on each, has the
+    server set `go_me` for 400 days; PostHog then never loads there and Vercel
+    Analytics drops every event. `/?notme` undoes it. The flag leaves the
+    address bar as the page loads, and a toast confirms the switch.
+  - Inputs are masked in recordings. Canvases (the LED backdrop, the G, the
+    stage transition, the arcade's particles) come out empty in a replay.
+  - `npm test` covers the ID route (`tests/hello.test.mjs`).
 
 ## 👤 Author
 

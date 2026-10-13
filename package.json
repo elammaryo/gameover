@@ -9,7 +9,7 @@
     "lint": "eslint",
     "spotify:renew-token": "node scripts/renew-spotify-token.mjs",
     "stream-copies": "node --experimental-strip-types --no-warnings scripts/stream-copies.mjs",
-    "test": "node --experimental-strip-types --no-warnings tests/queue.test.mjs"
+    "test": "node --experimental-strip-types --no-warnings tests/queue.test.mjs && node --experimental-strip-types --no-warnings tests/hello.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.935.0",
@@ -21,6 +21,7 @@
     "motion": "^12.23.24",
     "next": "^16.0.7",
     "ogl": "^1.0.11",
+    "posthog-js": "^1.438.9",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-icons": "^5.5.0",
