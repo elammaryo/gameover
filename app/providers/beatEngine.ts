@@ -21,6 +21,12 @@ import type { BeatTrack } from '../models/Track'
      are allowed to play on iOS.
    - A pause the system makes (a phone call, headphones unplugged) is
      reported as a pause, so the UI and lock screen stay truthful.
+   - iOS keeps a page running with the screen off only while it's playing
+     audio. Between tracks nothing plays while the next one loads, and when
+     that takes a moment (a big file, a slow connection) iOS suspends the
+     page right there, until the phone is opened again. So in the
+     background a silent clip plays on a second element across the switch
+     (the bridge), until the next track is actually playing.
 
    Skips fade the outgoing track out and the new one in (a few hundred ms)
    where scripts can set the volume and the tab is visible; otherwise the
@@ -46,9 +52,10 @@ const MAX_RETRIES = 2
 const STALL_MS = 9000
 const FADE_OUT_MS = 150
 const FADE_IN_MS = 280
+/** the longest the silent bridge between tracks runs */
+const BRIDGE_MS = 30_000
 
-function silentWavUrl() {
-  const n = 400
+function silentWavUrl(n = 400) {
   const rate = 8000
   const buf = new ArrayBuffer(44 + n)
   const v = new DataView(buf)
@@ -103,6 +110,9 @@ export class BeatEngine {
   /** failed: the element's own events mustn't change the status */
   private errored = false
   private disposed = false
+  /** plays silence across a track switch in the background (see above) */
+  private readonly bridgeAudio: HTMLAudioElement
+  private bridgeTimer = 0
   /** where to put the playhead once this load's audio is in */
   private resume: { token: number; at: number } | null = null
   /** what went wrong last on this track: the connection, or the file */
@@ -127,6 +137,16 @@ export class BeatEngine {
     a.hidden = true
     document.body.appendChild(a)
     this.audio = a
+
+    // the bridge: a second of silence, looped (8 kHz, 8 bits: tiny)
+    const bridge = new Audio()
+    bridge.loop = true
+    bridge.preload = 'auto'
+    bridge.src = silentWavUrl(8000)
+    bridge.setAttribute('data-bridge-audio', '')
+    bridge.hidden = true
+    document.body.appendChild(bridge)
+    this.bridgeAudio = bridge
 
     // scripts can't set the volume on iOS; skip the fades there
     const probe = new Audio()
@@ -168,6 +188,15 @@ export class BeatEngine {
   unlock() {
     if (this.unlocked) return
     this.unlocked = true
+    // the bridge has to have played inside a tap to be allowed to play
+    // later on its own (with the screen off)
+    const bridge = this.bridgeAudio
+    bridge.play().then(
+      () => {
+        if (!this.bridgeTimer) bridge.pause()
+      },
+      () => {}
+    )
     if (this.audio.src) return
     this.audio.src = silentWavUrl()
     this.audio.play().then(
@@ -192,6 +221,8 @@ export class BeatEngine {
     this.trouble = 'broken'
     this.clearStall()
     this.emit(opts.autoplay ? 'loading' : 'paused')
+    // (a skip from the lock screen: keep the page awake while it loads)
+    if (opts.autoplay) this.startBridge()
 
     // where the volume can't be faded, the old track stops right away
     let fadeOut: Promise<void> = Promise.resolve()
@@ -277,6 +308,7 @@ export class BeatEngine {
   pause() {
     this.wantPlay = false
     this.clearStall()
+    this.endBridge()
     // mid-switch the old track is already on its way out, and the new one
     // won't start now
     if (this.audio.paused || this.switching) {
@@ -301,6 +333,7 @@ export class BeatEngine {
     this.errored = false
     this.resume = null
     this.clearStall()
+    this.endBridge()
     this.settleFade()
     this.audio.pause()
     this.audio.removeAttribute('src')
@@ -332,6 +365,7 @@ export class BeatEngine {
     this.stop()
     document.removeEventListener('visibilitychange', this.handleVisibility)
     this.audio.remove()
+    this.bridgeAudio.remove()
   }
 
   /* --- internals ----------------------------------------------------------- */
@@ -407,6 +441,7 @@ export class BeatEngine {
     this.retries++
     this.recovering = true
     this.clearStall()
+    this.startBridge()
     // a link that lapsed while paused is fixed quietly, without a spinner
     if (this.wantPlay) this.emit('loading')
     let url: string
@@ -431,6 +466,7 @@ export class BeatEngine {
   private fail(reason: FailReason, at: number) {
     const track = this.track
     this.clearStall()
+    this.endBridge()
     this.wantPlay = false
     this.errored = true
     this.failedAt = at
@@ -509,11 +545,26 @@ export class BeatEngine {
     this.stallTimer = 0
   }
 
+  /** Silence across a track switch, only while the page is in the background. */
+  private startBridge() {
+    if (document.visibilityState !== 'hidden' || !this.wantPlay) return
+    window.clearTimeout(this.bridgeTimer)
+    this.bridgeTimer = window.setTimeout(() => this.endBridge(), BRIDGE_MS)
+    if (this.bridgeAudio.paused) this.bridgeAudio.play().catch(() => {})
+  }
+
+  private endBridge() {
+    window.clearTimeout(this.bridgeTimer)
+    this.bridgeTimer = 0
+    if (!this.bridgeAudio.paused) this.bridgeAudio.pause()
+  }
+
   /* --- element events ------------------------------------------------------ */
 
   private handlePlaying = () => {
     this.clearStall()
     if (!this.track || this.switching) return
+    this.endBridge()
     this.errored = false
     this.emit('playing')
     // a track that has played for a while has earned its retries back
@@ -543,6 +594,8 @@ export class BeatEngine {
     if (!this.track || !this.wantPlay || this.switching || this.errored) return
     this.emit('loading')
     this.armStall()
+    // starved of data with the screen off: stay awake until it plays again
+    this.startBridge()
   }
 
   private handleStalled = () => {
@@ -574,6 +627,8 @@ export class BeatEngine {
     // silent unlock clip): its end isn't the new track's
     if (!this.track || this.switching || this.errored) return
     this.clearStall()
+    // with the screen off, keep the page awake until the next one plays
+    this.startBridge()
     this.on.onEnded()
   }
 
@@ -610,5 +665,7 @@ export class BeatEngine {
 
   private handleVisibility = () => {
     if (document.visibilityState === 'hidden') this.settleFade()
+    // back on screen, the page stays awake by itself
+    else this.endBridge()
   }
 }
