@@ -56,6 +56,23 @@ const SPOTIFY_POLL_MS = 2000
 export const isActive = (status: PlayerStatus) =>
   status === 'playing' || status === 'loading'
 
+/**
+ * The Audio Session API (Safari 16.4+): 'playback' tells iOS this is a
+ * music player, so its sound carries on in the background and on the lock
+ * screen like a music app's. Only while a beat plays: otherwise 'auto', so
+ * the arcade's sound effects stay quiet on silent mode and don't stop other
+ * apps' music.
+ */
+function setAudioSession(type: 'playback' | 'auto') {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
+  if (!session || session.type === type) return
+  try {
+    session.type = type
+  } catch {
+    // not settable here
+  }
+}
+
 type SpotifyClock = {
   /** the SDK has reported our current track */
   live: boolean
@@ -146,6 +163,7 @@ class Player {
   private setStatus(status: PlayerStatus) {
     if (this.state.status === status) return
     this.state = { ...this.state, status }
+    setAudioSession(isActive(status) && this.currentIs('beat') ? 'playback' : 'auto')
     if (status === 'playing') {
       this.fails = 0
       this.clearNetworkHold()
