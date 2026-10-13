@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertTriangle, ListEnd, ListPlus } from 'lucide-react'
+import { AlertTriangle, Eye, EyeOff, ListEnd, ListPlus } from 'lucide-react'
 import { TOAST_EVENT, type ToastDetail } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +12,9 @@ const LIFETIME = 2600
 const MAX = 3
 
 function iconFor(t: Item) {
+  // The analytics switch (lib/visitor.ts): counting this browser, or not
+  if (t.icon === 'off') return EyeOff
+  if (t.icon === 'on') return Eye
   if (t.tone === 'warn') return AlertTriangle
   if (/next/i.test(t.text)) return ListEnd
   return ListPlus

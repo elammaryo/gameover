@@ -3,7 +3,7 @@ import { Archivo, Geist, Geist_Mono, Silkscreen } from 'next/font/google'
 import './globals.css'
 import PlayBarProvider from './providers/PlayBarProvider'
 import MotionProvider from './providers/MotionProvider'
-import { Analytics } from '@vercel/analytics/next'
+import { SiteAnalytics } from './components/SiteAnalytics'
 import { PlayerBar, PlayerSpacer } from './components/PlayerBar'
 import { Backdrop } from './components/Backdrop'
 import { StageTransition } from './components/StageTransition'
@@ -107,7 +107,8 @@ export default function RootLayout({
             </HiddenOnHome>
             <Arcade />
             <PlayerSpacer />
-            <Analytics />
+            {/* Vercel Web Analytics; PostHog starts in instrumentation-client.ts */}
+            <SiteAnalytics />
           </PlayBarProvider>
         </MotionProvider>
       </body>
