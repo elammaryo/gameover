@@ -132,7 +132,11 @@ re-render every row.
   same second. The next beat's link is fetched ahead of time. Beats that
   won't load are skipped with a note (three in a row and it stops and says
   so). Skips and pauses fade briefly, except where the browser can't (iOS,
-  background tabs).
+  background tabs). With the screen off, a silent clip on a second element
+  bridges each track change until the next track plays: iOS only keeps a
+  page running in the background while it's playing audio, and would
+  otherwise suspend it while the next track loads. While a beat plays the
+  page also declares itself a music player (`navigator.audioSession`).
 - **Streaming copies** (`lib/streamCopy.ts`): beats whose masters are
   lossless (WAV, AIFF, FLAC) stream from an MP3 copy at 320 kbps once
   there is one (`Beats/stream/<id>.mp3`, next to the master): a quarter of
